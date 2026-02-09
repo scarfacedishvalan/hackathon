@@ -20,7 +20,7 @@ if __name__ == "__main__":
     recipe = load_json_recipe(r"C:\Python\portfolio-project\recipe2.json")
     
     # Set up price data
-    chosen_assets = ["NIFTYBEES_NS", "CPSEETF_NS", "JUNIORBEES_NS", "MON100_NS", "MOM100_NS", "CONSUMBEES_NS"]
+    chosen_assets = ["NIFTYBEES", "CPSEETF", "JUNIORBEES", "MON100", "MOM100", "CONSUMBEES"]
 
     pricedata = PriceData(asset_list=chosen_assets)
     data = pricedata._dfraw
