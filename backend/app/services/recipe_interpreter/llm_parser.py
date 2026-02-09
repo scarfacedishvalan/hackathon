@@ -4,9 +4,6 @@ import json
 from pathlib import Path
 
 from openai import OpenAI
-from pydantic import ValidationError
-
-from .semantic_schema import SemanticRecipe
 
 
 class ParserError(Exception):
@@ -22,7 +19,7 @@ class InvalidJSONError(ParserError):
 
 
 class SchemaMismatchError(ParserError):
-    """Raised when JSON does not match SemanticRecipe schema."""
+    """Raised when JSON does not match the selected schema."""
 
     pass
 
@@ -59,7 +56,14 @@ def _extract_json_from_response(content: str) -> str:
     return content.strip()
 
 
-def parse_text_to_json(text: str) -> dict:
+def parse_text_to_json(
+    text: str,
+    *,
+    system_prompt_file: str = "system_prompt_backtesting.txt",
+    user_prompt_file: str = "user_prompt.txt",
+    schema: str = "backtesting",
+    validate: bool = True,
+) -> dict:
     """
     Parse user instruction text into validated JSON.
 
@@ -75,8 +79,8 @@ def parse_text_to_json(text: str) -> dict:
         MissingFieldError: If required fields are missing.
     """
     # Load prompts
-    system_prompt = _load_prompt("system_prompt.txt")
-    user_prompt_template = _load_prompt("user_prompt.txt")
+    system_prompt = _load_prompt(system_prompt_file)
+    user_prompt_template = _load_prompt(user_prompt_file)
 
     # Inject user text into user prompt
     user_prompt = user_prompt_template.replace("{USER_INPUT}", text)
@@ -106,15 +110,3 @@ def parse_text_to_json(text: str) -> dict:
         raise InvalidJSONError(f"Invalid JSON from LLM: {e}") from e
 
     return parsed_data
-    # # Validate against schema
-    # try:
-    #     validated = SemanticRecipe.model_validate(parsed_data)
-    # except ValidationError as e:
-    #     errors = e.errors()
-    #     missing_fields = [err for err in errors if err["type"] == "missing"]
-    #     if missing_fields:
-    #         field_names = [".".join(str(loc) for loc in err["loc"]) for err in missing_fields]
-    #         raise MissingFieldError(f"Missing required fields: {field_names}") from e
-    #     raise SchemaMismatchError(f"Schema validation failed: {e}") from e
-
-    # return validated.model_dump()

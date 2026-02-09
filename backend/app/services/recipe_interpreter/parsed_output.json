@@ -1,0 +1,49 @@
+{
+  "strategy_name": "SmaCross",
+  "timeframe": "daily",
+  "data": {
+    "symbol": "SPY",
+    "source": null,
+    "path": null,
+    "start": "2019-01-01",
+    "end": "2023-12-31"
+  },
+  "backtest": {
+    "cash": 25000,
+    "commission": "0.1%",
+    "margin": null,
+    "trade_on_close": true,
+    "hedging": null,
+    "exclusive_orders": true
+  },
+  "strategy_params": {
+    "fast": 10,
+    "slow": 30
+  },
+  "rules": {
+    "entry": "Buy when SMA(10) crosses above SMA(30)",
+    "exit": "Sell when SMA(10) crosses back below SMA(30)"
+  },
+  "risk": {
+    "stop_loss": null,
+    "take_profit": null,
+    "trailing_stop": null
+  },
+  "optimize": {
+    "metric": "Sharpe ratio",
+    "maximize": true,
+    "constraint": null,
+    "params": {
+      "fast": [
+        5,
+        10,
+        15
+      ],
+      "slow": [
+        20,
+        30,
+        50
+      ]
+    }
+  }
+}

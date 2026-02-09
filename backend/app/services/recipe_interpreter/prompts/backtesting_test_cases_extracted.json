@@ -1,0 +1,407 @@
+[
+  {
+    "expected_input": "Backtest BuyAndHold on AAPL daily from 2020-01-01 to 2020-12-31 with $10,000 cash.",
+    "expected_output": {
+      "strategy_name": "BuyAndHold",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "AAPL",
+        "source": null,
+        "path": null,
+        "start": "2020-01-01",
+        "end": "2020-12-31"
+      },
+      "backtest": {
+        "cash": 10000,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": null,
+      "rules": {
+        "entry": null,
+        "exit": null
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "extracted_output": {
+      "strategy_name": "BuyAndHold",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "AAPL",
+        "source": null,
+        "path": null,
+        "start": "2020-01-01",
+        "end": "2020-12-31"
+      },
+      "backtest": {
+        "cash": 10000,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": null,
+      "rules": {
+        "entry": null,
+        "exit": null
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "pass": true,
+    "error": null
+  },
+  {
+    "expected_input": "Run SmaCross on MSFT daily from 2021-01-01 to 2022-01-01. Buy when SMA(20) crosses above SMA(50) and sell when it crosses below. Cash 50000, commission 0.05%.",
+    "expected_output": {
+      "strategy_name": "SmaCross",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "MSFT",
+        "source": null,
+        "path": null,
+        "start": "2021-01-01",
+        "end": "2022-01-01"
+      },
+      "backtest": {
+        "cash": 50000,
+        "commission": "0.05%",
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": {
+        "fast": 20,
+        "slow": 50
+      },
+      "rules": {
+        "entry": "Buy when SMA(20) crosses above SMA(50)",
+        "exit": "Sell when SMA(20) crosses below SMA(50)"
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "extracted_output": {
+      "strategy_name": "SmaCross",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "MSFT",
+        "source": null,
+        "path": null,
+        "start": "2021-01-01",
+        "end": "2022-01-01"
+      },
+      "backtest": {
+        "cash": 50000,
+        "commission": "0.05%",
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": {
+        "fast": 20,
+        "slow": 50
+      },
+      "rules": {
+        "entry": "Buy when SMA(20) crosses above SMA(50)",
+        "exit": "Sell when SMA(20) crosses below SMA(50)"
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "pass": true,
+    "error": null
+  },
+  {
+    "expected_input": "Backtest EmaCross on SPY 1h from 2022-01-01 to 2022-03-01 with trade on close and exclusive orders. Entry: EMA(12) crosses above EMA(26). Exit: EMA(12) crosses below EMA(26).",
+    "expected_output": {
+      "strategy_name": "EmaCross",
+      "timeframe": "1h",
+      "data": {
+        "symbol": "SPY",
+        "source": null,
+        "path": null,
+        "start": "2022-01-01",
+        "end": "2022-03-01"
+      },
+      "backtest": {
+        "cash": null,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": true,
+        "hedging": null,
+        "exclusive_orders": true
+      },
+      "strategy_params": {
+        "fast": 12,
+        "slow": 26
+      },
+      "rules": {
+        "entry": "EMA(12) crosses above EMA(26)",
+        "exit": "EMA(12) crosses below EMA(26)"
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "extracted_output": {
+      "strategy_name": "EmaCross",
+      "timeframe": "1h",
+      "data": {
+        "symbol": "SPY",
+        "source": null,
+        "path": null,
+        "start": "2022-01-01",
+        "end": "2022-03-01"
+      },
+      "backtest": {
+        "cash": null,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": true,
+        "hedging": null,
+        "exclusive_orders": true
+      },
+      "strategy_params": {
+        "fast": 12,
+        "slow": 26
+      },
+      "rules": {
+        "entry": "EMA(12) crosses above EMA(26)",
+        "exit": "EMA(12) crosses below EMA(26)"
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "pass": true,
+    "error": null
+  },
+  {
+    "expected_input": "Backtest RsiReversion on QQQ daily from 2020-01-01 to 2020-06-30. Buy when RSI(14) < 30 and sell when RSI(14) > 70.",
+    "expected_output": {
+      "strategy_name": "RsiReversion",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "QQQ",
+        "source": null,
+        "path": null,
+        "start": "2020-01-01",
+        "end": "2020-06-30"
+      },
+      "backtest": {
+        "cash": null,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": null,
+      "rules": {
+        "entry": "Buy when RSI(14) < 30",
+        "exit": "Sell when RSI(14) > 70"
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "extracted_output": {
+      "strategy_name": "RsiReversion",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "QQQ",
+        "source": null,
+        "path": null,
+        "start": "2020-01-01",
+        "end": "2020-06-30"
+      },
+      "backtest": {
+        "cash": null,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": null,
+      "rules": {
+        "entry": "Buy when RSI(14) < 30",
+        "exit": "Sell when RSI(14) > 70"
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": null,
+        "maximize": null,
+        "constraint": null,
+        "params": null
+      }
+    },
+    "pass": true,
+    "error": null
+  },
+  {
+    "expected_input": "Optimize SmaCross on SPY daily from 2019-01-01 to 2019-12-31: fast in [5, 10], slow in [20, 50], maximize Sharpe ratio.",
+    "expected_output": {
+      "strategy_name": "SmaCross",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "SPY",
+        "source": null,
+        "path": null,
+        "start": "2019-01-01",
+        "end": "2019-12-31"
+      },
+      "backtest": {
+        "cash": null,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": null,
+      "rules": {
+        "entry": null,
+        "exit": null
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": "Sharpe ratio",
+        "maximize": true,
+        "constraint": null,
+        "params": {
+          "fast": [
+            5,
+            10
+          ],
+          "slow": [
+            20,
+            50
+          ]
+        }
+      }
+    },
+    "extracted_output": {
+      "strategy_name": "SmaCross",
+      "timeframe": "daily",
+      "data": {
+        "symbol": "SPY",
+        "source": null,
+        "path": null,
+        "start": "2019-01-01",
+        "end": "2019-12-31"
+      },
+      "backtest": {
+        "cash": null,
+        "commission": null,
+        "margin": null,
+        "trade_on_close": null,
+        "hedging": null,
+        "exclusive_orders": null
+      },
+      "strategy_params": null,
+      "rules": {
+        "entry": null,
+        "exit": null
+      },
+      "risk": {
+        "stop_loss": null,
+        "take_profit": null,
+        "trailing_stop": null
+      },
+      "optimize": {
+        "metric": "Sharpe ratio",
+        "maximize": true,
+        "constraint": null,
+        "params": {
+          "fast": [
+            5,
+            10
+          ],
+          "slow": [
+            20,
+            50
+          ]
+        }
+      }
+    },
+    "pass": true,
+    "error": null
+  }
+]

@@ -1,0 +1,4 @@
+Backtest a simple SMA crossover on SPY using daily bars from 2019-01-01 to 2023-12-31.
+Buy when SMA(10) crosses above SMA(30) and sell when it crosses back below.
+Start with $25,000 cash, commission 0.1%, trade on close, and use exclusive orders.
+Also optimize the fast SMA over [5, 10, 15] and the slow SMA over [20, 30, 50], maximizing Sharpe ratio.

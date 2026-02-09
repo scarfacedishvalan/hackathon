@@ -6,7 +6,11 @@ import json
 import sys
 from pathlib import Path
 
-from llm_parser import InvalidJSONError, MissingFieldError, ParserError, SchemaMismatchError, parse_text_to_json
+from app.services.recipe_interpreter.llm_parser import InvalidJSONError, MissingFieldError, ParserError, SchemaMismatchError, parse_text_to_json
+
+
+BACKEND_DIR = Path(__file__).resolve().parent
+PROMPTS_DIR = BACKEND_DIR / "app" / "services" / "recipe_interpreter" / "prompts"
 
 def _is_number(x: object) -> bool:
     return isinstance(x, (int, float)) and not isinstance(x, bool)
@@ -126,28 +130,36 @@ def main() -> int:
     parser.add_argument(
         "--tests",
         type=str,
-        default=str(Path("prompts") / "backtesting_test_cases.json"),
+        default=str(PROMPTS_DIR / "backtesting_test_cases.json"),
         help="Path to JSON test cases file",
     )
     parser.add_argument(
         "--save-extracted",
         type=str,
-        default=str(Path("prompts") / "backtesting_test_cases_extracted.json"),
+        default=str(PROMPTS_DIR / "backtesting_test_cases_extracted.json"),
         help="Where to save extracted outputs when running tests",
     )
 
     args = parser.parse_args()
 
+    tests_path = Path(args.tests)
+    if not tests_path.is_absolute():
+        tests_path = (BACKEND_DIR / tests_path).resolve()
+
+    save_extracted_path = Path(args.save_extracted)
+    if not save_extracted_path.is_absolute():
+        save_extracted_path = (BACKEND_DIR / save_extracted_path).resolve()
+
     if args.instruction is None:
         return run_test_cases(
-            Path(args.tests),
-            save_extracted_path=Path(args.save_extracted),
+            tests_path,
+            save_extracted_path=save_extracted_path,
         )
 
     try:
         result = parse_text_to_json(
             args.instruction,
-            system_prompt_file="system_prompt_backtesting.txt",
+            system_prompt_file=str(PROMPTS_DIR / "system_prompt_backtesting.txt"),
             schema="backtesting",
         )
         print(json.dumps(result, indent=2))
