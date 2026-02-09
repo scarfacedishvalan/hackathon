@@ -1,0 +1,3 @@
+Extract structured data from the following instruction:
+
+"{USER_INPUT}"

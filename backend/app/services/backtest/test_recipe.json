@@ -1,0 +1,35 @@
+{
+    "weighmeanvar1": 
+        {
+            "rebalance_freq": "RunYearly",
+            "select": "all",
+            "RunAfterDate": "2019-12-24",
+            "optimiser":
+                        {
+                            "name": "WeighMeanVar",
+                            "args": {
+                                "lookback" : "P3Y"                            
+                            }
+                        },
+            "rebalance": true
+        },
+    "weighmeanvar2": 
+        {
+            "rebalance_freq": "RunYearly",
+            "select": "all",
+            "RunAfterDate": "2019-12-24",
+            "optimiser":
+                        [
+                            {
+                            "name": "WeighMeanVar",
+                            "args": {
+                                "lookback" : "P2Y",
+                                "covar_method" : "standard"
+                                }
+                            }
+                        ],
+            "rebalance": true
+
+        }
+}
+  
