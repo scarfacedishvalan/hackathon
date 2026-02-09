@@ -2,7 +2,7 @@ import React from 'react';
 
 interface MetricCardProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
 }
 
 export function MetricCard({ label, value }: MetricCardProps) {

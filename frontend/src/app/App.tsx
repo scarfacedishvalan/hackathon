@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StockSelector } from './components/StockSelector';
@@ -13,12 +13,37 @@ function App() {
   const [recipeJSON, setRecipeJSON] = useState<any>(null);
   const [equityCurveData, setEquityCurveData] = useState<any[]>([]);
   const [summaryStats, setSummaryStats] = useState<any>(null);
+  const [plotUrl, setPlotUrl] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
+  const BACKEND_BASE_URL = 'http://localhost:8000';
+
+  const formatPercent = (value: any) => {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'number' && Number.isFinite(value)) return `${value.toFixed(2)}%`;
+    const s = String(value);
+    return s.includes('%') ? s : s;
+  };
+
+  const formatNumber = (value: any) => {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'number' && Number.isFinite(value)) return value.toFixed(2);
+    return String(value);
+  };
+
+  const pickStat = (stats: any, keys: string[], formatter: (v: any) => string) => {
+    if (!stats) return '—';
+    for (const k of keys) {
+      const v = stats[k];
+      if (v !== null && v !== undefined) return formatter(v);
+    }
+    return '—';
+  };
+
   const exampleInstructions = [
-    "Run the strategy WeighMeanVar with lookbacks 3y, 2y and 1y with yearly rebalance",
-    "Run the strategies weighmeanvar and WeighEqual with lookbacks 3y, 2y and 1y with yearly rebalance",
-    "Run WeighMeanVar with standard covariance method after 2015-12-24 with all stocks"
+    "Run SmaCross on SPY from 2019-01-01 to 2023-12-31 with cash 25000",
+    "Run EmaCross on AAPL daily with cash 25000 and commission 0.1%",
+    "Run RsiReversion on MSFT daily with cash 25000"
   ];
 
   const handleCopyExample = async (text: string, index: number) => {
@@ -40,14 +65,14 @@ function App() {
     
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/generate-recipe', {
+      const response = await fetch(`${BACKEND_BASE_URL}/api/generate-recipe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           stocks: selectedStocks,
-          strategy_instruction: strategyInstruction || 'Run the strategy WeighMeanVar with lookbacks 3y, 2y and 1y with yearly rebalance'
+          strategy_instruction: strategyInstruction || ''
         }),
       });
 
@@ -59,8 +84,18 @@ function App() {
       
       // Update state with backend response
       setRecipeJSON(data.recipe);
-      setEquityCurveData(data.equity_curve);
+      const curve = Array.isArray(data.equity_curve) ? data.equity_curve : [];
+      const normalizedCurve = curve
+        .map((row: any) => {
+          const date = row.date ?? row.Date ?? row.datetime ?? row.Datetime ?? row.time ?? row.Time;
+          const value = row.value ?? row.Equity ?? row.equity ?? row.Portfolio ?? row.portfolio;
+          return { date, value };
+        })
+        .filter((pt: any) => pt.date != null && pt.value != null);
+
+      setEquityCurveData(normalizedCurve);
       setSummaryStats(data.summary_stats);
+      setPlotUrl(typeof data.plot_url === 'string' ? `${BACKEND_BASE_URL}${data.plot_url}` : null);
       setShowResults(true);
       
     } catch (error) {
@@ -175,7 +210,19 @@ function App() {
         {/* Main Visualization Section */}
         {showResults && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-lg text-slate-900 font-medium mb-6">Backtest Equity Curve</h2>
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <h2 className="text-lg text-slate-900 font-medium">Backtest Equity Curve</h2>
+              {plotUrl && (
+                <a
+                  href={plotUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  Open HTML plot
+                </a>
+              )}
+            </div>
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={equityCurveData}>
@@ -217,10 +264,22 @@ function App() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-lg text-slate-900 font-medium mb-4">Summary Statistics</h2>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard label="CAGR" value={summaryStats.cagr} />
-              <MetricCard label="Sharpe Ratio" value={summaryStats.sharpe_ratio} />
-              <MetricCard label="Max Drawdown" value={summaryStats.max_drawdown} />
-              <MetricCard label="Volatility" value={summaryStats.volatility} />
+              <MetricCard
+                label="CAGR"
+                value={pickStat(summaryStats, ['CAGR [%]', 'CAGR', 'cagr'], formatPercent)}
+              />
+              <MetricCard
+                label="Sharpe Ratio"
+                value={pickStat(summaryStats, ['Sharpe Ratio', 'sharpe_ratio', 'Sharpe'], formatNumber)}
+              />
+              <MetricCard
+                label="Max Drawdown"
+                value={pickStat(summaryStats, ['Max. Drawdown [%]', 'Max Drawdown', 'max_drawdown'], formatPercent)}
+              />
+              <MetricCard
+                label="Volatility"
+                value={pickStat(summaryStats, ['Volatility (Ann.) [%]', 'Volatility', 'volatility'], formatPercent)}
+              />
             </div>
           </div>
         )}

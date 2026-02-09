@@ -28,6 +28,7 @@ import pandas as pd
 try:
     from backtesting import Backtest, Strategy
     from backtesting.lib import crossover
+    from backtesting.test import GOOG  # sample data
 except Exception as exc:  # pragma: no cover
     raise SystemExit(
         "Missing dependency: backtesting. Install with `pip install backtesting`."
@@ -156,7 +157,12 @@ def _load_data(recipe: Mapping[str, Any]) -> pd.DataFrame:
     start = _parse_date(data.get("start"))
     end = _parse_date(data.get("end"))
 
-    if path:
+    if isinstance(source, str) and source.strip().lower() in {"sample", "backtesting.sample", "backtesting.test"}:
+        # Use built-in sample OHLCV data from backtesting.py.
+        # Note: GOOG already has a DatetimeIndex and OHLCV columns.
+        df = GOOG.copy()
+        df = _coerce_ohlc(df)
+    elif path:
         p = Path(path)
         if not p.exists():
             raise FileNotFoundError(f"Data path does not exist: {p}")
@@ -169,7 +175,7 @@ def _load_data(recipe: Mapping[str, Any]) -> pd.DataFrame:
         df = _coerce_ohlc(df)
     else:
         if not symbol:
-            raise ValueError("Recipe must provide data.path or data.symbol")
+            raise ValueError("Recipe must provide data.path, data.source='sample', or data.symbol")
 
         # If the recipe doesn't explicitly state a source, we attempt yfinance.
         if source not in (None, "yfinance"):
@@ -242,6 +248,24 @@ def SMA(series: pd.Series, n: int) -> pd.Series:
     return s.rolling(int(n)).mean().to_numpy()
 
 
+def EMA(series: pd.Series, n: int) -> pd.Series:
+    s = pd.Series(series)
+    return s.ewm(span=int(n), adjust=False).mean().to_numpy()
+
+
+def RSI(series: pd.Series, n: int) -> pd.Series:
+    s = pd.Series(series)
+    delta = s.diff()
+    gain = delta.clip(lower=0.0)
+    loss = (-delta).clip(lower=0.0)
+    # Wilder's smoothing
+    avg_gain = gain.ewm(alpha=1 / int(n), adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / int(n), adjust=False).mean()
+    rs = avg_gain / avg_loss.replace(0.0, math.nan)
+    rsi = 100 - (100 / (1 + rs))
+    return rsi.fillna(50.0).to_numpy()
+
+
 class BuyAndHold(Strategy):
     def next(self) -> None:
         if not self.position:
@@ -263,9 +287,41 @@ class SmaCross(Strategy):
             self.position.close()
 
 
+class EmaCross(Strategy):
+    fast: int = 12
+    slow: int = 26
+
+    def init(self) -> None:
+        self.ema_fast = self.I(EMA, self.data.Close, self.fast)
+        self.ema_slow = self.I(EMA, self.data.Close, self.slow)
+
+    def next(self) -> None:
+        if crossover(self.ema_fast, self.ema_slow):
+            self.buy()
+        elif crossover(self.ema_slow, self.ema_fast):
+            self.position.close()
+
+
+class RsiReversion(Strategy):
+    period: int = 14
+    lower: float = 30.0
+    upper: float = 70.0
+
+    def init(self) -> None:
+        self.rsi = self.I(RSI, self.data.Close, self.period)
+
+    def next(self) -> None:
+        if not self.position and self.rsi[-1] < self.lower:
+            self.buy()
+        elif self.position and self.rsi[-1] > self.upper:
+            self.position.close()
+
+
 _STRATEGY_MAP: dict[str, type[Strategy]] = {
     "BuyAndHold": BuyAndHold,
     "SmaCross": SmaCross,
+    "EmaCross": EmaCross,
+    "RsiReversion": RsiReversion,
 }
 
 
