@@ -4,10 +4,10 @@ Chart Formatters Module
 Format portfolio data into structures ready for UI consumption.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Any
 
 
-def allocation_to_chart(weights: Dict[str, float]) -> List[Dict[str, any]]:
+def allocation_to_chart(weights: Dict[str, float]) -> List[Dict[str, Any]]:
     """
     Convert portfolio weights to a chart-ready format.
     
@@ -29,7 +29,7 @@ def allocation_to_chart(weights: Dict[str, float]) -> List[Dict[str, any]]:
 def allocation_comparison(
     baseline: Dict[str, float],
     stressed: Dict[str, float]
-) -> List[Dict[str, any]]:
+) -> List[Dict[str, Any]]:
     """
     Compare two portfolio allocations side-by-side.
     
