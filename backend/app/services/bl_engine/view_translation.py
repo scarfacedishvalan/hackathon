@@ -8,6 +8,11 @@ import numpy as np
 from typing import List, Dict, Any
 
 
+# Scaling factor for converting confidence levels to uncertainty values
+# This scales the (1 - confidence) factor to appropriate variance levels for the omega matrix
+UNCERTAINTY_SCALE = 0.01
+
+
 def build_P_matrix(views: List[Dict[str, Any]], assets: List[str]) -> np.ndarray:
     """
     Build the pick matrix P from structured views.
@@ -76,8 +81,8 @@ def build_omega(views: List[Dict[str, Any]]) -> np.ndarray:
     
     for i, view in enumerate(views):
         # Higher confidence -> lower uncertainty
-        # Using a simple inverse relationship: uncertainty = (1 - confidence)
-        uncertainty = (1.0 - view["confidence"]) * 0.01
+        # Using a simple inverse relationship: uncertainty = (1 - confidence) * UNCERTAINTY_SCALE
+        uncertainty = (1.0 - view["confidence"]) * UNCERTAINTY_SCALE
         omega[i, i] = uncertainty
     
     return omega
