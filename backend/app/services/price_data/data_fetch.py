@@ -1,4 +1,6 @@
 import pandas as pd
+import xlwings as xw
+
 import numpy as np
 from numpy import *
 import os
@@ -10,7 +12,7 @@ import pandas as pd
 import sqlite3
 from pathlib import Path
 
-RAW_PRICE_DATAPATH = r"C:\Python\hackathon\backend\price_data.xlsx"
+RAW_PRICE_DATAPATH = "price_data.xlsx"
 USE_EXCEL_DATA = True  # Set to True to use Excel file instead of synthetic data
 USE_DB_DATA = False  # Set to True to read from SQLite database instead of Excel or synthetic data
 TABLE_NAME = "price_history"
