@@ -1,0 +1,5 @@
+Extract Black-Litterman investor views from the article below.
+
+ARTICLE:
+
+"{ARTICLE_TEXT}"
