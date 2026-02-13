@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "name": "Q1_macro_alpha_blend",
+    "description": "Bottom-up tech alpha with rate shock overlay",
+    "version": "1.0"
+  },
+
+  "universe": {
+    "assets": ["AAPL", "MSFT", "AMZN", "TSLA"]
+  },
+
+  "model_parameters": {
+    "tau": 0.05,
+    "risk_aversion": 3.0,
+    "risk_free_rate": 0.02
+  },
+
+  "constraints": {
+    "long_only": true,
+    "weight_bounds": {
+      "AAPL": [0.10, 0.40],
+      "MSFT": [0.10, 0.40],
+      "AMZN":  [0.10, 0.50],
+      "TSLA":  [0.10, 0.40]
+    }
+  },
+
+  "bottom_up_views": [
+    {
+      "type": "relative",
+      "assets": ["AAPL", "MSFT"],
+      "weights": [1, -1],
+      "expected_outperformance": 0.03,
+      "confidence": 0.8,
+      "label": "AAPL outperforms MSFT"
+    },
+    {
+      "type": "absolute",
+      "asset": "AMZN",
+      "expected_return": 0.055,
+      "confidence": 0.6,
+      "label": "Credit modest upside"
+    }
+  ],
+
+  "top_down_views": {
+    "factor_model": {
+      "factors": ["Rates", "Growth"]
+    },
+    "factor_shocks": [
+      {
+        "factor": "Rates",
+        "shock": 0.01,
+        "confidence": 0.7,
+        "label": "Rates spike"
+      },
+      {
+        "factor": "Growth",
+        "shock": -0.02,
+        "confidence": 0.6,
+        "label": "Growth slowdown"
+      }
+    ]
+  }
+}
