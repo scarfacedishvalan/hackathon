@@ -1,0 +1,57 @@
+{
+  "input": {
+    "investor_text": "I'm bearish on Tesla. Expecting 5% decline. Rising rates are a concern.",
+    "assets": [
+      "TSLA",
+      "NVDA",
+      "AMD"
+    ],
+    "factors": [
+      "Rates",
+      "Growth",
+      "Momentum"
+    ],
+    "use_schema": true
+  },
+  "output": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "TSLA",
+        "NVDA",
+        "AMD"
+      ]
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 3.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true
+    },
+    "bottom_up_views": [
+      {
+        "type": "absolute",
+        "asset": "TSLA",
+        "expected_return": -0.05,
+        "confidence": 0.6,
+        "label": "Bearish on Tesla"
+      }
+    ],
+    "top_down_views": {
+      "factor_shocks": [
+        {
+          "factor": "Rates",
+          "shock": -0.02,
+          "confidence": 0.6,
+          "label": "Rising rates are a concern"
+        }
+      ]
+    }
+  }
+}

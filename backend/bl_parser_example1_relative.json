@@ -1,0 +1,58 @@
+{
+  "input": {
+    "investor_text": "Apple will strongly outperform Microsoft by 3% this quarter.",
+    "assets": [
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "AMZN"
+    ],
+    "factors": [
+      "Rates",
+      "Growth"
+    ],
+    "use_schema": true
+  },
+  "output": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN"
+      ]
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 3.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true
+    },
+    "bottom_up_views": [
+      {
+        "type": "relative",
+        "assets": [
+          "AAPL",
+          "MSFT"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": 0.03,
+        "confidence": 0.85,
+        "label": "Apple will strongly outperform Microsoft"
+      }
+    ],
+    "top_down_views": {
+      "factor_shocks": []
+    }
+  }
+}

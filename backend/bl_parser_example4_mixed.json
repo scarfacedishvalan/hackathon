@@ -1,0 +1,70 @@
+{
+  "input": {
+    "investor_text": "TSLA will outperform MSFT by 2%. Rates are expected to rise by 0.5%, which will impact growth stocks negatively. Momentum in tech sector is strong.",
+    "assets": [
+      "AAPL",
+      "MSFT",
+      "TSLA"
+    ],
+    "factors": [
+      "Rates",
+      "Growth",
+      "Momentum"
+    ],
+    "use_schema": false
+  },
+  "output": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "TSLA"
+      ]
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 3.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true
+    },
+    "bottom_up_views": [
+      {
+        "type": "relative",
+        "assets": [
+          "TSLA",
+          "MSFT"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": 0.02,
+        "confidence": 0.6,
+        "label": "TSLA outperformance over MSFT"
+      }
+    ],
+    "top_down_views": {
+      "factor_shocks": [
+        {
+          "factor": "Rates",
+          "shock": -0.02,
+          "confidence": 0.6,
+          "label": "Negative impact from rising rates on growth stocks"
+        },
+        {
+          "factor": "Momentum",
+          "shock": 0.04,
+          "confidence": 0.6,
+          "label": "Strong momentum in tech sector"
+        }
+      ]
+    }
+  }
+}

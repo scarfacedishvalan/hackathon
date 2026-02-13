@@ -1,0 +1,40 @@
+Universe (Allowed Assets):
+{ASSET_LIST}
+
+Asset Metadata (Sector & Factor Exposures):
+{ASSET_METADATA}
+
+Factor Model (Allowed Factors):
+{FACTOR_LIST}
+
+The following recipe template is fixed and must not be modified:
+
+{
+  "meta": {
+    "name": "Q1_macro_alpha_blend",
+    "description": "Bottom-up tech alpha with rate shock overlay",
+    "version": "1.0"
+  },
+  "universe": {
+    "assets": {ASSET_LIST}
+  },
+  "model_parameters": {
+    "tau": 0.05,
+    "risk_aversion": 3.0,
+    "risk_free_rate": 0.02
+  },
+  "constraints": {
+    "long_only": true
+  }
+}
+
+Only extract and populate:
+- bottom_up_views
+- top_down_views.factor_shocks
+
+Investor Text:
+"""
+{INVESTOR_TEXT}
+"""
+
+Return JSON strictly matching the output schema.

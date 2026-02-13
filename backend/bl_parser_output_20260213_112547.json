@@ -1,0 +1,62 @@
+{
+  "input": {
+    "investor_text": "Apple will outperform Microsoft by 5%",
+    "assets": [
+      "AAPL",
+      "MSFT",
+      "GOOGL",
+      "AMZN",
+      "TSLA"
+    ],
+    "factors": [
+      "Rates",
+      "Growth",
+      "Value",
+      "Momentum"
+    ],
+    "use_schema": true
+  },
+  "output": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "AMZN",
+        "TSLA"
+      ]
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 3.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true
+    },
+    "bottom_up_views": [
+      {
+        "type": "relative",
+        "assets": [
+          "AAPL",
+          "MSFT"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": 0.05,
+        "confidence": 0.6,
+        "label": "Apple outperforms Microsoft"
+      }
+    ],
+    "top_down_views": {
+      "factor_shocks": []
+    }
+  }
+}

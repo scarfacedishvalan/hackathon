@@ -1,0 +1,38 @@
+{
+  "input": {
+    "investor_text": "The market looks uncertain. No strong opinion.",
+    "assets": [
+      "AAPL",
+      "MSFT"
+    ],
+    "factors": [
+      "Rates"
+    ],
+    "use_schema": false
+  },
+  "output": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT"
+      ]
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 3.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true
+    },
+    "bottom_up_views": [],
+    "top_down_views": {
+      "factor_shocks": []
+    }
+  }
+}

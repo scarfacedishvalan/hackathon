@@ -1,0 +1,170 @@
+{
+  "AAPL": {
+    "name": "Apple Inc.",
+    "sector": "Technology",
+    "industry": "Consumer Electronics",
+    "factor_exposures": {
+      "Growth": "high",
+      "Momentum": "high",
+      "Value": "low",
+      "Rates": "medium"
+    },
+    "market_cap": "large"
+  },
+  "MSFT": {
+    "name": "Microsoft Corporation",
+    "sector": "Technology",
+    "industry": "Software",
+    "factor_exposures": {
+      "Growth": "high",
+      "Momentum": "high",
+      "Value": "medium",
+      "Rates": "medium"
+    },
+    "market_cap": "large"
+  },
+  "GOOGL": {
+    "name": "Alphabet Inc.",
+    "sector": "Technology",
+    "industry": "Internet Services",
+    "factor_exposures": {
+      "Growth": "high",
+      "Momentum": "medium",
+      "Value": "medium",
+      "Rates": "medium"
+    },
+    "market_cap": "large"
+  },
+  "AMZN": {
+    "name": "Amazon.com Inc.",
+    "sector": "Consumer Discretionary",
+    "industry": "E-commerce & Cloud",
+    "factor_exposures": {
+      "Growth": "very_high",
+      "Momentum": "high",
+      "Value": "low",
+      "Rates": "high"
+    },
+    "market_cap": "large"
+  },
+  "TSLA": {
+    "name": "Tesla Inc.",
+    "sector": "Consumer Discretionary",
+    "industry": "Automotive & Energy",
+    "factor_exposures": {
+      "Growth": "very_high",
+      "Momentum": "very_high",
+      "Value": "very_low",
+      "Rates": "very_high"
+    },
+    "market_cap": "large"
+  },
+  "NVDA": {
+    "name": "NVIDIA Corporation",
+    "sector": "Technology",
+    "industry": "Semiconductors",
+    "factor_exposures": {
+      "Growth": "very_high",
+      "Momentum": "very_high",
+      "Value": "low",
+      "Rates": "high"
+    },
+    "market_cap": "large"
+  },
+  "AMD": {
+    "name": "Advanced Micro Devices",
+    "sector": "Technology",
+    "industry": "Semiconductors",
+    "factor_exposures": {
+      "Growth": "high",
+      "Momentum": "high",
+      "Value": "medium",
+      "Rates": "high"
+    },
+    "market_cap": "large"
+  },
+  "META": {
+    "name": "Meta Platforms Inc.",
+    "sector": "Technology",
+    "industry": "Social Media",
+    "factor_exposures": {
+      "Growth": "high",
+      "Momentum": "medium",
+      "Value": "medium",
+      "Rates": "medium"
+    },
+    "market_cap": "large"
+  },
+  "JNJ": {
+    "name": "Johnson & Johnson",
+    "sector": "Healthcare",
+    "industry": "Pharmaceuticals",
+    "factor_exposures": {
+      "Growth": "low",
+      "Momentum": "low",
+      "Value": "high",
+      "Rates": "low"
+    },
+    "market_cap": "large"
+  },
+  "XOM": {
+    "name": "Exxon Mobil Corporation",
+    "sector": "Energy",
+    "industry": "Oil & Gas",
+    "factor_exposures": {
+      "Growth": "low",
+      "Momentum": "medium",
+      "Value": "very_high",
+      "Rates": "low"
+    },
+    "market_cap": "large"
+  },
+  "JPM": {
+    "name": "JPMorgan Chase & Co.",
+    "sector": "Financials",
+    "industry": "Banking",
+    "factor_exposures": {
+      "Growth": "medium",
+      "Momentum": "medium",
+      "Value": "high",
+      "Rates": "very_high"
+    },
+    "market_cap": "large"
+  },
+  "BAC": {
+    "name": "Bank of America Corp.",
+    "sector": "Financials",
+    "industry": "Banking",
+    "factor_exposures": {
+      "Growth": "medium",
+      "Momentum": "medium",
+      "Value": "high",
+      "Rates": "very_high"
+    },
+    "market_cap": "large"
+  },
+  "WMT": {
+    "name": "Walmart Inc.",
+    "sector": "Consumer Staples",
+    "industry": "Retail",
+    "factor_exposures": {
+      "Growth": "low",
+      "Momentum": "low",
+      "Value": "high",
+      "Rates": "low"
+    },
+    "market_cap": "large"
+  },
+  "PG": {
+    "name": "Procter & Gamble Co.",
+    "sector": "Consumer Staples",
+    "industry": "Consumer Goods",
+    "factor_exposures": {
+      "Growth": "low",
+      "Momentum": "low",
+      "Value": "high",
+      "Rates": "low"
+    },
+    "market_cap": "large"
+  }
+}

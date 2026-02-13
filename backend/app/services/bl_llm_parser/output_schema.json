@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "properties": {
+    "bottom_up_views": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["absolute", "relative"]
+          },
+          "asset": {
+            "type": "string"
+          },
+          "assets": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "weights": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "expected_return": {
+            "type": "number"
+          },
+          "expected_outperformance": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": ["type", "confidence", "label"]
+      }
+    },
+    "top_down_views": {
+      "type": "object",
+      "properties": {
+        "factor_shocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "factor": { "type": "string" },
+              "shock": { "type": "number" },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "label": { "type": "string" }
+            },
+            "required": ["factor", "shock", "confidence", "label"]
+          }
+        }
+      },
+      "required": ["factor_shocks"]
+    }
+  },
+  "required": ["bottom_up_views", "top_down_views"]
+}
