@@ -1,0 +1,168 @@
+{
+  "assets": [
+    { "ticker": "AAPL", "name": "Apple Inc.", "weight": 0.25, "selected": true },
+    { "ticker": "MSFT", "name": "Microsoft Corp.", "weight": 0.22, "selected": true },
+    { "ticker": "GOOG", "name": "Alphabet Inc.", "weight": 0.18, "selected": true },
+    { "ticker": "BND", "name": "US Bond Index", "weight": 0.15, "selected": true },
+    { "ticker": "GLD", "name": "Gold ETF", "weight": 0.12, "selected": true },
+    { "ticker": "VNQ", "name": "Real Estate ETF", "weight": 0.08, "selected": false }
+  ],
+  "activeViews": [
+    {
+      "id": "view-1",
+      "type": "relative",
+      "asset": "AAPL vs GOOG",
+      "value": 0.03,
+      "direction": "positive",
+      "confidence": 0.7,
+      "expectedReturn": 0.03
+    },
+    {
+      "id": "view-2",
+      "type": "absolute",
+      "asset": "BND",
+      "value": 0.025,
+      "direction": "neutral",
+      "confidence": 0.5,
+      "expectedReturn": 0.02
+    },
+    {
+      "id": "view-3",
+      "type": "relative",
+      "asset": "MSFT vs Market",
+      "value": 0.05,
+      "direction": "positive",
+      "confidence": 0.8,
+      "expectedReturn": 0.05
+    },
+    {
+      "id": "view-4",
+      "type": "absolute",
+      "asset": "GLD",
+      "value": 0.04,
+      "direction": "positive",
+      "confidence": 0.6,
+      "expectedReturn": 0.04
+    }
+  ],
+  "analystSuggestions": [
+    { "ticker": "AAPL", "text": "iPhone demand remains strong in Q4", "sentiment": "bullish" },
+    { "ticker": "MSFT", "text": "Cloud growth accelerating beyond expectations", "sentiment": "bullish" },
+    { "ticker": "GOOG", "text": "Ad revenue showing signs of recovery", "sentiment": "bullish" },
+    { "ticker": "BND", "text": "Fed policy expected to remain stable", "sentiment": "neutral" },
+    { "ticker": "GLD", "text": "Inflation concerns may boost gold prices", "sentiment": "bullish" }
+  ],
+  "analystNews": [
+    {
+      "id": 1,
+      "heading": "Apple iPhone demand exceeds expectations",
+      "translatedView": "AAPL expected to outperform large-cap tech peers",
+      "link": "https://example.com/apple-news"
+    },
+    {
+      "id": 2,
+      "heading": "Microsoft cloud growth accelerates",
+      "translatedView": "MSFT positive growth momentum",
+      "link": "https://example.com/msft-news"
+    },
+    {
+      "id": 3,
+      "heading": "Bond yields stabilize amid rate pause",
+      "translatedView": "BND neutral duration outlook",
+      "link": "https://example.com/bond-news"
+    },
+    {
+      "id": 4,
+      "heading": "Gold prices surge on inflation fears",
+      "translatedView": "GLD outperforming commodity basket",
+      "link": "https://example.com/gold-news"
+    },
+    {
+      "id": 5,
+      "heading": "Tech sector faces regulatory headwinds",
+      "translatedView": "GOOG and MSFT moderate near-term uncertainty",
+      "link": "https://example.com/tech-regulation"
+    },
+    {
+      "id": 6,
+      "heading": "Real estate market shows resilience",
+      "translatedView": "VNQ stable yield outlook",
+      "link": "https://example.com/real-estate"
+    }
+  ],
+  "efficientFrontier": {
+    "curve": [
+      { "vol": 0.05, "ret": 0.03 },
+      { "vol": 0.07, "ret": 0.05 },
+      { "vol": 0.09, "ret": 0.065 },
+      { "vol": 0.11, "ret": 0.08 },
+      { "vol": 0.13, "ret": 0.092 },
+      { "vol": 0.15, "ret": 0.10 },
+      { "vol": 0.17, "ret": 0.105 },
+      { "vol": 0.19, "ret": 0.108 }
+    ],
+    "prior": { "vol": 0.09, "ret": 0.07 },
+    "posterior": { "vol": 0.10, "ret": 0.085 }
+  },
+  "allocation": [
+    { "ticker": "AAPL", "priorWeight": 0.20, "blWeight": 0.25 },
+    { "ticker": "MSFT", "priorWeight": 0.18, "blWeight": 0.22 },
+    { "ticker": "GOOG", "priorWeight": 0.20, "blWeight": 0.18 },
+    { "ticker": "BND", "priorWeight": 0.17, "blWeight": 0.15 },
+    { "ticker": "GLD", "priorWeight": 0.15, "blWeight": 0.12 },
+    { "ticker": "VNQ", "priorWeight": 0.10, "blWeight": 0.08 }
+  ],
+  "topDownContribution": [
+    {
+      "sector": "Technology",
+      "returnContribution": 0.045,
+      "riskContribution": 0.058
+    },
+    {
+      "sector": "Bonds",
+      "returnContribution": 0.018,
+      "riskContribution": 0.012
+    },
+    {
+      "sector": "Commodities",
+      "returnContribution": 0.012,
+      "riskContribution": 0.022
+    },
+    {
+      "sector": "Real Estate",
+      "returnContribution": 0.008,
+      "riskContribution": 0.015
+    }
+  ],
+  "portfolios": [
+    {
+      "id": "growth",
+      "name": "Growth Portfolio",
+      "holdings": [
+        { "ticker": "AAPL", "weight": 0.30 },
+        { "ticker": "MSFT", "weight": 0.25 },
+        { "ticker": "GOOG", "weight": 0.45 }
+      ]
+    },
+    {
+      "id": "balanced",
+      "name": "Balanced Portfolio",
+      "holdings": [
+        { "ticker": "AAPL", "weight": 0.20 },
+        { "ticker": "MSFT", "weight": 0.15 },
+        { "ticker": "BND", "weight": 0.30 },
+        { "ticker": "GLD", "weight": 0.20 },
+        { "ticker": "VNQ", "weight": 0.15 }
+      ]
+    },
+    {
+      "id": "conservative",
+      "name": "Conservative Portfolio",
+      "holdings": [
+        { "ticker": "BND", "weight": 0.50 },
+        { "ticker": "GLD", "weight": 0.30 },
+        { "ticker": "VNQ", "weight": 0.20 }
+      ]
+    }
+  ]
+}
