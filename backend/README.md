@@ -174,6 +174,47 @@ Generate a portfolio recipe and backtest results
 }
 ```
 
+### `POST /api/parse-bl-views`
+Parse natural language investment views into structured Black-Litterman format
+
+**Request Body:**
+```json
+{
+  "investor_text": "I believe tech stocks will outperform by 5% this year. Apple should beat Microsoft by 2%.",
+  "assets": ["AAPL", "MSFT", "GOOGL", "AMZN"],
+  "factors": ["Growth", "Rates", "Momentum", "Value"],
+  "use_schema": true
+}
+```
+
+**Note:** `assets` and `factors` are optional. If omitted, defaults to a predefined list of major stocks and common factors.
+
+**Response:**
+```json
+{
+  "bottom_up_views": [
+    {
+      "type": "relative",
+      "assets": ["AAPL", "MSFT"],
+      "weights": [1.0, -1.0],
+      "expected_outperformance": 0.02,
+      "confidence": 0.7,
+      "label": "Apple expected to outperform Microsoft by 2%"
+    }
+  ],
+  "top_down_views": {
+    "factor_shocks": [
+      {
+        "factor": "Growth",
+        "shock": 0.05,
+        "confidence": 0.8,
+        "label": "Tech sector expected to grow by 5%"
+      }
+    ]
+  }
+}
+```
+
 ## Development Notes
 
 - CORS is configured to allow requests from the frontend (localhost:5173 and 127.0.0.1)

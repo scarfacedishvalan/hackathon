@@ -23,7 +23,6 @@ class BlackLittermanLLMParser:
     
     def __init__(
         self,
-        llm_client,
         prompt_dir: str,
         use_schema: bool = False
     ):
@@ -31,11 +30,9 @@ class BlackLittermanLLMParser:
         Initialize the parser.
         
         Args:
-            llm_client: Client object with a chat(system_prompt, user_prompt, schema=None) method
             prompt_dir: Directory path containing system_prompt.txt and user_prompt.txt
             use_schema: If True, loads and passes output_schema.json to the LLM client
         """
-        self.llm_client = llm_client
         self.prompt_dir = prompt_dir
         self.use_schema = use_schema
         

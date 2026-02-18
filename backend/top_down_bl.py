@@ -7,6 +7,18 @@ Demonstrates how to combine:
 
 Into a single stacked P, Q, Omega matrix for unified Black-Litterman inference.
 """
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Optional
+
+from openai import OpenAI
+
+# Add backend directory to path for imports
+BACKEND_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(BACKEND_DIR))
 
 import numpy as np
 import pandas as pd
@@ -300,6 +312,18 @@ def main():
     print("✓ Successfully combined bottom-up and top-down views!")
     print("="*70)
 
-
+#  Get yfinance data
+def get_price_data():
+    from app.services.price_data.data_fetch import read_from_sqlite
+    from app.services.price_data.load_csv_to_db import save_to_sqlite, DB_PATH, TABLE_NAME
+    df_db = read_from_sqlite()
+    #  Drop the column name index
+    df_db.drop(columns=['index'], inplace=True)
+    save_to_sqlite(df_db, DB_PATH, TABLE_NAME)
+    df_db = read_from_sqlite()
+    return df_db
+ 
 if __name__ == "__main__":
-    main()
+    # main()
+    df_db = get_price_data()
+    print(df_db.head())

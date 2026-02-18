@@ -10,15 +10,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.services.recipe_interpreter.backtesting_from_json import run_from_recipe
 
-try:
-    # Optional: only used if you want to parse natural language into a recipe.
-    from app.services.recipe_interpreter.llm_parser import parse_text_to_json
-except Exception:  # pragma: no cover
-    parse_text_to_json = None  # type: ignore[assignment]
+
+from app.services.recipe_interpreter.llm_parser import parse_text_to_json
+# BL LLM Parser imports
+from app.services.bl_llm_parser.parser import BlackLittermanLLMParser
+from app.services.llm_client.utils import OpenAIClientWrapper
 
 app = FastAPI(title="Portfolio Backtesting API", version="1.0.0")
 
@@ -51,6 +51,57 @@ class RecipeResponse(BaseModel):
     equity_curve: List[Dict[str, Any]]
     summary_stats: Dict[str, Any]
     plot_url: Optional[str] = None
+
+
+# ====== Black-Litterman Parser Models ======
+class BLBottomUpView(BaseModel):
+    """Represents a bottom-up investment view (absolute or relative)"""
+    type: str = Field(..., description="View type: 'absolute' or 'relative'")
+    asset: Optional[str] = Field(None, description="Single asset for absolute view")
+    assets: Optional[List[str]] = Field(None, description="Two assets for relative view")
+    weights: Optional[List[float]] = Field(None, description="Weights for relative view [1, -1]")
+    expected_return: Optional[float] = Field(None, description="Expected return for absolute view")
+    expected_outperformance: Optional[float] = Field(None, description="Expected outperformance for relative view")
+    confidence: float = Field(..., description="Confidence level (0-1)")
+    label: str = Field(..., description="Human-readable description of the view")
+
+
+class BLFactorShock(BaseModel):
+    """Represents a factor shock in top-down views"""
+    factor: str = Field(..., description="Factor name (e.g., 'Growth', 'Rates')")
+    shock: float = Field(..., description="Magnitude of the factor shock")
+    confidence: float = Field(..., description="Confidence level (0-1)")
+    label: str = Field(..., description="Human-readable description of the shock")
+
+
+class BLTopDownViews(BaseModel):
+    """Container for top-down factor-based views"""
+    factor_shocks: List[BLFactorShock] = Field(default_factory=list)
+
+
+class BLParserRequest(BaseModel):
+    """Request model for Black-Litterman parser endpoint"""
+    investor_text: str = Field(..., description="Natural language investment views")
+    assets: Optional[List[str]] = Field(
+        default=None,
+        description="List of asset symbols to consider (e.g., ['AAPL', 'MSFT'])",
+        example=["AAPL", "MSFT", "GOOGL"]
+    )
+    factors: Optional[List[str]] = Field(
+        default=None,
+        description="List of factor names to consider (e.g., ['Growth', 'Rates'])",
+        example=["Growth", "Rates", "Momentum", "Value"]
+    )
+    use_schema: bool = Field(
+        default=True,
+        description="Whether to enforce structured schema with LLM"
+    )
+
+
+class BLParserResponse(BaseModel):
+    """Response model for Black-Litterman parser endpoint"""
+    bottom_up_views: List[BLBottomUpView] = Field(default_factory=list)
+    top_down_views: BLTopDownViews = Field(default_factory=BLTopDownViews)
 
 
 def _load_example_recipe() -> Dict[str, Any]:
@@ -197,3 +248,73 @@ async def generate_recipe_endpoint(request: RecipeRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating recipe/backtest: {str(e)}")
+
+
+def _load_sector_metadata() -> Dict[str, Any]:
+    """Load sector metadata for BL parser."""
+    metadata_path = APP_DIR / "services" / "bl_llm_parser" / "sector_metadata.json"
+    if metadata_path.exists():
+        return json.loads(metadata_path.read_text(encoding="utf-8"))
+    return {}
+
+
+@app.post("/api/parse-bl-views", response_model=BLParserResponse)
+async def parse_bl_views_endpoint(request: BLParserRequest):
+    """
+    Parse natural language investment views into structured Black-Litterman format.
+    
+    Takes investor text describing market views and converts it into:
+    - Bottom-up views: Specific asset expectations (absolute or relative)
+    - Top-down views: Factor-based market shocks
+    
+    Example request:
+    {
+        "investor_text": "I believe tech stocks will outperform by 5% this year. Apple should beat Microsoft by 2%.",
+        "assets": ["AAPL", "MSFT", "GOOGL"],
+        "factors": ["Growth", "Rates", "Momentum"]
+    }
+    """
+    # Check if parser is available
+    if BlackLittermanLLMParser is None or OpenAIClientWrapper is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Black-Litterman parser is not available. Please ensure required dependencies are installed."
+        )
+    
+    try:
+        # Set default assets and factors if not provided
+        assets = request.assets or [
+            "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA",
+            "JPM", "BAC", "GS", "V", "MA"
+        ]
+        factors = request.factors or ["Growth", "Rates", "Momentum", "Value"]
+        
+        # Load asset metadata
+        asset_metadata = _load_sector_metadata()
+        
+        # Initialize the LLM client and parser
+        prompt_dir = str(APP_DIR / "services" / "bl_llm_parser" / "prompts")
+        
+        parser = BlackLittermanLLMParser(
+            prompt_dir=prompt_dir,
+            use_schema=request.use_schema
+        )
+        
+        # Parse the investor text
+        print(f"Parsing BL views from text: {request.investor_text[:100]}...")
+        result = parser.parse(
+            assets=assets,
+            factors=factors,
+            investor_text=request.investor_text,
+            asset_metadata=asset_metadata
+        )
+        
+        # Convert to response model
+        return BLParserResponse(**result)
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input or malformed LLM output: {str(e)}")
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=f"Required file not found: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error parsing BL views: {str(e)}")

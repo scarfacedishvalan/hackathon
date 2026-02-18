@@ -1,20 +1,16 @@
 import pandas as pd
-import xlwings as xw
 
 import numpy as np
 from numpy import *
 import os
-from numpy.linalg import multi_dot
-import plotly.graph_objects as go
-import base64
 from datetime import datetime, timedelta
 import pandas as pd
 import sqlite3
 from pathlib import Path
 
 RAW_PRICE_DATAPATH = "price_data.xlsx"
-USE_EXCEL_DATA = True  # Set to True to use Excel file instead of synthetic data
-USE_DB_DATA = False  # Set to True to read from SQLite database instead of Excel or synthetic data
+USE_EXCEL_DATA = False  # Set to True to use Excel file instead of synthetic data
+USE_DB_DATA = True  # Set to True to read from SQLite database instead of Excel or synthetic data
 TABLE_NAME = "price_history"
 
 

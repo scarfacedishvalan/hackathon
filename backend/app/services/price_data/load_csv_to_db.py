@@ -108,6 +108,10 @@ def save_to_sqlite(df: pd.DataFrame, db_path: str, table_name: str):
     try:
         # Reset index to make Date a column
         df_to_save = df.reset_index()
+
+        # Drop the column name index if it exists
+        if 'index' in df_to_save.columns:
+            df_to_save.drop(columns=['index'], inplace=True)
         
         # Save to SQLite
         df_to_save.to_sql(table_name, conn, if_exists='replace', index=False)
