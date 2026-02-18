@@ -10,4 +10,4 @@ from app.services.llm_client.db_helpers import (
 
 
 if __name__ == "__main__":
-    show_all_stats(days=30)  # Show stats for last 30 days
+    print_recent_calls(days=30)  # Show stats for last 30 days
