@@ -9,7 +9,19 @@ makes it easier to:
 - Manage temperature and other hyperparameters
 - Monitor LLM usage analytics by service/operation
 """
-
+# Pricing per 1M tokens as of February 2026
+# Update these values as pricing changes
+PRICING = {
+    "gpt-4o": {"input": 2.50, "output": 10.00},
+    "gpt-4o-mini": {"input": 0.150, "output": 0.600},
+    "gpt-4-turbo": {"input": 10.00, "output": 30.00},
+    "gpt-4": {"input": 30.00, "output": 60.00},
+    "gpt-3.5-turbo": {"input": 0.50, "output": 1.50},
+    "claude-sonnet-4.5": {"input": 3.00, "output": 15.00},
+    "claude-sonnet-3.5": {"input": 3.00, "output": 15.00},
+    "claude-opus-3": {"input": 15.00, "output": 75.00},
+    "claude-haiku-3": {"input": 0.25, "output": 1.25},
+}
 # Nested dictionary: service -> operation -> parameters
 CHAT_AND_RECORD_METADATA = {
     "black_litterman_parser": {
@@ -32,7 +44,7 @@ CHAT_AND_RECORD_METADATA = {
         "parse_article_views": {
             "service": "news_api",
             "operation": "parse_article_views",
-            "model": "gpt-4o",
+            "model": "gpt-4.1-mini",
             "temperature": 0,  # Deterministic for structured extraction
         }
     },

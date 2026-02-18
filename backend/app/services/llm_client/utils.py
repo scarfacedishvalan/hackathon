@@ -15,6 +15,7 @@ from typing import Dict, Any, Optional, Union
 from openai import OpenAI
 
 from app.services.llm_client.tracker import LLMUsageTracker, LLMCallRecord
+from app.services.model_settings import PRICING
 
 
 # Default database location: backend/data/llm_usage.db
@@ -265,7 +266,7 @@ def _calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> f
     Calculate cost in USD based on token usage.
     
     Pricing is per 1M tokens as of February 2026.
-    Update these values as pricing changes.
+    Update these values in model_settings/chat_and_record_metadata.py as pricing changes.
     
     Args:
         model: Model name
@@ -275,19 +276,6 @@ def _calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> f
     Returns:
         Total cost in USD
     """
-    # Pricing per 1M tokens (update as needed)
-    PRICING = {
-        "gpt-4o": {"input": 2.50, "output": 10.00},
-        "gpt-4o-mini": {"input": 0.150, "output": 0.600},
-        "gpt-4-turbo": {"input": 10.00, "output": 30.00},
-        "gpt-4": {"input": 30.00, "output": 60.00},
-        "gpt-3.5-turbo": {"input": 0.50, "output": 1.50},
-        "claude-sonnet-4.5": {"input": 3.00, "output": 15.00},
-        "claude-sonnet-3.5": {"input": 3.00, "output": 15.00},
-        "claude-opus-3": {"input": 15.00, "output": 75.00},
-        "claude-haiku-3": {"input": 0.25, "output": 1.25},
-    }
-    
     # Default pricing for unknown models
     pricing = PRICING.get(model, {"input": 0, "output": 0})
     
