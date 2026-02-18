@@ -29,6 +29,7 @@ from app.services.bl_engine.bl_standalone import (
     market_implied_prior_returns
 )
 from app.services.bl_engine.factor_views import FactorView, FactorViewTransformer
+from app.services.price_data.load_data import load_market_data
 
 
 def create_synthetic_data():
@@ -269,9 +270,12 @@ def run_combined_bl(price_df, market_caps, B, asset_view, factor_views, tau=0.05
     }
 
 
-def main():
+def main(use_real_data=True):
     """
     Main execution: demonstrates combining bottom-up and top-down views.
+    
+    Args:
+        use_real_data: If True, use real price data from SQLite; if False, use synthetic data
     """
     print("\n" + "="*70)
     print("BLACK-LITTERMAN: COMBINING BOTTOM-UP & TOP-DOWN VIEWS")
@@ -279,8 +283,13 @@ def main():
     print("\nThis demonstrates stacking asset-level and factor-level views")
     print("into a unified P, Q, Ω matrix for Black-Litterman inference.")
     
-    # Create synthetic data
-    price_df, market_caps, B, factor_names, assets = create_synthetic_data()
+    # Load data (real or synthetic)
+    if use_real_data:
+        print("\n📊 Using REAL price data from database")
+        price_df, market_caps, B, factor_names, assets = load_market_data()
+    else:
+        print("\n📊 Using SYNTHETIC price data")
+        price_df, market_caps, B, factor_names, assets = create_synthetic_data()
     
     print(f"\nPortfolio Setup:")
     print(f"  Assets: {len(assets)} ({', '.join(assets)})")
@@ -288,10 +297,18 @@ def main():
     print(f"  Historical days: {len(price_df)}")
     
     # Define bottom-up view: "MSFT will return 12%"
+    # Find MSFT index in assets list
+    try:
+        msft_idx = assets.index('MSFT')
+    except ValueError:
+        # If MSFT not available, use first asset
+        msft_idx = 0
+        print(f"\n⚠️  MSFT not available, using {assets[0]} for bottom-up view")
+    
     asset_view = (
-        1,      # asset_index for MSFT
-        0.12,   # expected return (12%)
-        0.7     # confidence
+        msft_idx,  # asset_index for MSFT (or first available asset)
+        0.12,      # expected return (12%)
+        0.7        # confidence
     )
     
     # Define top-down factor views
@@ -312,18 +329,11 @@ def main():
     print("✓ Successfully combined bottom-up and top-down views!")
     print("="*70)
 
-#  Get yfinance data
-def get_price_data():
-    from app.services.price_data.data_fetch import read_from_sqlite
-    from app.services.price_data.load_csv_to_db import save_to_sqlite, DB_PATH, TABLE_NAME
-    df_db = read_from_sqlite()
-    #  Drop the column name index
-    df_db.drop(columns=['index'], inplace=True)
-    save_to_sqlite(df_db, DB_PATH, TABLE_NAME)
-    df_db = read_from_sqlite()
-    return df_db
- 
+
 if __name__ == "__main__":
-    # main()
-    df_db = get_price_data()
-    print(df_db.head())
+    # Run with real data (default)
+    d1 = load_market_data(as_dict=True)
+    b=2
+    # Uncomment below to run with synthetic data instead
+    # main(use_real_data=False)
+

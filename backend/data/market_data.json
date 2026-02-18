@@ -1,0 +1,53 @@
+{
+  "all_assets": [
+    "AAPL",
+    "AMZN",
+    "BAC",
+    "GOOGL",
+    "JNJ",
+    "JPM",
+    "MSFT",
+    "PG",
+    "TSLA",
+    "WMT"
+  ],
+  "market_caps": {
+    "AAPL": 2800,
+    "AMZN": 1600,
+    "BAC": 280,
+    "GOOGL": 1800,
+    "JNJ": 420,
+    "JPM": 450,
+    "MSFT": 2400,
+    "PG": 360,
+    "TSLA": 800,
+    "WMT": 400
+  },
+  "factor_names": [
+    "Growth",
+    "Financial",
+    "Defensive",
+    "Market"
+  ],
+  "factor_exposures": {
+    "AAPL": [1.2, 0.0, 0.1, 1.1],
+    "AMZN": [1.4, 0.0, 0.1, 1.3],
+    "BAC": [0.1, 1.3, 0.2, 0.8],
+    "GOOGL": [1.3, 0.0, 0.1, 1.2],
+    "JNJ": [0.2, 0.0, 1.4, 0.6],
+    "JPM": [0.2, 1.5, 0.2, 0.9],
+    "MSFT": [1.1, 0.0, 0.2, 1.0],
+    "PG": [0.2, 0.0, 1.3, 0.6],
+    "TSLA": [1.6, 0.0, 0.0, 1.5],
+    "WMT": [0.3, 0.1, 1.1, 0.7]
+  },
+  "description": {
+    "factors": {
+      "Growth": "Technology and growth-oriented stocks (high exposure: AAPL, AMZN, GOOGL, MSFT, TSLA)",
+      "Financial": "Financial sector exposure (high exposure: BAC, JPM)",
+      "Defensive": "Defensive/consumer staples (high exposure: JNJ, PG, WMT)",
+      "Market": "Overall market beta"
+    },
+    "market_caps_unit": "billions USD"
+  }
+}
