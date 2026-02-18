@@ -13,6 +13,7 @@ from typing import List, Dict, Optional
 from openai import OpenAI
 from pydantic import ValidationError
 from app.services.llm_client import chat_and_record
+from app.services.model_settings import CHAT_AND_RECORD_METADATA
 from app.services.news_api.view_schema import View, ViewList
 
 
@@ -73,14 +74,15 @@ def parse_article_to_views(article_text: str, api_key: Optional[str] = None, mod
         raise ValueError("OpenAI API key not provided and OPENAI_API_KEY env var not set")
     
     # Call LLM with automatic tracking
+    metadata = CHAT_AND_RECORD_METADATA["news_api"]["parse_article_views"]
     try:
         llm_output = chat_and_record(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            service="news_api",
-            operation="parse_article_views",
-            model=model,
-            temperature=0
+            service=metadata["service"],
+            operation=metadata["operation"],
+            model=model or metadata["model"],  # Allow override via parameter
+            temperature=metadata["temperature"]
         )
         
         if not llm_output:

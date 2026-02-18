@@ -5,6 +5,9 @@ from pathlib import Path
 
 from openai import OpenAI
 
+from app.services.llm_client import chat_and_record
+from app.services.model_settings import CHAT_AND_RECORD_METADATA
+
 
 class ParserError(Exception):
     """Base exception for parser errors."""
@@ -85,18 +88,17 @@ def parse_text_to_json(
     # Inject user text into user prompt
     user_prompt = user_prompt_template.replace("{USER_INPUT}", text)
 
-    # Call OpenAI-compatible API
-    client = OpenAI()
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0,
+    # Call LLM with automatic tracking
+    metadata = CHAT_AND_RECORD_METADATA["recipe_interpreter_bt"]["parse_strategy"]
+    raw_output = chat_and_record(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        service=metadata["service"],
+        operation=metadata["operation"],
+        model=metadata["model"],
+        temperature=metadata["temperature"]
     )
-
-    raw_output = response.choices[0].message.content
+    
     if raw_output is None:
         raise InvalidJSONError("LLM returned empty response")
 

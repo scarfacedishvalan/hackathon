@@ -9,6 +9,9 @@ import os
 import json
 from typing import List, Dict, Optional
 
+from app.services.llm_client import chat_and_record
+from app.services.model_settings import CHAT_AND_RECORD_METADATA
+
 
 class BlackLittermanLLMParser:
     """
@@ -154,10 +157,15 @@ class BlackLittermanLLMParser:
             schema_content = self._load_file(schema_path)
             schema = json.loads(schema_content)
         
-        # Call LLM
-        response = self.llm_client.chat(
+        # Call LLM with automatic tracking
+        metadata = CHAT_AND_RECORD_METADATA["black_litterman_parser"]["parse_views"]
+        response = chat_and_record(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
+            service=metadata["service"],
+            operation=metadata["operation"],
+            model=metadata["model"],
+            temperature=metadata["temperature"],
             schema=schema
         )
         
