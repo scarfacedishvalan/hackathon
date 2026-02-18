@@ -12,8 +12,8 @@ from typing import List, Dict, Optional
 
 from openai import OpenAI
 from pydantic import ValidationError
-
-from .view_schema import View, ViewList
+from app.services.llm_client import chat_and_record
+from app.services.news_api.view_schema import View, ViewList
 
 
 def load_prompt(filename: str) -> str:
@@ -68,25 +68,20 @@ def parse_article_to_views(article_text: str, api_key: Optional[str] = None, mod
     # Insert article text into user prompt
     user_prompt = user_prompt_template.replace("{ARTICLE_TEXT}", article_text)
     
-    # Initialize OpenAI client
-    client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
-    
-    if not client.api_key:
+    # Validate API key if provided
+    if api_key is None and not os.getenv("OPENAI_API_KEY"):
         raise ValueError("OpenAI API key not provided and OPENAI_API_KEY env var not set")
     
-    # Call LLM
+    # Call LLM with automatic tracking
     try:
-        response = client.chat.completions.create(
+        llm_output = chat_and_record(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            service="news_api",
+            operation="parse_article_views",
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0,  # Deterministic output
-            response_format={"type": "json_object"} if model in ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"] else None
+            temperature=0
         )
-        
-        llm_output = response.choices[0].message.content
         
         if not llm_output:
             raise RuntimeError("LLM returned empty response")

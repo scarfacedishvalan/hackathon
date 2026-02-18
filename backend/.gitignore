@@ -28,3 +28,7 @@ Thumbs.db
 
 # plots
 plots/
+
+# LLM usage tracking database
+data/*.db
+data/*.db-journal
