@@ -36,7 +36,7 @@ class StressTestLLMParser:
     """
     Parser that orchestrates LLM-based extraction of stress test specifications.
     
-    This class loads the system prompt, calls an LLM with user requests,
+    This class loads prompt templates, injects recipe context, calls an LLM,
     and validates the response into a StressSpec object.
     """
     
@@ -45,7 +45,7 @@ class StressTestLLMParser:
         Initialize the parser.
         
         Args:
-            prompt_dir: Directory path containing stress_prompt.txt
+            prompt_dir: Directory path containing system_prompt.txt and user_prompt.txt
         """
         self.prompt_dir = prompt_dir
         
@@ -66,49 +66,67 @@ class StressTestLLMParser:
         with open(path, 'r', encoding='utf-8') as f:
             return f.read()
     
-    def _build_context_prompt(
+    def _build_user_prompt(
         self,
-        user_request: str,
-        recipe_context: Optional[Dict] = None
+        template: str,
+        view_labels: List[str],
+        factors: List[str],
+        stress_request: str
     ) -> str:
         """
-        Build the full user prompt including recipe context.
+        Build the user prompt by replacing template placeholders.
         
         Args:
-            user_request: User's natural language stress test request
-            recipe_context: Optional dictionary with recipe information
-                Should include:
-                - views: List of view labels available
-                - factors: List of factor names available
-                
+            template: User prompt template with placeholders
+            view_labels: List of available view labels from recipe
+            factors: List of available factor names from recipe
+            stress_request: User's natural language stress test request
+            
         Returns:
             Formatted user prompt string
         """
-        prompt_parts = []
+        # Format view labels
+        if view_labels:
+            view_labels_str = "\n".join([f"  - {label}" for label in view_labels])
+        else:
+            view_labels_str = "  (No views available in recipe)"
         
-        # Add recipe context if provided
-        if recipe_context:
-            prompt_parts.append("RECIPE CONTEXT:")
-            
-            if "views" in recipe_context and recipe_context["views"]:
-                view_labels = recipe_context["views"]
-                prompt_parts.append(f"\nAvailable view labels:")
-                for label in view_labels:
-                    prompt_parts.append(f"  - {label}")
-            
-            if "factors" in recipe_context and recipe_context["factors"]:
-                factors = recipe_context["factors"]
-                prompt_parts.append(f"\nAvailable factors:")
-                for factor in factors:
-                    prompt_parts.append(f"  - {factor}")
-            
-            prompt_parts.append("\n---\n")
+        # Format factors
+        if factors:
+            factors_str = "\n".join([f"  - {factor}" for factor in factors])
+        else:
+            factors_str = "  (No factors available in recipe)"
         
-        # Add user request
-        prompt_parts.append("USER STRESS TEST REQUEST:")
-        prompt_parts.append(user_request)
+        # Replace placeholders
+        prompt = template.replace("{VIEW_LABELS}", view_labels_str)
+        prompt = prompt.replace("{FACTORS}", factors_str)
+        prompt = prompt.replace("{STRESS_REQUEST}", stress_request)
         
-        return "\n".join(prompt_parts)
+        return prompt
+    
+    def _extract_json_from_response(self, content: str) -> str:
+        """
+        Extract JSON from LLM response, handling markdown code blocks.
+        
+        Args:
+            content: Raw LLM response string
+            
+        Returns:
+            Cleaned JSON string
+        """
+        content = content.strip()
+        
+        # Handle markdown code blocks (```json ... ``` or ``` ... ```)
+        if content.startswith("```"):
+            lines = content.split("\n")
+            # Remove first line (```json or ```)
+            lines = lines[1:]
+            # Remove last line (```)
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            content = "\n".join(lines)
+        
+        return content.strip()
     
     def parse(
         self,
@@ -119,8 +137,8 @@ class StressTestLLMParser:
         Parse a natural language stress test request into a StressSpec.
         
         This is the main entry point for the parser. It orchestrates:
-        1. Loading the system prompt
-        2. Building the user prompt with optional recipe context
+        1. Loading prompt templates
+        2. Building the formatted user prompt with recipe context
         3. Calling the LLM
         4. Parsing and validating the JSON response into a StressSpec
         
@@ -136,14 +154,30 @@ class StressTestLLMParser:
             
         Raises:
             ValueError: If JSON is invalid or fails StressSpec validation
-            FileNotFoundError: If prompt file cannot be found
+            FileNotFoundError: If prompt files cannot be found
         """
         # Load system prompt
-        system_prompt_path = os.path.join(self.prompt_dir, "stress_prompt.txt")
+        system_prompt_path = os.path.join(self.prompt_dir, "system_prompt.txt")
         system_prompt = self._load_file(system_prompt_path)
         
-        # Build user prompt
-        user_prompt = self._build_context_prompt(user_request, recipe_context)
+        # Load user prompt template
+        user_prompt_path = os.path.join(self.prompt_dir, "user_prompt.txt")
+        user_prompt_template = self._load_file(user_prompt_path)
+        
+        # Extract recipe context
+        view_labels = []
+        factors = []
+        if recipe_context:
+            view_labels = recipe_context.get("views", [])
+            factors = recipe_context.get("factors", [])
+        
+        # Build formatted user prompt
+        user_prompt = self._build_user_prompt(
+            template=user_prompt_template,
+            view_labels=view_labels,
+            factors=factors,
+            stress_request=user_request
+        )
         
         # Call LLM with automatic tracking
         metadata = CHAT_AND_RECORD_METADATA["bl_stress_parser"]["parse_stress_request"]
@@ -157,11 +191,18 @@ class StressTestLLMParser:
             schema=None  # No schema enforcement, rely on prompt engineering
         )
         
+        # Extract JSON from response (handles markdown code blocks)
+        cleaned_response = self._extract_json_from_response(response)
+        
         # Parse JSON response
         try:
-            result = json.loads(response)
+            result = json.loads(cleaned_response)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON returned by LLM: {e}\n\nResponse: {response}")
+            raise ValueError(
+                f"Invalid JSON returned by LLM: {e}\n\n"
+                f"Raw Response: {response}\n\n"
+                f"Cleaned Response: {cleaned_response}"
+            )
         
         # Validate using Pydantic model
         # This will automatically check required fields and run validators

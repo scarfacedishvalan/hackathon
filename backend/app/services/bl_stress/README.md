@@ -15,8 +15,10 @@ bl_stress/
 ├── stress_defaults.py             # Deterministic default grids
 ├── llm_parser.py                  # LLM-based parser
 ├── example_recipe.json            # Example recipe for testing
+├── README.md                      # Documentation
 └── prompts/
-    └── stress_prompt.txt          # System prompt for LLM
+    ├── system_prompt.txt          # System prompt for LLM
+    └── user_prompt.txt            # User prompt template with placeholders
 ```
 
 ## Components
@@ -47,12 +49,13 @@ All grids come in three levels: **conservative**, **standard**, **aggressive**.
 LLM-based parser following the same pattern as `bl_llm_parser`:
 
 - Uses `chat_and_record` for LLM calls with automatic tracking
-- Loads system prompt from `prompts/stress_prompt.txt`
-- Accepts optional recipe context (view labels, factors)
+- Loads system prompt from `prompts/system_prompt.txt`
+- Loads user prompt template from `prompts/user_prompt.txt`
+- Injects recipe context (view labels, factors) into user prompt placeholders
 - Returns validated `StressSpec` object
 - Main function: `parse_stress_prompt(user_request, recipe_context)`
 
-### 4. `prompts/stress_prompt.txt`
+### 4. `prompts/system_prompt.txt`
 
 System prompt that:
 
@@ -60,7 +63,17 @@ System prompt that:
 - Lists all allowed stress types and their required fields
 - Explicitly forbids numeric hallucination
 - Enforces use of grid_level labels instead of numeric ranges
-- Requires exact matching of view labels and factor names
+- Provides interpretation guidelines and examples
+
+### 5. `prompts/user_prompt.txt`
+
+User prompt template with placeholders:
+
+- `{VIEW_LABELS}`: Injected list of available view labels from recipe
+- `{FACTORS}`: Injected list of available factors from recipe
+- `{STRESS_REQUEST}`: User's natural language stress test request
+- Lists available regime templates
+- Reminds LLM to use exact labels and grid_level values
 
 ## Usage
 

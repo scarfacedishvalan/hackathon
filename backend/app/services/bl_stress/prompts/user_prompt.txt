@@ -1,0 +1,28 @@
+Recipe Context - Available Views:
+{VIEW_LABELS}
+
+Recipe Context - Available Factors:
+{FACTORS}
+
+Available Regime Templates:
+- high_uncertainty
+- risk_off
+- risk_on
+- crisis
+- low_vol
+
+---
+
+User Stress Test Request:
+"""
+{STRESS_REQUEST}
+"""
+
+Based on the above request and the available views and factors from the recipe,
+output a JSON object that specifies the stress test parameters.
+
+Remember:
+- Use EXACT view labels from the list above
+- Use EXACT factor names from the list above
+- Use grid_level labels (conservative/standard/aggressive), NOT numeric values
+- Output ONLY the JSON object, no explanations
