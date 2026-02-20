@@ -29,6 +29,9 @@ Thumbs.db
 # plots
 plots/
 
+# prompts
+chatgpt_prompts/
+
 # LLM usage tracking database
 data/*.db
 data/*.db-journal

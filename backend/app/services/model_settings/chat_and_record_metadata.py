@@ -48,6 +48,14 @@ CHAT_AND_RECORD_METADATA = {
             "temperature": 0,  # Deterministic for structured extraction
         }
     },
+    "bl_stress_parser": {
+        "parse_stress_request": {
+            "service": "bl_stress_parser",
+            "operation": "parse_stress_request",
+            "model": "gpt-4o",
+            "temperature": 0,  # Deterministic for stress test specification
+        }
+    },
 }
 
 

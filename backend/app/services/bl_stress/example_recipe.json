@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "name": "Tech_Portfolio_Base",
+    "description": "Tech sector portfolio with momentum and value factors",
+    "version": "1.0"
+  },
+
+  "universe": {
+    "assets": ["AAPL", "MSFT", "GOOGL", "META", "NVDA"]
+  },
+
+  "model_parameters": {
+    "tau": 0.05,
+    "risk_aversion": 2.5,
+    "risk_free_rate": 0.025
+  },
+
+  "constraints": {
+    "long_only": true,
+    "weight_bounds": {
+      "AAPL": [0.10, 0.35],
+      "MSFT": [0.10, 0.35],
+      "GOOGL": [0.10, 0.30],
+      "META": [0.05, 0.25],
+      "NVDA": [0.05, 0.30]
+    }
+  },
+
+  "bottom_up_views": [
+    {
+      "type": "relative",
+      "assets": ["AAPL", "MSFT"],
+      "weights": [1, -1],
+      "expected_outperformance": 0.02,
+      "confidence": 0.75,
+      "label": "AAPL outperforms MSFT"
+    },
+    {
+      "type": "relative",
+      "assets": ["NVDA", "META"],
+      "weights": [1, -1],
+      "expected_outperformance": 0.04,
+      "confidence": 0.70,
+      "label": "NVDA outperforms META"
+    },
+    {
+      "type": "absolute",
+      "asset": "GOOGL",
+      "expected_return": 0.08,
+      "confidence": 0.60,
+      "label": "GOOGL strong growth"
+    }
+  ],
+
+  "top_down_views": {
+    "factor_model": {
+      "factors": ["Momentum", "Value", "Quality"]
+    },
+    "factor_shocks": [
+      {
+        "factor": "Momentum",
+        "shock": 0.015,
+        "confidence": 0.65,
+        "label": "Momentum strengthens"
+      },
+      {
+        "factor": "Value",
+        "shock": -0.01,
+        "confidence": 0.55,
+        "label": "Value factor weak"
+      }
+    ]
+  }
+}

@@ -58,6 +58,7 @@ from app.services.bl_engine.bl_standalone import (
     market_implied_prior_returns
 )
 from app.services.bl_engine.factor_views import FactorView, FactorViewTransformer
+from app.services.price_data.load_data import load_market_data
 
 
 def run_bl_recipe(
@@ -456,16 +457,10 @@ def example_usage():
         recipe = json.load(f)
     
     # Create synthetic data (using the same function from top_down_bl)
-    price_df_full, market_caps_full, B_full, factor_names, all_assets = create_synthetic_data()
+    price_df_full, market_caps_full, B_full, factor_names, all_assets = load_market_data()
     
     # Build factor index map
     factor_index_map = {name: idx for idx, name in enumerate(factor_names)}
-    
-    # Add the recipe-specific factors if they don't exist
-    # For this example, let's map Rates and Growth to existing factors
-    # Rates -> Financial (index 1), Growth -> Growth (index 0)
-    factor_index_map['Rates'] = 1  # Map to Financial factor
-    factor_index_map['Growth'] = 0  # Already exists
     
     # Filter data to include recipe universe assets
     # Need to ensure we have all recipe assets in our synthetic data
