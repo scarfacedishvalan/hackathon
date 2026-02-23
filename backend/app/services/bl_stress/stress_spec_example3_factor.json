@@ -1,0 +1,5 @@
+{
+  "stress_type": "factor_amplification",
+  "factor": "Momentum",
+  "grid_level": "standard"
+}

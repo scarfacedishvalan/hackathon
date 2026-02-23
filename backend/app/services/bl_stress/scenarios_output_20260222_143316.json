@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "timestamp": "20260222_143316",
+    "source_file": "c:\\Python\\hackathon\\backend\\app\\services\\bl_stress\\stress_spec_example5_view_joint.json",
+    "scenario_count": 15
+  },
+  "stress_spec": {
+    "stress_type": "view_joint",
+    "target_label": "NVDA outperforms META",
+    "factor": null,
+    "grid_level": null,
+    "template_name": null,
+    "mode": null,
+    "magnitude_grid_level": "standard",
+    "confidence_grid_level": "conservative"
+  },
+  "scenarios": [
+    {
+      "scenario_id": "joint_mag-2x_conf0.6",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": -2.0,
+      "confidence_scale": 0.6,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": -0.08,
+      "new_confidence": 0.42
+    },
+    {
+      "scenario_id": "joint_mag-2x_conf0.8",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": -2.0,
+      "confidence_scale": 0.8,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": -0.08,
+      "new_confidence": 0.5599999999999999
+    },
+    {
+      "scenario_id": "joint_mag-2x_conf1.0",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": -2.0,
+      "confidence_scale": 1.0,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": -0.08,
+      "new_confidence": 0.7
+    },
+    {
+      "scenario_id": "joint_mag-1x_conf0.6",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": -1.0,
+      "confidence_scale": 0.6,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": -0.04,
+      "new_confidence": 0.42
+    },
+    {
+      "scenario_id": "joint_mag-1x_conf0.8",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": -1.0,
+      "confidence_scale": 0.8,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": -0.04,
+      "new_confidence": 0.5599999999999999
+    },
+    {
+      "scenario_id": "joint_mag-1x_conf1.0",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": -1.0,
+      "confidence_scale": 1.0,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": -0.04,
+      "new_confidence": 0.7
+    },
+    {
+      "scenario_id": "joint_mag+0x_conf0.6",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 0.0,
+      "confidence_scale": 0.6,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.0,
+      "new_confidence": 0.42
+    },
+    {
+      "scenario_id": "joint_mag+0x_conf0.8",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 0.0,
+      "confidence_scale": 0.8,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.0,
+      "new_confidence": 0.5599999999999999
+    },
+    {
+      "scenario_id": "joint_mag+0x_conf1.0",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 0.0,
+      "confidence_scale": 1.0,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.0,
+      "new_confidence": 0.7
+    },
+    {
+      "scenario_id": "joint_mag+1x_conf0.6",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 1.0,
+      "confidence_scale": 0.6,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.04,
+      "new_confidence": 0.42
+    },
+    {
+      "scenario_id": "joint_mag+1x_conf0.8",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 1.0,
+      "confidence_scale": 0.8,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.04,
+      "new_confidence": 0.5599999999999999
+    },
+    {
+      "scenario_id": "joint_mag+1x_conf1.0",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 1.0,
+      "confidence_scale": 1.0,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.04,
+      "new_confidence": 0.7
+    },
+    {
+      "scenario_id": "joint_mag+2x_conf0.6",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 2.0,
+      "confidence_scale": 0.6,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.08,
+      "new_confidence": 0.42
+    },
+    {
+      "scenario_id": "joint_mag+2x_conf0.8",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 2.0,
+      "confidence_scale": 0.8,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.08,
+      "new_confidence": 0.5599999999999999
+    },
+    {
+      "scenario_id": "joint_mag+2x_conf1.0",
+      "stress_type": "view_joint",
+      "target_label": "NVDA outperforms META",
+      "magnitude_multiplier": 2.0,
+      "confidence_scale": 1.0,
+      "base_magnitude": 0.04,
+      "base_confidence": 0.7,
+      "new_magnitude": 0.08,
+      "new_confidence": 0.7
+    }
+  ]
+}

@@ -14,6 +14,21 @@ from app.services.bl_stress.stress_defaults import (
     REGIME_LIBRARY,
 )
 from app.services.bl_stress.llm_parser import parse_stress_prompt, available_stress_types
+from app.services.bl_stress.scenario_models import (
+    Scenario,
+    ViewMagnitudeScenario,
+    ConfidenceScenario,
+    FactorShockScenario,
+    TauShiftScenario,
+    VolatilityScenario,
+    RegimeScenario,
+    ViewJointScenario,
+    AnyScenario,
+)
+from app.services.bl_stress.scenario_generator import (
+    ScenarioGenerator,
+    generate_scenarios_from_spec,
+)
 
 __all__ = [
     "StressSpec",
@@ -24,4 +39,15 @@ __all__ = [
     "REGIME_LIBRARY",
     "parse_stress_prompt",
     "available_stress_types",
+    "Scenario",
+    "ViewMagnitudeScenario",
+    "ConfidenceScenario",
+    "FactorShockScenario",
+    "TauShiftScenario",
+    "VolatilityScenario",
+    "RegimeScenario",
+    "ViewJointScenario",
+    "AnyScenario",
+    "ScenarioGenerator",
+    "generate_scenarios_from_spec",
 ]

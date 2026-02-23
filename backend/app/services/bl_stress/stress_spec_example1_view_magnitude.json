@@ -1,0 +1,6 @@
+{
+  "stress_type": "view_magnitude",
+  "target_label": "AAPL outperforms MSFT",
+  "grid_level": "standard",
+  "mode": "relative_to_base"
+}

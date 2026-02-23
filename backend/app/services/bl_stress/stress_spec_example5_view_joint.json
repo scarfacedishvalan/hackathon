@@ -1,0 +1,6 @@
+{
+  "stress_type": "view_joint",
+  "target_label": "NVDA outperforms META",
+  "magnitude_grid_level": "standard",
+  "confidence_grid_level": "conservative"
+}
