@@ -91,6 +91,7 @@ Global service utilities like API clients that are used application-wide.
 
 1. Navigate to the project directory:
 ```bash
+set PATH="C:\Program Files\nodejs\";%PATH%
 cd frontend/bl_main
 ```
 
