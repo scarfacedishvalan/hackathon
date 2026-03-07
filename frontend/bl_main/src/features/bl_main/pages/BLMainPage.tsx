@@ -13,7 +13,7 @@ import {
 import './BLMainPage.css';
 
 export const BLMainPage: React.FC = () => {
-  const { data, loading, activeViews, parseView, parseViewLoading, deleteView } = useBLMain();
+  const { data, loading, activeViews, parseView, parseViewLoading, deleteView, portfolios, portfoliosLoading, createPortfolio, deletePortfolio, selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio } = useBLMain();
 
   if (loading) {
     return (
@@ -40,7 +40,15 @@ export const BLMainPage: React.FC = () => {
         <CreateView parseView={parseView} parseViewLoading={parseViewLoading} />
         <ActiveViews views={activeViews} onDelete={deleteView} />
         <AnalystSuggestions suggestions={data.analystSuggestions} />
-        <ModelControls />
+        <ModelControls
+          portfolios={portfolios}
+          portfoliosLoading={portfoliosLoading}
+          createPortfolio={createPortfolio}
+          deletePortfolio={deletePortfolio}
+          selectedPortfolioId={selectedPortfolioId}
+          setSelectedPortfolioId={setSelectedPortfolioId}
+          selectedPortfolio={selectedPortfolio}
+        />
       </div>
 
       {/* Right Column */}

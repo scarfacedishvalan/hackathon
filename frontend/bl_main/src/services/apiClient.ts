@@ -24,4 +24,13 @@ export const apiClient = {
     }
     return response.json();
   },
+
+  async delete(endpoint: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+  },
 };

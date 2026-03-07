@@ -11,9 +11,10 @@ if __name__ == "__main__":
     # Inserts backend/ into sys.path so that `app.*` imports resolve correctly.
 
     SAMPLE_TEXTS = [
-        "Apple will strongly outperform Google by 5% next quarter.",
-        "I'm bearish on Tesla, expecting a 4% decline. Rising interest rates are a concern.",
-        "Microsoft looks neutral; no strong view.",
+        # "Apple will strongly outperform Google by 5% next quarter.",
+        # "I'm bearish on Tesla, expecting a 4% decline. Rising interest rates are a concern.",
+        # "Microsoft looks neutral; no strong view.",
+        "Technology sector will outperform by 4%. AI adoption driving growth across the sector."
     ]
 
     for sample in SAMPLE_TEXTS:

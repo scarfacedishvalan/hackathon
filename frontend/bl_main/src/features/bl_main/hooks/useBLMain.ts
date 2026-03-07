@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { blMainService } from '../services/blMainService';
-import type { ActiveView, BLMainData, ParsedView } from '../types/blMainTypes';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { blMainService, portfolioService } from '../services/blMainService';
+import type { ActiveView, BLMainData, ParsedView, Portfolio } from '../types/blMainTypes';
 
 const STORAGE_KEY = 'bl_active_views';
 
@@ -14,6 +14,13 @@ interface UseBLMainReturn {
   parseViewLoading: boolean;
   parseViewError: Error | null;
   deleteView: (id: string) => void;
+  portfolios: Portfolio[];
+  portfoliosLoading: boolean;
+  createPortfolio: (portfolio: Omit<Portfolio, 'id'> & { id?: string }) => Promise<void>;
+  deletePortfolio: (id: string) => Promise<void>;
+  selectedPortfolioId: string | null;
+  setSelectedPortfolioId: (id: string | null) => void;
+  selectedPortfolio: Portfolio | null;
 }
 
 /** Map a ParsedView from the backend into the local ActiveView shape. */
@@ -61,6 +68,35 @@ export const useBLMain = (): UseBLMainReturn => {
   const [parseViewLoading, setParseViewLoading] = useState<boolean>(false);
   const [parseViewError, setParseViewError] = useState<Error | null>(null);
 
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [portfoliosLoading, setPortfoliosLoading] = useState<boolean>(false);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
+
+  const selectedPortfolio = useMemo(
+    () => portfolios.find(p => p.id === selectedPortfolioId) ?? null,
+    [portfolios, selectedPortfolioId]
+  );
+
+  const loadPortfolios = useCallback(async () => {
+    setPortfoliosLoading(true);
+    try {
+      const result = await portfolioService.getAll();
+      setPortfolios(result);
+    } finally {
+      setPortfoliosLoading(false);
+    }
+  }, []);
+
+  const createPortfolio = useCallback(async (portfolio: Omit<Portfolio, 'id'> & { id?: string }) => {
+    const created = await portfolioService.create(portfolio);
+    setPortfolios(prev => [...prev, created]);
+  }, []);
+
+  const deletePortfolio = useCallback(async (id: string) => {
+    await portfolioService.remove(id);
+    setPortfolios(prev => prev.filter(p => p.id !== id));
+  }, []);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -105,7 +141,8 @@ export const useBLMain = (): UseBLMainReturn => {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    loadPortfolios();
+  }, [fetchData, loadPortfolios]);
 
   const parseView = useCallback(async (text: string) => {
     try {
@@ -127,5 +164,5 @@ export const useBLMain = (): UseBLMainReturn => {
     setActiveViews(prev => prev.filter(v => v.id !== id));
   }, []);
 
-  return { data, loading, error, refetch, activeViews, parseView, parseViewLoading, parseViewError, deleteView };
+  return { data, loading, error, refetch, activeViews, parseView, parseViewLoading, parseViewError, deleteView, portfolios, portfoliosLoading, createPortfolio, deletePortfolio, selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio };
 };

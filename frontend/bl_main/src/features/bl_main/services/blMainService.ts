@@ -1,4 +1,4 @@
-import type { BLMainData, ParsedView } from '../types/blMainTypes';
+import type { BLMainData, ParsedView, Portfolio } from '../types/blMainTypes';
 import { apiClient } from '../../../services/apiClient';
 import mockData from '../mock/mockBlMainData.json';
 
@@ -47,5 +47,23 @@ export const blMainService = {
         resolve(mockData as BLMainData);
       }, 800);
     });
+  },
+};
+
+export const portfolioService = {
+  getAll: async (): Promise<Portfolio[]> => {
+    try {
+      return await apiClient.get<Portfolio[]>('/portfolios');
+    } catch {
+      return (mockData as BLMainData).portfolios ?? [];
+    }
+  },
+
+  create: async (portfolio: Omit<Portfolio, 'id'> & { id?: string }): Promise<Portfolio> => {
+    return apiClient.post<Portfolio>('/portfolios', portfolio);
+  },
+
+  remove: async (id: string): Promise<void> => {
+    return apiClient.delete(`/portfolios/${id}`);
   },
 };

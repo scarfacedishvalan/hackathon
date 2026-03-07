@@ -1,13 +1,32 @@
 from __future__ import annotations
 
+import json
+import pathlib
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routers.views_router import router as views_router
+from app.api.routers.portfolios_router import router as portfolios_router
+from app.db.database import init_db, seed_portfolios
 
-app = FastAPI(title="Portfolio Backtesting API", version="1.0.0")
+MOCK_PATH = (
+    pathlib.Path(__file__).resolve().parents[3]
+    / "frontend" / "bl_main" / "src" / "features" / "bl_main" / "mock" / "mockBlMainData.json"
+)
 
-# CORS configuration
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    if MOCK_PATH.exists():
+        mock = json.loads(MOCK_PATH.read_text(encoding="utf-8"))
+        seed_portfolios(mock.get("portfolios", []))
+    yield
+
+
+app = FastAPI(title="Portfolio Backtesting API", version="1.0.0", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
@@ -16,4 +35,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 app.include_router(views_router)
+app.include_router(portfolios_router)
