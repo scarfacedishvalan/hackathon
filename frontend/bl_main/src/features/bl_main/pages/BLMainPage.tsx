@@ -13,7 +13,7 @@ import {
 import './BLMainPage.css';
 
 export const BLMainPage: React.FC = () => {
-  const { data, loading } = useBLMain();
+  const { data, loading, activeViews, parseView, parseViewLoading, deleteView } = useBLMain();
 
   if (loading) {
     return (
@@ -37,8 +37,8 @@ export const BLMainPage: React.FC = () => {
       {/* Left Column */}
       <div className="left-column">
         <AssetSelection assets={data.assets} />
-        <CreateView />
-        <ActiveViews views={data.activeViews} />
+        <CreateView parseView={parseView} parseViewLoading={parseViewLoading} />
+        <ActiveViews views={activeViews} onDelete={deleteView} />
         <AnalystSuggestions suggestions={data.analystSuggestions} />
         <ModelControls />
       </div>

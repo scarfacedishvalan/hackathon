@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { Card, Button } from '@shared/components';
 import './CreateView.css';
 
-export const CreateView: React.FC = () => {
+interface CreateViewProps {
+  parseView: (text: string) => Promise<void>;
+  parseViewLoading: boolean;
+}
+
+export const CreateView: React.FC<CreateViewProps> = ({ parseView, parseViewLoading }) => {
   const [assetInput, setAssetInput] = useState('');
 
-  const handleCreate = () => {
-    console.log('Creating view:', { assetInput });
-    // In production, this would call a callback to add the view
+  const handleCreate = async () => {
+    if (!assetInput.trim()) return;
+    await parseView(assetInput);
     setAssetInput('');
   };
 
@@ -39,8 +44,8 @@ export const CreateView: React.FC = () => {
           />
         </div>
 
-        <Button variant="secondary" onClick={handleCreate} className="create-btn">
-          Add View
+        <Button variant="secondary" onClick={handleCreate} className="create-btn" disabled={parseViewLoading}>
+          {parseViewLoading ? 'Parsing...' : 'Add View'}
         </Button>
 
         <div className="examples-section">

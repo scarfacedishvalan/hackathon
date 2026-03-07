@@ -1,4 +1,5 @@
-import type { BLMainData } from '../types/blMainTypes';
+import type { BLMainData, ParsedView } from '../types/blMainTypes';
+import { apiClient } from '../../../services/apiClient';
 import mockData from '../mock/mockBlMainData.json';
 
 /**
@@ -17,6 +18,15 @@ export const blMainService = {
         resolve(mockData as BLMainData);
       }, 500);
     });
+  },
+
+  /**
+   * Parse a natural language investment view via the backend.
+   * POST /views/parse
+   */
+  parseView: async (text: string): Promise<ParsedView[]> => {
+    const response = await apiClient.post<{ view: ParsedView[] }>('/views/parse', { text });
+    return response.view;
   },
 
   /**

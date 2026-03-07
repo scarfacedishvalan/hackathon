@@ -5,9 +5,10 @@ import type { ActiveView } from '../types/blMainTypes';
 
 interface ActiveViewsProps {
   views: ActiveView[];
+  onDelete: (id: string) => void;
 }
 
-export const ActiveViews: React.FC<ActiveViewsProps> = ({ views }) => {
+export const ActiveViews: React.FC<ActiveViewsProps> = ({ views, onDelete }) => {
   const columns: Column<ActiveView>[] = [
     {
       key: 'type',
@@ -47,10 +48,10 @@ export const ActiveViews: React.FC<ActiveViewsProps> = ({ views }) => {
       key: 'actions',
       header: '',
       width: '60px',
-      render: () => (
+      render: (view) => (
         <button
           className="remove-btn"
-          onClick={() => console.log('Remove view')}
+          onClick={() => onDelete(view.id ?? '')}
         >
           ×
         </button>

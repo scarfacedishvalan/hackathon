@@ -79,3 +79,14 @@ export interface ModelControlsConfig {
   riskAversion: number;
   confidenceScaling: 'low' | 'medium' | 'high';
 }
+
+export interface ParsedView {
+  type: 'relative' | 'absolute' | 'factor';
+  asset_long?: string;
+  asset_short?: string;
+  asset?: string;
+  factor?: string;
+  alpha?: number;
+  confidence?: number;
+  label?: string;
+}
