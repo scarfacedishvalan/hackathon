@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Column } from '@shared/components/Table';
 import type { Asset, Portfolio, PortfolioHolding } from '../types/blMainTypes';
 import mockData from '../mock/mockBlMainData.json';
+import { portfolioService } from '../services/blMainService';
 import './AssetSelection.css';
 
 interface AssetSelectionProps {
@@ -25,18 +26,63 @@ export const AssetSelection: React.FC<AssetSelectionProps> = ({ assets: initialA
     setAssets(initialAssets);
   }, [initialAssets]);
 
-  const loadPortfolio = (portfolioId: string) => {
-    const portfolio = portfolios.find(p => p.id === portfolioId);
-    if (!portfolio) return;
-
-    setAssets(prevAssets => 
-      prevAssets.map(asset => {
-        const holding = portfolio.holdings.find(h => h.ticker === asset.ticker);
-        return holding 
-          ? { ...asset, weight: holding.weight }
-          : asset;
+  // Load portfolios from backend on mount, falling back to / merging with mock data
+  useEffect(() => {
+    const defaultPortfolios: Portfolio[] = mockData.portfolios || [];
+    portfolioService.getAll()
+      .then(backendPortfolios => {
+        const merged = backendPortfolios.length > 0 ? backendPortfolios : defaultPortfolios;
+        setPortfolios(merged);
+        return merged;
       })
-    );
+      .catch(() => {
+        setPortfolios(defaultPortfolios);
+        return defaultPortfolios;
+      })
+      .then(portfolioList => {
+        // Auto-select first portfolio and reflect it in the table
+        if (portfolioList.length > 0) {
+          const first = portfolioList[0];
+          setSelectedPortfolioId(first.id);
+          setAssets(prev =>
+            prev.map(asset => {
+              const holding = first.holdings.find(h => h.ticker === asset.ticker);
+              return { ...asset, weight: holding ? holding.weight : asset.weight };
+            })
+          );
+        }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadPortfolio = async (portfolioId: string) => {
+    if (!portfolioId) {
+      setAssets(initialAssets);
+      setSelectedPortfolioId('');
+      return;
+    }
+
+    try {
+      const portfolio = await portfolioService.getById(portfolioId);
+      setAssets(prevAssets =>
+        prevAssets.map(asset => {
+          const holding = portfolio.holdings.find(h => h.ticker === asset.ticker);
+          return { ...asset, weight: holding ? holding.weight : 0 };
+        })
+      );
+      setPortfolios(prev => prev.map(p => p.id === portfolioId ? portfolio : p));
+    } catch {
+      // Fallback to local state
+      const portfolio = portfolios.find(p => p.id === portfolioId);
+      if (portfolio) {
+        setAssets(prevAssets =>
+          prevAssets.map(asset => {
+            const holding = portfolio.holdings.find(h => h.ticker === asset.ticker);
+            return { ...asset, weight: holding ? holding.weight : 0 };
+          })
+        );
+      }
+    }
     setSelectedPortfolioId(portfolioId);
   };
 
@@ -84,10 +130,10 @@ export const AssetSelection: React.FC<AssetSelectionProps> = ({ assets: initialA
   const canSave = Math.abs(totalWeight - 1) < 0.0001 && portfolioName.trim() !== '';
 
   // Calculate summary data for collapsed view
-  const selectedAssetsCount = assets.filter(a => a.selected).length;
-  const assetsTotalWeight = assets.reduce((sum, a) => sum + (a.selected ? a.weight : 0), 0);
   const selectedPortfolio = portfolios.find(p => p.id === selectedPortfolioId);
   const portfolioDisplayName = selectedPortfolio?.name || 'No Portfolio Selected';
+  const portfolioHoldingsCount = selectedPortfolio?.holdings.length ?? 0;
+  const portfolioTotalWeight = selectedPortfolio?.holdings.reduce((sum, h) => sum + h.weight, 0) ?? 0;
 
   const autoNormalize = () => {
     if (holdings.length === 0) return;
@@ -112,20 +158,6 @@ export const AssetSelection: React.FC<AssetSelectionProps> = ({ assets: initialA
 
   const columns: Column<Asset>[] = [
     {
-      key: 'selected',
-      header: 'Select',
-      width: '60px',
-      render: (asset) => (
-        <input
-          type="checkbox"
-          checked={asset.selected}
-          onChange={() => {
-            console.log('Toggle asset:', asset.ticker);
-          }}
-        />
-      ),
-    },
-    {
       key: 'ticker',
       header: 'Ticker',
       width: '100px',
@@ -136,8 +168,8 @@ export const AssetSelection: React.FC<AssetSelectionProps> = ({ assets: initialA
     },
     {
       key: 'weight',
-      header: 'Weight',
-      width: '100px',
+      header: 'Allocation',
+      width: '110px',
       render: (asset) => `${(asset.weight * 100).toFixed(1)}%`,
     },
   ];
@@ -164,7 +196,7 @@ export const AssetSelection: React.FC<AssetSelectionProps> = ({ assets: initialA
               </div>
               <div className="summary-line">
                 <span className="summary-detail">
-                  {selectedAssetsCount} Assets | Total Weight: {(assetsTotalWeight * 100).toFixed(0)}%
+                  {portfolioHoldingsCount} Assets | Total Allocation: {(portfolioTotalWeight * 100).toFixed(0)}%
                 </span>
               </div>
             </div>

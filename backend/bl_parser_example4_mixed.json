@@ -34,9 +34,9 @@
       "factor_shocks": [
         {
           "factor": "Rates",
-          "shock": -0.04,
+          "shock": -0.02,
           "confidence": 0.6,
-          "label": "Rising rates hurting growth stocks"
+          "label": "Rising rates impacting growth stocks negatively"
         },
         {
           "factor": "Momentum",

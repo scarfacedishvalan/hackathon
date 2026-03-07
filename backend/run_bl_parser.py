@@ -317,7 +317,6 @@ def run_example(
         return None
     
     parser = BlackLittermanLLMParser(
-        llm_client=llm_client,
         prompt_dir=str(prompt_dir),
         use_schema=use_schema
     )
@@ -396,7 +395,6 @@ def run_interactive_mode():
         return
     
     parser = BlackLittermanLLMParser(
-        llm_client=llm_client,
         prompt_dir=str(prompt_dir),
         use_schema=True
     )

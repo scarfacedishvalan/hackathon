@@ -9,6 +9,7 @@ no FastAPI routes.
 import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -22,6 +23,9 @@ _SERVICES_DIR = Path(__file__).resolve().parent.parent / "services"
 _PARSER_DIR = _SERVICES_DIR / "bl_llm_parser"
 _PROMPT_DIR = _PARSER_DIR / "prompts"
 _METADATA_PATH = _PARSER_DIR / "sector_metadata.json"
+
+# Recipes are stored in backend/data/bl_recipes/
+_RECIPES_DIR = Path(__file__).resolve().parents[2] / "data" / "bl_recipes"
 
 # ---------------------------------------------------------------------------
 # Defaults
@@ -42,6 +46,112 @@ def _load_asset_metadata() -> Dict[str, Any]:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
+
+
+# ---------------------------------------------------------------------------
+# Recipe persistence
+# ---------------------------------------------------------------------------
+
+
+def _recipe_path(name: str) -> Path:
+    """Return the file path for a recipe named *name*."""
+    # Sanitise name: keep only alphanumerics, hyphens, underscores
+    safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
+    return _RECIPES_DIR / f"{safe}.json"
+
+
+def save_current_views(views: List[Dict[str, Any]]) -> Path:
+    """
+    Overwrite ``current.json`` with a frontend-supplied list of active views.
+
+    Called when the UI syncs its full active-views state to the server
+    (e.g. after a delete or after appending a newly-parsed view).
+
+    Args:
+        views: List of ``ActiveView``-shaped dicts sent from the frontend.
+
+    Returns:
+        Path to the saved file.
+    """
+    _RECIPES_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "name": "current",
+        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "raw_result": None,  # not available for frontend-driven syncs
+        "normalised_views": views,
+    }
+    path = _recipe_path("current")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+    return path
+
+
+def save_recipe(
+    raw_result: Dict[str, Any],
+    normalised: List[Dict[str, Any]],
+    name: str = "current",
+) -> Path:
+    """
+    Persist a parse result to ``backend/data/bl_recipes/<name>.json``.
+
+    ``current.json`` is always overwritten.  Any other *name* creates a
+    named snapshot that can be retrieved later.
+
+    Args:
+        raw_result:  Raw parser output from ``BlackLittermanLLMParser``.
+        normalised:  Normalised view list produced by ``parse_view``.
+        name:        Recipe name (default ``"current"``).
+
+    Returns:
+        Path to the saved file.
+    """
+    _RECIPES_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "name": name,
+        "saved_at": datetime.now(timezone.utc).isoformat(),
+        "raw_result": raw_result,
+        "normalised_views": normalised,
+    }
+    path = _recipe_path(name)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+    return path
+
+
+def load_recipe(name: str = "current") -> Dict[str, Any]:
+    """
+    Load a previously saved recipe by name.
+
+    Args:
+        name: Recipe name (default ``"current"``).
+
+    Returns:
+        Dict with keys ``name``, ``saved_at``, ``raw_result``,
+        ``normalised_views``.
+
+    Raises:
+        FileNotFoundError: If no recipe with that name exists.
+    """
+    path = _recipe_path(name)
+    if not path.exists():
+        raise FileNotFoundError(f"No recipe named '{name}' found at {path}")
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def list_recipes() -> List[str]:
+    """
+    Return the names of all saved recipes (without the ``.json`` extension).
+
+    ``"current"`` is always listed first when present.
+    """
+    if not _RECIPES_DIR.exists():
+        return []
+    names = [p.stem for p in sorted(_RECIPES_DIR.glob("*.json"))]
+    # Float "current" to the top
+    if "current" in names:
+        names = ["current"] + [n for n in names if n != "current"]
+    return names
 
 
 def _normalize_view(raw_view: Dict[str, Any], view_category: str) -> Dict[str, Any]:
@@ -190,6 +300,9 @@ def parse_view(
 
     for shock in raw_result.get("top_down_views", {}).get("factor_shocks", []):
         normalised.append(_normalize_view(shock, "top_down"))
+
+    # Always persist the latest result so the UI can consume it
+    save_recipe(raw_result, normalised, name="current")
 
     return normalised
 

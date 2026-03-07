@@ -131,6 +131,14 @@ export const useBLMain = (): UseBLMainReturn => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(activeViews));
   }, [activeViews]);
 
+  // Keep backend current.json in sync with the full active views list.
+  // Fires on every add or delete so the server always mirrors the table.
+  useEffect(() => {
+    blMainService.syncCurrentViews(activeViews).catch((err) =>
+      console.warn('Failed to sync views to backend:', err)
+    );
+  }, [activeViews]);
+
   // Only seed from fetched data if localStorage is empty
   useEffect(() => {
     if (data?.activeViews && activeViews.length === 0) {

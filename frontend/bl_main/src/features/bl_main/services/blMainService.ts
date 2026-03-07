@@ -1,4 +1,4 @@
-import type { BLMainData, ParsedView, Portfolio } from '../types/blMainTypes';
+import type { BLMainData, ParsedView, Portfolio, ActiveView } from '../types/blMainTypes';
 import { apiClient } from '../../../services/apiClient';
 import mockData from '../mock/mockBlMainData.json';
 
@@ -27,6 +27,15 @@ export const blMainService = {
   parseView: async (text: string): Promise<ParsedView[]> => {
     const response = await apiClient.post<{ view: ParsedView[] }>('/views/parse', { text });
     return response.view;
+  },
+
+  /**
+   * Sync the full active-views list to the server so current.json always
+   * mirrors what the UI is showing.
+   * PUT /views/current
+   */
+  syncCurrentViews: async (views: ActiveView[]): Promise<void> => {
+    await apiClient.put('/views/current', { views });
   },
 
   /**
@@ -61,6 +70,10 @@ export const portfolioService = {
 
   create: async (portfolio: Omit<Portfolio, 'id'> & { id?: string }): Promise<Portfolio> => {
     return apiClient.post<Portfolio>('/portfolios', portfolio);
+  },
+
+  getById: async (id: string): Promise<Portfolio> => {
+    return apiClient.get<Portfolio>(`/portfolios/${id}`);
   },
 
   remove: async (id: string): Promise<void> => {

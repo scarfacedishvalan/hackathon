@@ -27,7 +27,7 @@
         ],
         "expected_outperformance": 0.03,
         "confidence": 0.6,
-        "label": "Apple strong outperformance over Microsoft"
+        "label": "Apple strong outperformance vs. Microsoft"
       }
     ],
     "top_down_views": {

@@ -20,14 +20,14 @@
         "asset": "TSLA",
         "expected_return": -0.05,
         "confidence": 0.6,
-        "label": "Bearish view on Tesla"
+        "label": "Bearish on Tesla"
       }
     ],
     "top_down_views": {
       "factor_shocks": [
         {
           "factor": "Rates",
-          "shock": -0.02,
+          "shock": 0.02,
           "confidence": 0.6,
           "label": "Rising rates concern"
         }
