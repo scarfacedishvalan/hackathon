@@ -19,24 +19,10 @@
   },
   "constraints": {
     "long_only": true,
-    "weight_bounds": {
-      "AAPL": [
-        0.1,
-        0.4
-      ],
-      "MSFT": [
-        0.1,
-        0.4
-      ],
-      "AMZN": [
-        0.1,
-        0.5
-      ],
-      "TSLA": [
-        0.1,
-        0.4
-      ]
-    }
+    "weight_bounds": [
+      0.0,
+      0.4
+    ]
   },
   "bottom_up_views": [
     {
@@ -50,7 +36,7 @@
       "type": "relative",
       "assets": [
         "TSLA",
-        "MSFT"
+        "JPM"
       ],
       "weights": [
         1,
@@ -58,7 +44,7 @@
       ],
       "expected_outperformance": -0.05,
       "confidence": 0.6,
-      "label": "TSLA expected to underperform MSFT"
+      "label": "TSLA underperform JPM"
     }
   ],
   "top_down_views": {
@@ -68,25 +54,6 @@
         "Growth"
       ]
     },
-    "factor_shocks": [
-      {
-        "factor": "Rates",
-        "shock": 0.02,
-        "confidence": 0.6,
-        "label": "Rising rates"
-      },
-      {
-        "factor": "Financial",
-        "shock": 0.04,
-        "confidence": 0.6,
-        "label": "Strong benefit to financials"
-      },
-      {
-        "factor": "Defensive",
-        "shock": -0.01,
-        "confidence": 0.6,
-        "label": "Slightly hurt defensives"
-      }
-    ]
+    "factor_shocks": []
   }
 }

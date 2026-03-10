@@ -1,5 +1,5 @@
 import React from 'react';
-import { useBLMain } from '@features/bl_main/hooks/useBLMain';
+import { useBLMain } from '@features/bl_main/context/BLMainContext';
 import { Button } from '@shared/components';
 import './AppLayout.css';
 

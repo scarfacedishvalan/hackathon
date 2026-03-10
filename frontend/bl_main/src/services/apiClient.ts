@@ -22,6 +22,10 @@ export const apiClient = {
     if (!response.ok) {
       throw new Error(`API Error: ${response.statusText}`);
     }
+    // 204 No Content — valid success, no body to parse
+    if (response.status === 204) {
+      return undefined as T;
+    }
     return response.json();
   },
 

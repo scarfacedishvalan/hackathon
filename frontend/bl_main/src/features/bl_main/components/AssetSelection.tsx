@@ -1,337 +1,107 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Column } from '@shared/components/Table';
-import type { Asset, Portfolio, PortfolioHolding } from '../types/blMainTypes';
-import mockData from '../mock/mockBlMainData.json';
-import { portfolioService } from '../services/blMainService';
+import React, { useState, useEffect, useCallback } from 'react';
+import { universeService } from '../services/blMainService';
 import './AssetSelection.css';
 
-interface AssetSelectionProps {
-  assets: Asset[];
-}
+/** Full asset universe sourced from backend/data/market_data.json */
+const FULL_UNIVERSE = [
+  { ticker: 'AAPL',  name: 'Apple Inc.' },
+  { ticker: 'AMZN',  name: 'Amazon.com Inc.' },
+  { ticker: 'BAC',   name: 'Bank of America' },
+  { ticker: 'BND',   name: 'Vanguard Total Bond' },
+  { ticker: 'GLD',   name: 'SPDR Gold Shares' },
+  { ticker: 'GOOG',  name: 'Alphabet Inc.' },
+  { ticker: 'GOOGL', name: 'Alphabet Inc.' },
+  { ticker: 'JNJ',   name: 'Johnson & Johnson' },
+  { ticker: 'JPM',   name: 'JPMorgan Chase' },
+  { ticker: 'MSFT',  name: 'Microsoft Corp.' },
+  { ticker: 'PG',    name: 'Procter & Gamble' },
+  { ticker: 'TSLA',  name: 'Tesla Inc.' },
+  { ticker: 'VNQ',   name: 'Vanguard Real Estate' },
+  { ticker: 'WMT',   name: 'Walmart Inc.' },
+];
 
-export const AssetSelection: React.FC<AssetSelectionProps> = ({ assets: initialAssets }) => {
-  const [assets, setAssets] = useState<Asset[]>(initialAssets);
-  const [portfolios, setPortfolios] = useState<Portfolio[]>(mockData.portfolios || []);
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>('');
-  const [showModal, setShowModal] = useState(false);
+const COL_SIZE = 7;
+const col1 = FULL_UNIVERSE.slice(0, COL_SIZE);
+const col2 = FULL_UNIVERSE.slice(COL_SIZE);
+
+export const AssetSelection: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Modal state
-  const [portfolioName, setPortfolioName] = useState('');
-  const [holdings, setHoldings] = useState<PortfolioHolding[]>([]);
-  const [tickerSearch, setTickerSearch] = useState('');
+  const [activeUniverse, setActiveUniverse] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
 
-  // Update assets when initial assets change
-  useEffect(() => {
-    setAssets(initialAssets);
-  }, [initialAssets]);
-
-  // Load portfolios from backend on mount, falling back to / merging with mock data
-  useEffect(() => {
-    const defaultPortfolios: Portfolio[] = mockData.portfolios || [];
-    portfolioService.getAll()
-      .then(backendPortfolios => {
-        const merged = backendPortfolios.length > 0 ? backendPortfolios : defaultPortfolios;
-        setPortfolios(merged);
-        return merged;
-      })
-      .catch(() => {
-        setPortfolios(defaultPortfolios);
-        return defaultPortfolios;
-      })
-      .then(portfolioList => {
-        // Auto-select first portfolio and reflect it in the table
-        if (portfolioList.length > 0) {
-          const first = portfolioList[0];
-          setSelectedPortfolioId(first.id);
-          setAssets(prev =>
-            prev.map(asset => {
-              const holding = first.holdings.find(h => h.ticker === asset.ticker);
-              return { ...asset, weight: holding ? holding.weight : asset.weight };
-            })
-          );
-        }
-      });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loadUniverse = useCallback(async () => {
+    const tickers = await universeService.getUniverse();
+    setActiveUniverse(
+      new Set(tickers.length > 0 ? tickers : FULL_UNIVERSE.map(a => a.ticker))
+    );
   }, []);
 
-  const loadPortfolio = async (portfolioId: string) => {
-    if (!portfolioId) {
-      setAssets(initialAssets);
-      setSelectedPortfolioId('');
-      return;
-    }
+  useEffect(() => { loadUniverse(); }, [loadUniverse]);
 
+  const handleToggle = async (ticker: string) => {
+    const next = new Set(activeUniverse);
+    if (next.has(ticker)) next.delete(ticker);
+    else next.add(ticker);
+    setActiveUniverse(next);
+    setSaving(true);
     try {
-      const portfolio = await portfolioService.getById(portfolioId);
-      setAssets(prevAssets =>
-        prevAssets.map(asset => {
-          const holding = portfolio.holdings.find(h => h.ticker === asset.ticker);
-          return { ...asset, weight: holding ? holding.weight : 0 };
-        })
-      );
-      setPortfolios(prev => prev.map(p => p.id === portfolioId ? portfolio : p));
-    } catch {
-      // Fallback to local state
-      const portfolio = portfolios.find(p => p.id === portfolioId);
-      if (portfolio) {
-        setAssets(prevAssets =>
-          prevAssets.map(asset => {
-            const holding = portfolio.holdings.find(h => h.ticker === asset.ticker);
-            return { ...asset, weight: holding ? holding.weight : 0 };
-          })
-        );
-      }
+      await universeService.setUniverse([...next]);
+    } finally {
+      setSaving(false);
     }
-    setSelectedPortfolioId(portfolioId);
   };
 
-  const openCreateModal = () => {
-    setShowModal(true);
-    setPortfolioName('');
-    setHoldings([]);
-    setTickerSearch('');
-  };
+  const selected = FULL_UNIVERSE.filter(a => activeUniverse.has(a.ticker));
+  const summary = selected.length === 0
+    ? 'No assets selected'
+    : `${selected.map(a => a.ticker).join(', ')}\u2002(${selected.length})`;
 
-  const closeModal = () => {
-    setShowModal(false);
-  };
-
-  const addHolding = () => {
-    const ticker = tickerSearch.trim().toUpperCase();
-    if (!ticker) return;
-    
-    if (holdings.some(h => h.ticker === ticker)) {
-      alert('Ticker already added');
-      return;
-    }
-
-    setHoldings([...holdings, { ticker, weight: 0 }]);
-    setTickerSearch('');
-  };
-
-  const removeHolding = (ticker: string) => {
-    setHoldings(holdings.filter(h => h.ticker !== ticker));
-  };
-
-  const updateHoldingWeight = (ticker: string, value: string) => {
-    const weight = parseFloat(value) || 0;
-    const clampedWeight = Math.max(0, Math.min(100, weight));
-    
-    setHoldings(holdings.map(h => 
-      h.ticker === ticker 
-        ? { ...h, weight: clampedWeight / 100 }
-        : h
-    ));
-  };
-
-  const totalWeight = holdings.reduce((sum, h) => sum + h.weight, 0);
-  const remaining = 1 - totalWeight;
-  const canSave = Math.abs(totalWeight - 1) < 0.0001 && portfolioName.trim() !== '';
-
-  // Calculate summary data for collapsed view
-  const selectedPortfolio = portfolios.find(p => p.id === selectedPortfolioId);
-  const portfolioDisplayName = selectedPortfolio?.name || 'No Portfolio Selected';
-  const portfolioHoldingsCount = selectedPortfolio?.holdings.length ?? 0;
-  const portfolioTotalWeight = selectedPortfolio?.holdings.reduce((sum, h) => sum + h.weight, 0) ?? 0;
-
-  const autoNormalize = () => {
-    if (holdings.length === 0) return;
-    
-    const normalizedWeight = 1 / holdings.length;
-    setHoldings(holdings.map(h => ({ ...h, weight: normalizedWeight })));
-  };
-
-  const savePortfolio = () => {
-    if (!canSave) return;
-
-    const newPortfolio: Portfolio = {
-      id: `portfolio-${Date.now()}`,
-      name: portfolioName.trim(),
-      holdings: holdings.map(h => ({ ...h })),
-    };
-
-    setPortfolios([...portfolios, newPortfolio]);
-    loadPortfolio(newPortfolio.id);
-    closeModal();
-  };
-
-  const columns: Column<Asset>[] = [
-    {
-      key: 'ticker',
-      header: 'Ticker',
-      width: '100px',
-    },
-    {
-      key: 'name',
-      header: 'Name',
-    },
-    {
-      key: 'weight',
-      header: 'Allocation',
-      width: '110px',
-      render: (asset) => `${(asset.weight * 100).toFixed(1)}%`,
-    },
-  ];
+  const renderColumn = (items: typeof FULL_UNIVERSE) => (
+    <div className="universe-column">
+      {items.map(asset => (
+        <label key={asset.ticker} className="universe-row">
+          <input
+            type="checkbox"
+            className="universe-checkbox"
+            checked={activeUniverse.has(asset.ticker)}
+            onChange={() => handleToggle(asset.ticker)}
+          />
+          <span className="universe-ticker">{asset.ticker}</span>
+          <span className="universe-name">{asset.name}</span>
+        </label>
+      ))}
+    </div>
+  );
 
   return (
-    <>
-      <div className="asset-selection-card">
-        <div 
-          className="asset-card-header collapsible-header" 
-          onClick={() => setIsExpanded(prev => !prev)}
-        >
-          <h3 className="asset-card-title">
-            Portfolio Context
-            <span className={`chevron ${isExpanded ? 'expanded' : ''}`}>▼</span>
-          </h3>
-        </div>
-        
-        {!isExpanded ? (
-          <div className="collapsed-summary">
-            <div className="summary-info">
-              <div className="summary-line">
-                <span className="summary-label">Portfolio:</span>
-                <span className="summary-value">{portfolioDisplayName}</span>
-              </div>
-              <div className="summary-line">
-                <span className="summary-detail">
-                  {portfolioHoldingsCount} Assets | Total Allocation: {(portfolioTotalWeight * 100).toFixed(0)}%
-                </span>
-              </div>
-            </div>
-            <button 
-              className="change-btn" 
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(true);
-              }}
-            >
-              Change
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="asset-card-controls-row">
-              <select 
-                className="portfolio-dropdown"
-                value={selectedPortfolioId}
-                onChange={(e) => loadPortfolio(e.target.value)}
-              >
-                <option value="">Select Portfolio</option>
-                {portfolios.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
-              <button className="create-portfolio-btn" onClick={openCreateModal}>
-                + Create Portfolio
-              </button>
-            </div>
-            <div className="asset-card-content">
-              <Table data={assets} columns={columns} />
-            </div>
-          </>
-        )}
+    <div className="asset-selection-card">
+      <div
+        className="asset-card-header collapsible-header"
+        onClick={() => setIsExpanded(p => !p)}
+      >
+        <h3 className="asset-card-title">
+          Asset Universe
+          {saving && <span className="universe-saving">saving…</span>}
+          <span className={`chevron ${isExpanded ? 'expanded' : ''}`}>▼</span>
+        </h3>
       </div>
 
-      {showModal && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal-title">Create Portfolio</h2>
-            
-            <div className="modal-section">
-              <label className="modal-label">Portfolio Name:</label>
-              <input
-                type="text"
-                className="modal-input"
-                value={portfolioName}
-                onChange={(e) => setPortfolioName(e.target.value)}
-                placeholder="Enter portfolio name"
-              />
-            </div>
-
-            <div className="modal-section">
-              <label className="modal-label">Add Security:</label>
-              <div className="add-security-row">
-                <input
-                  type="text"
-                  className="modal-input"
-                  value={tickerSearch}
-                  onChange={(e) => setTickerSearch(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addHolding()}
-                  placeholder="Enter ticker (e.g., AAPL)"
-                />
-                <button className="modal-add-btn" onClick={addHolding}>
-                  + Add
-                </button>
-              </div>
-            </div>
-
-            {holdings.length > 0 && (
-              <div className="modal-section">
-                <table className="holdings-table">
-                  <thead>
-                    <tr>
-                      <th>Ticker</th>
-                      <th>Weight (%)</th>
-                      <th>Remove</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {holdings.map(h => (
-                      <tr key={h.ticker}>
-                        <td>{h.ticker}</td>
-                        <td>
-                          <input
-                            type="number"
-                            className="weight-input"
-                            value={(h.weight * 100).toFixed(2)}
-                            onChange={(e) => updateHoldingWeight(h.ticker, e.target.value)}
-                            min="0"
-                            max="100"
-                            step="0.01"
-                          />
-                        </td>
-                        <td>
-                          <button 
-                            className="remove-holding-btn"
-                            onClick={() => removeHolding(h.ticker)}
-                          >
-                            ✕
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                
-                <div className={`remaining-allocation ${remaining < 0 ? 'negative' : ''}`}>
-                  Remaining Allocation: <strong>{(remaining * 100).toFixed(2)}%</strong>
-                  {remaining < 0 && <span className="warning"> (Exceeds 100%)</span>}
-                </div>
-              </div>
-            )}
-
-            <div className="modal-actions">
-              {holdings.length > 0 && (
-                <button className="modal-btn-secondary" onClick={autoNormalize}>
-                  Auto Normalize
-                </button>
-              )}
-              <button className="modal-btn-secondary" onClick={closeModal}>
-                Cancel
-              </button>
-              <button 
-                className="modal-btn-primary" 
-                onClick={savePortfolio}
-                disabled={!canSave}
-              >
-                Save Portfolio
-              </button>
-            </div>
-          </div>
+      {!isExpanded ? (
+        <div className="universe-collapsed">
+          <span className="universe-summary">{summary}</span>
+          <button
+            className="change-btn"
+            onClick={e => { e.stopPropagation(); setIsExpanded(true); }}
+          >
+            Change
+          </button>
+        </div>
+      ) : (
+        <div className="universe-grid">
+          {renderColumn(col1)}
+          {renderColumn(col2)}
         </div>
       )}
-    </>
+    </div>
   );
 };

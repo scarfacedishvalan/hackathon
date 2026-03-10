@@ -1,4 +1,4 @@
 export { BLMainPage } from './pages/BLMainPage';
 export * from './components';
-export * from './hooks/useBLMain';
+export { useBLMain, BLMainProvider } from './context/BLMainContext';
 export * from './types/blMainTypes';

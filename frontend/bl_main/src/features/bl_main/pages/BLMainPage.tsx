@@ -1,5 +1,5 @@
 import React from 'react';
-import { useBLMain } from '../hooks/useBLMain';
+import { useBLMain } from '../context/BLMainContext';
 import {
   AssetSelection,
   CreateView,
@@ -45,7 +45,7 @@ export const BLMainPage: React.FC = () => {
     <div className="bl-main-page">
       {/* Left Column */}
       <div className="left-column">
-        <AssetSelection assets={data.assets} />
+        <AssetSelection />
         <CreateView parseView={parseView} parseViewLoading={parseViewLoading} />
         <ActiveViews
           bottomUpViews={bottomUpViews}

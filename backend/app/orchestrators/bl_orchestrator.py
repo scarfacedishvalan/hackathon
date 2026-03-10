@@ -142,6 +142,15 @@ def run_black_litterman(
 
     universe: list[str] = recipe["universe"]["assets"]
 
+    # weight_bounds is now a single [min, max] pair applied to all assets.
+    # If an old dict-style entry sneaked in (e.g. manual edit), drop it so
+    # run_bl_recipe falls back to the global long-only bounds instead of
+    # silently applying stale per-asset floors.
+    bounds_raw = recipe.get("constraints", {}).get("weight_bounds", None)
+    if isinstance(bounds_raw, dict):
+        # Legacy per-asset dict — discard it; rely on long_only fallback
+        recipe["constraints"]["weight_bounds"] = None
+
     # Filter price data to universe
     missing_prices = [a for a in universe if a not in price_data.columns]
     if missing_prices:

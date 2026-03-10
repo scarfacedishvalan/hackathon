@@ -123,6 +123,27 @@ async def update_model_parameters(body: dict):
     return view_orchestrator.get_model_parameters()
 
 
+@router.get("/universe")
+async def get_universe():
+    """Return the universe.assets list from current.json."""
+    return {"assets": view_orchestrator.get_universe()}
+
+
+@router.put("/universe")
+async def update_universe(body: dict):
+    """
+    Overwrite universe.assets in current.json.
+
+    Request body: ``{ "assets": ["AAPL", "MSFT", ...] }``
+    Returns the saved list.
+    """
+    assets = body.get("assets", [])
+    if not isinstance(assets, list):
+        raise HTTPException(status_code=422, detail="'assets' must be a list of ticker strings")
+    saved = view_orchestrator.update_universe(assets)
+    return {"assets": saved}
+
+
 @router.delete("/bottom_up/{index}", status_code=204)
 async def delete_bottom_up_view(index: int):
     """

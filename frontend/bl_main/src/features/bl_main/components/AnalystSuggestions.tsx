@@ -16,6 +16,7 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingFetch, setLoadingFetch] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   // ── Load cached news on mount ─────────────────────────────────────────────
@@ -70,6 +71,7 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
     setError(null);
     try {
       await newsService.addNewsView(news.id);
+      setAddedIds((prev) => new Set(prev).add(news.id));
       onViewAdded?.();
     } catch {
       setError(`Failed to add view for "${news.heading}".`);
@@ -111,11 +113,11 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
       width: '150px',
       render: (n) => (
         <button
-          className="add-view-btn"
+          className={`add-view-btn${addedIds.has(n.id) ? ' added' : ''}`}
           onClick={() => handleAddToActiveViews(n)}
-          disabled={addingId === n.id}
+          disabled={addingId === n.id || addedIds.has(n.id)}
         >
-          {addingId === n.id ? 'Adding…' : '+ Active Views'}
+          {addingId === n.id ? 'Adding…' : addedIds.has(n.id) ? '✓ Added' : '+ Active Views'}
         </button>
       ),
     },

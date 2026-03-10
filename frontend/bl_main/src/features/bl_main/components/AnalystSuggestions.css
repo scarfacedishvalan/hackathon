@@ -109,6 +109,11 @@
   cursor: not-allowed;
 }
 
+.add-view-btn.added {
+  background: #15803d;
+  cursor: default;
+}
+
 .refresh-btn {
   padding: 10px 16px;
   background: #f0fdf4;

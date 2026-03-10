@@ -105,6 +105,24 @@ export const portfolioService = {
   },
 };
 
+export const universeService = {
+  /** GET /views/universe — active asset tickers in current.json */
+  getUniverse: async (): Promise<string[]> => {
+    try {
+      const res = await apiClient.get<{ assets: string[] }>('/views/universe');
+      return res.assets;
+    } catch {
+      return [];
+    }
+  },
+
+  /** PUT /views/universe — overwrite the universe asset list */
+  setUniverse: async (assets: string[]): Promise<string[]> => {
+    const res = await apiClient.put<{ assets: string[] }>('/views/universe', { assets });
+    return res.assets;
+  },
+};
+
 export const newsService = {
   /** GET /news — return cached items from news.json */
   getNews: async (): Promise<AnalystNews[]> => {

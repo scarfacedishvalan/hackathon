@@ -346,72 +346,31 @@ def run_bl_recipe(
     # Extract constraints
     constraints_config = recipe.get('constraints', {})
     long_only = constraints_config.get('long_only', True)
-    weight_bounds_config = constraints_config.get('weight_bounds', {})
-    
-    # Check if we have custom per-asset bounds
-    has_custom_bounds = bool(weight_bounds_config) and any(
-        asset in weight_bounds_config for asset in universe
-    )
-    
-    if has_custom_bounds:
-        # Custom bounds per asset - use manual optimization
-        from scipy.optimize import minimize
-        
-        bounds = []
-        custom_count = 0
-        for asset in universe:
-            if asset in weight_bounds_config:
-                bounds.append(tuple(weight_bounds_config[asset]))
-                custom_count += 1
-            else:
-                bounds.append((0.0, 1.0) if long_only else (-1.0, 1.0))
-        
-        print(f"  Using custom weight bounds for {custom_count} assets")
-        
-        # Manual optimization
-        posterior_returns_array = np.array([posterior_returns[asset] for asset in universe])
-        
-        def negative_sharpe(weights):
-            portfolio_return = np.dot(weights, posterior_returns_array)
-            portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(Sigma, weights)))
-            return -(portfolio_return - risk_free_rate) / portfolio_volatility
-        
-        initial_weights = np.ones(n_assets) / n_assets
-        constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
-        
-        result = minimize(
-            negative_sharpe,
-            initial_weights,
-            method='SLSQP',
-            bounds=bounds,
-            constraints=constraints
-        )
-        
-        if not result.success:
-            print(f"  ⚠️  Optimization warning: {result.message}")
-        
-        weights = {asset: weight for asset, weight in zip(universe, result.x)}
-        # Clean near-zero weights
-        weights = {k: v for k, v in weights.items() if abs(v) > 1e-4}
-        
+    weight_bounds_config = constraints_config.get('weight_bounds', None)
+
+    # Resolve a single (min, max) tuple applied uniformly to every asset.
+    # weight_bounds may be:
+    #   [min, max]       — list/tuple (new style)
+    #   null / absent    — fall back to long-only [0, 1] or unconstrained
+    if weight_bounds_config is not None and not isinstance(weight_bounds_config, dict):
+        lo, hi = float(weight_bounds_config[0]), float(weight_bounds_config[1])
+        bounds = (lo, hi)
+        print(f"  Using global weight bounds: [{lo}, {hi}] for all {n_assets} assets")
+    elif long_only:
+        bounds = (0.0, 1.0)
+        print(f"  Using long-only constraint: [0, 1]")
     else:
-        # Default bounds - use EfficientFrontier class
-        if long_only:
-            bounds = (0.0, 1.0)
-            print(f"  Using long-only constraint: [0, 1]")
-        else:
-            bounds = (None, None)
-            print(f"  No weight constraints")
-        
-        # Optimize
-        ef = EfficientFrontier(
-            posterior_returns, 
-            cov_matrix, 
-            weight_bounds=bounds,
-            risk_free_rate=risk_free_rate
-        )
-        ef.max_sharpe()
-        weights = ef.clean_weights()
+        bounds = (None, None)
+        print(f"  No weight constraints")
+
+    ef = EfficientFrontier(
+        posterior_returns,
+        cov_matrix,
+        weight_bounds=bounds,
+        risk_free_rate=risk_free_rate
+    )
+    ef.max_sharpe()
+    weights = ef.clean_weights()
     
     print("\n  Optimal Weights:")
     for asset in universe:

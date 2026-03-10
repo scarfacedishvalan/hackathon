@@ -238,6 +238,37 @@ def _append_views_to_current(new_result: Dict[str, Any]) -> None:
     save_recipe(existing, "current")
 
 
+def get_universe() -> List[str]:
+    """
+    Return the ``universe.assets`` list from ``current.json``.
+
+    Falls back to an empty list when ``current.json`` is absent or has no
+    ``universe`` key.
+    """
+    try:
+        recipe = load_recipe("current")
+        return recipe.get("universe", {}).get("assets", [])
+    except FileNotFoundError:
+        return []
+
+
+def update_universe(assets: List[str]) -> List[str]:
+    """
+    Overwrite ``universe.assets`` in ``current.json`` with *assets*.
+
+    Creates ``current.json`` with minimal structure if it does not exist.
+    Returns the saved list.
+    """
+    try:
+        recipe = load_recipe("current")
+    except FileNotFoundError:
+        recipe = {}
+
+    recipe.setdefault("universe", {})["assets"] = assets
+    save_recipe(recipe, "current")
+    return assets
+
+
 def get_model_parameters() -> Dict[str, float]:
     """
     Return the ``model_parameters`` block from ``current.json``.
