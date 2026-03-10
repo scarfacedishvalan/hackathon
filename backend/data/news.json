@@ -1,0 +1,85 @@
+{
+  "items": [
+    {
+      "id": "5c4bd8642ba7",
+      "heading": "Apple Shares Soar After Earnings Beat and Analyst Upgrade",
+      "translatedView": "Apple Shares Soar After Earnings Beat and Analyst Upgrade",
+      "link": "https://simulation.example.com/aapl/944b48e3a9",
+      "source": "MarketWatch AI",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-10T06:28:38.063759+00:00"
+    },
+    {
+      "id": "9744e5e1edd3",
+      "heading": "Interest Rates Pressure Apple as Analysts Caution on Valuation",
+      "translatedView": "The rates factor is expected to deliver a moderately positive premium. AAPL is expected to have a moderately negative return.",
+      "link": "https://simulation.example.com/aapl/f665709c50",
+      "source": "Reuters Mock",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-10T06:28:40.551111+00:00"
+    },
+    {
+      "id": "057cb60d60c5",
+      "heading": "Apple's Earnings Beat: A Temporary Boost Amid Rate Hikes?",
+      "translatedView": "AAPL is expected to have a moderately positive return. The rates factor is expected to deliver a moderately positive premium.",
+      "link": "https://simulation.example.com/aapl/871ef22b5f",
+      "source": "Bloomberg Sim",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-10T06:28:43.191835+00:00"
+    },
+    {
+      "id": "101b66082e00",
+      "heading": "Microsoft Earnings Beat Expectations Amid Rising Interest Rates",
+      "translatedView": "The rates factor is expected to deliver a moderately positive premium.",
+      "link": "https://simulation.example.com/msft/35c600b4b4",
+      "source": "MarketWatch AI",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-10T06:28:57.959502+00:00"
+    },
+    {
+      "id": "8f6ee79fe72c",
+      "heading": "Analysts Upgrade Microsoft Stock Following Strong Earnings Report",
+      "translatedView": "Analysts Upgrade Microsoft Stock Following Strong Earnings Report",
+      "link": "https://simulation.example.com/msft/c023c59fdb",
+      "source": "Reuters Mock",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-10T06:28:59.151400+00:00"
+    },
+    {
+      "id": "0c227e4e8ead",
+      "heading": "Microsoft Faces Pressure as Interest Rates Rise Despite Earnings Beat",
+      "translatedView": "MSFT is expected to have a moderately negative return. The rates factor is expected to deliver a moderately positive premium.",
+      "link": "https://simulation.example.com/msft/1f351b4d09",
+      "source": "Bloomberg Sim",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-10T06:29:01.197799+00:00"
+    },
+    {
+      "id": "3a6c06d8677a",
+      "heading": "JPMorgan Reports Strong Earnings Beat Amid Rate Hikes",
+      "translatedView": "JPM is expected to have a moderately positive return. The rates factor is expected to deliver a moderately positive premium.",
+      "link": "https://simulation.example.com/jpm/7b6a52d05d",
+      "source": "Bloomberg Sim",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-10T06:29:18.234147+00:00"
+    },
+    {
+      "id": "d09ab69890ce",
+      "heading": "Analysts Cautious on JPMorgan Despite Earnings Strength",
+      "translatedView": "Analysts Cautious on JPMorgan Despite Earnings Strength",
+      "link": "https://simulation.example.com/jpm/d1a155e88f",
+      "source": "MarketWatch AI",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-10T06:29:19.538743+00:00"
+    },
+    {
+      "id": "bd478c19c138",
+      "heading": "JPMorgan Upgraded as Interest Rates Boost Profitability",
+      "translatedView": "JPMorgan Upgraded as Interest Rates Boost Profitability",
+      "link": "https://simulation.example.com/jpm/202a5abe2b",
+      "source": "Reuters Mock",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-10T06:29:20.775421+00:00"
+    }
+  ]
+}

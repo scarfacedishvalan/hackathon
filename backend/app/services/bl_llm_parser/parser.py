@@ -7,10 +7,43 @@ into structured Black-Litterman format using an LLM.
 
 import os
 import json
+from pathlib import Path
 from typing import List, Dict, Optional
 
 from app.services.llm_client import chat_and_record
 from app.services.model_settings import CHAT_AND_RECORD_METADATA
+
+_PARSER_DIR = Path(__file__).resolve().parent
+_DEFAULT_MARKET_DATA = _PARSER_DIR.parent.parent.parent / "data" / "market_data.json"
+
+
+def _load_default_asset_metadata() -> Dict:
+    """Build asset metadata from market_data.json (numeric factor exposures + sector)."""
+    try:
+        with open(_DEFAULT_MARKET_DATA, "r", encoding="utf-8") as f:
+            md = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+    factor_names = md.get("factor_names", [])
+    factor_exposures = md.get("factor_exposures", {})
+    asset_metadata = md.get("asset_metadata", {})
+    sector_map = md.get("sector_map", {})
+
+    result = {}
+    for asset, meta in asset_metadata.items():
+        exposures_raw = factor_exposures.get(asset)
+        if exposures_raw and not isinstance(exposures_raw, str):
+            exposures = dict(zip(factor_names, exposures_raw))
+        else:
+            exposures = {}
+        result[asset] = {
+            "name": meta.get("name", asset),
+            "sector": sector_map.get(asset, "Unknown"),
+            "asset_class": meta.get("asset_class", "Unknown"),
+            "factor_exposures": exposures,
+        }
+    return result
 
 
 class BlackLittermanLLMParser:
@@ -114,9 +147,8 @@ class BlackLittermanLLMParser:
             assets: List of allowed asset symbols (e.g., ["AAPL", "MSFT"])
             factors: List of allowed factor names (e.g., ["Rates", "Growth"])
             investor_text: Natural language investment views
-            asset_metadata: Optional dict mapping assets to sector/factor data
-                Example: {"AAPL": {"sector": "Technology", "factor_exposures": {...}}}
-                If None, parser works without sector context
+            asset_metadata: Optional dict mapping assets to sector/factor data.
+                If None, loaded automatically from market_data.json.
             
         Returns:
             Dictionary containing:
@@ -127,6 +159,10 @@ class BlackLittermanLLMParser:
             ValueError: If JSON is invalid or required keys are missing
             FileNotFoundError: If prompt files cannot be found
         """
+        # Use default metadata if none provided
+        if asset_metadata is None:
+            asset_metadata = _load_default_asset_metadata()
+
         # Load system prompt
         system_prompt_path = os.path.join(self.prompt_dir, "system_prompt.txt")
         system_prompt = self._load_file(system_prompt_path)

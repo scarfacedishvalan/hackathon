@@ -1,0 +1,7 @@
+Generate {LIMIT} financial news articles about the stock ticker: {TICKER}
+
+Keywords / themes to weave into the articles: {KEYWORDS}
+
+Today's date: {TODAY}
+
+Return only the JSON array as specified — no other text.

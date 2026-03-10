@@ -4,6 +4,7 @@ import json
 
 from app.orchestrators.view_orchestrator import parse_view, load_recipe
 from app.orchestrators.bl_orchestrator import run_black_litterman
+from app.orchestrators.news_orchestrator import fetch_and_parse, load_news, add_view_to_recipe
 from app.services.price_data.load_data import load_market_data
 
 _CURRENT_RECIPE_PATH = Path(__file__).resolve().parent / "data" / "bl_recipes" / "current.json"
@@ -17,6 +18,57 @@ def load_current_recipe() -> dict:
             "Run a view parse first or create the file manually."
         )
     return load_recipe("current")
+
+# ---------------------------------------------------------------------------
+# News API example
+# ---------------------------------------------------------------------------
+
+
+def run_news_example():
+    TICKERS = ["AAPL", "MSFT", "JPM"]
+    KEYWORDS = ["interest rates", "earnings beat", "analyst upgrade"]
+    LIMIT = 3  # articles per ticker
+
+    print("\n" + "=" * 60)
+    print("NEWS ORCHESTRATOR EXAMPLE  (simulated LLM articles)")
+    print("=" * 60)
+
+    # ── Step 1: generate & parse articles into news.json ──────────────────
+    print(f"\nGenerating up to {LIMIT} articles each for: {', '.join(TICKERS)}")
+    print(f"Keywords: {', '.join(KEYWORDS)}")
+    print("(Skips articles already cached in data/news.json)")
+    items = fetch_and_parse(tickers=TICKERS, limit_per_ticker=LIMIT, keywords=KEYWORDS)
+    print(f"\nTotal items in news.json after generation: {len(items)}")
+
+    if not items:
+        print("No news items returned — check your OPENAI_API_KEY and model availability.")
+        return
+
+    # ── Step 2: display the first few items ────────────────────────────────
+    print("\nLatest news items (first 5):")
+    print("-" * 60)
+    for item in items[:5]:
+        print(f"  [{item['ticker']}]  {item['heading'][:70]}")
+        print(f"           → {item['translatedView']}")
+        print()
+
+    # ── Step 3: add the first item's view to current.json ──────────────────
+    first_id = items[0]["id"]
+    print(f"Adding view for item id='{first_id}' to current.json ...")
+    try:
+        result = add_view_to_recipe(first_id)
+        bottom_up = result.get("bottom_up_views", [])
+        factor_shocks = result.get("top_down_views", {}).get("factor_shocks", [])
+        print(f"  → {len(bottom_up)} bottom-up view(s), {len(factor_shocks)} factor shock(s) appended")
+        if bottom_up:
+            print(f"     bottom-up: {json.dumps(bottom_up[0], indent=6)}")
+        if factor_shocks:
+            print(f"     top-down:  {json.dumps(factor_shocks[0], indent=6)}")
+    except Exception as exc:
+        print(f"  ERROR adding view: {exc}")
+
+    print("=" * 60)
+
 
 # ---------------------------------------------------------------------------
 # View parsing example
@@ -101,9 +153,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run orchestrator examples")
     parser.add_argument(
         "--example",
-        choices=["views", "bl", "all"],
-        default="bl",
-        help="Which example to run (default: bl)",
+        choices=["views", "bl", "news", "all"],
+        default="news",
+        help="Which example to run (default: news)",
     )
     args = parser.parse_args()
 
@@ -112,3 +164,6 @@ if __name__ == "__main__":
 
     if args.example in ("bl", "all"):
         run_bl_example()
+
+    if args.example in ("news", "all"):
+        run_news_example()

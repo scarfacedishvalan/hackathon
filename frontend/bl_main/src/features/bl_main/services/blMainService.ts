@@ -1,4 +1,4 @@
-import type { BLMainData, ParsedView, Portfolio, BottomUpView, TopDownView } from '../types/blMainTypes';
+import type { BLMainData, ParsedView, Portfolio, BottomUpView, TopDownView, AnalystNews } from '../types/blMainTypes';
 import { apiClient } from '../../../services/apiClient';
 import mockData from '../mock/mockBlMainData.json';
 
@@ -102,5 +102,28 @@ export const portfolioService = {
 
   remove: async (id: string): Promise<void> => {
     return apiClient.delete(`/portfolios/${id}`);
+  },
+};
+
+export const newsService = {
+  /** GET /news — return cached items from news.json */
+  getNews: async (): Promise<AnalystNews[]> => {
+    try {
+      const response = await apiClient.get<{ items: AnalystNews[] }>('/news');
+      return response.items;
+    } catch {
+      return [];
+    }
+  },
+
+  /** POST /news/fetch — fetch fresh articles and generate translatedViews */
+  fetchNews: async (): Promise<AnalystNews[]> => {
+    const response = await apiClient.post<{ count: number; items: AnalystNews[] }>('/news/fetch', {});
+    return response.items;
+  },
+
+  /** POST /news/{id}/add-view — parse translatedView and append to current.json */
+  addNewsView: async (id: string): Promise<void> => {
+    await apiClient.post(`/news/${id}/add-view`, {});
   },
 };

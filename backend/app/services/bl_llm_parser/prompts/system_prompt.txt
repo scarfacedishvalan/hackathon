@@ -32,6 +32,16 @@ NUMERIC NORMALIZATION
    - moderate conviction → 0.7
    - low conviction → 0.55
 
+VIEW CLASSIFICATION RULES (apply before generating any view)
+1. If the investor text references a sector group, factor, or basket of stocks
+   (e.g. "financials", "growth stocks", "tech", "defensives", "rate-sensitive assets"),
+   it is a TOP-DOWN view ONLY.
+   - Populate factor_shocks.
+   - Do NOT generate any bottom_up_views for that statement.
+2. Only generate bottom_up_views when the investor names SPECIFIC assets explicitly
+   (e.g. "AAPL will outperform MSFT", "I am bearish on Tesla").
+3. When both a specific asset AND a factor/sector are mentioned, generate both.
+
 BOTTOM-UP VIEW RULES
 1. Relative view:
    - type = "relative"
@@ -75,7 +85,20 @@ TOP-DOWN VIEW RULES
      * "Rates hurting growth stocks" → Rates factor, negative shock affecting high-growth assets
      * "Value stocks underperforming" → Value factor, negative shock
 
-5. Factor shock rules:
+5. Cause-vs-effect factor separation:
+   - When a statement mentions a CAUSE factor AND an EFFECT on another factor/sector,
+     emit a separate shock for EACH:
+     * Cause factor shock: direction from the cause word (e.g. "rising" → positive),
+       magnitude = default ±0.02 unless explicitly qualified
+     * Effect factor shock: direction from the effect word (e.g. "benefit" → positive,
+       "hurt" → negative), magnitude from the qualifier on the EFFECT (e.g. "strongly" → 0.04)
+   - Example: "Rising rates will strongly benefit financials and slightly hurt defensives"
+     → Rates: +0.02  (cause: rising rates, no magnitude on the rate move itself)
+     → Financial: +0.04  (effect: strongly benefit financials)
+     → Defensive: -0.01  (effect: slightly hurt defensives)
+   - NEVER apply the effect's magnitude qualifier to the cause factor.
+
+6. Factor shock rules:
    - Factor shocks apply portfolio-wide but affect assets proportionally to their factor exposure
    - Higher factor exposure = stronger impact from that factor's shock
    - Use asset metadata to understand which assets are sensitive to each factor

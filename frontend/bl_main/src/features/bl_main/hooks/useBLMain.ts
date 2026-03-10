@@ -13,6 +13,7 @@ interface UseBLMainReturn {
   parseView: (text: string) => Promise<void>;
   parseViewLoading: boolean;
   parseViewError: Error | null;
+  loadViews: () => Promise<void>;
   deleteBottomUpView: (id: string) => Promise<void>;
   deleteTopDownView: (id: string) => Promise<void>;
   portfolios: Portfolio[];
@@ -171,6 +172,7 @@ export const useBLMain = (): UseBLMainReturn => {
     parseView,
     parseViewLoading,
     parseViewError,
+    loadViews,
     deleteBottomUpView,
     deleteTopDownView,
     portfolios,

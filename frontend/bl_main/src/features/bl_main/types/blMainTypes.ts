@@ -50,10 +50,13 @@ export interface AnalystSuggestion {
 }
 
 export interface AnalystNews {
-  id: number;
+  id: string;
   heading: string;
   translatedView: string;
   link: string;
+  source?: string;
+  ticker?: string;
+  fetched_at?: string;
 }
 
 export interface EfficientFrontierPoint {

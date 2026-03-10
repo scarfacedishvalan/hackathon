@@ -70,10 +70,22 @@
     },
     "factor_shocks": [
       {
-        "factor": "Growth",
+        "factor": "Rates",
+        "shock": 0.02,
+        "confidence": 0.6,
+        "label": "Rising rates"
+      },
+      {
+        "factor": "Financial",
         "shock": 0.04,
         "confidence": 0.6,
-        "label": "Strong growth prospects"
+        "label": "Strong benefit to financials"
+      },
+      {
+        "factor": "Defensive",
+        "shock": -0.01,
+        "confidence": 0.6,
+        "label": "Slightly hurt defensives"
       }
     ]
   }

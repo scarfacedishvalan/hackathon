@@ -18,6 +18,7 @@ export const BLMainPage: React.FC = () => {
     bottomUpViews, topDownViews,
     parseView, parseViewLoading,
     deleteBottomUpView, deleteTopDownView,
+    loadViews,
     portfolios, portfoliosLoading,
     createPortfolio, deletePortfolio,
     selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio,
@@ -52,7 +53,7 @@ export const BLMainPage: React.FC = () => {
           onDeleteBottomUp={deleteBottomUpView}
           onDeleteTopDown={deleteTopDownView}
         />
-        <AnalystSuggestions suggestions={data.analystSuggestions} />
+        <AnalystSuggestions suggestions={data.analystSuggestions} onViewAdded={loadViews} />
         <ModelControls />
       </div>
 

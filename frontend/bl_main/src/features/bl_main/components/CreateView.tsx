@@ -21,13 +21,13 @@ export const CreateView: React.FC<CreateViewProps> = ({ parseView, parseViewLoad
   };
 
   const assetViewExamples = [
-    "AAPL will outperform MSFT by 3% over the next quarter. Strong iPhone sales expected.",
-    "TSLA expected to underperform SP500 by 5%. Delivery concerns and competition increasing."
+    "AAPL will outperform MSFT by 3% over the next quarter.",
+    "TSLA expected to underperform JPM by 5%."
   ];
 
   const factorViewExamples = [
-    "Technology sector will outperform by 4%. AI adoption driving growth across the sector.",
-    "Energy sector expected to decline by 2%. Renewable transition pressuring traditional energy."
+    "Growth factor is expected to deliver a +4% annualized excess return (factor premium) over cash",
+    "Rising rates will strongly benefit financials and slightly hurt defensives."
   ];
 
   return (

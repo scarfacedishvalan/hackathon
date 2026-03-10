@@ -46,7 +46,13 @@ CHAT_AND_RECORD_METADATA = {
             "operation": "parse_article_views",
             "model": "gpt-4.1-mini",
             "temperature": 0,  # Deterministic for structured extraction
-        }
+        },
+        "generate_article": {
+            "service": "news_api",
+            "operation": "generate_article",
+            "model": "gpt-4o-mini",
+            "temperature": 0.8,  # Some creativity for varied simulated articles
+        },
     },
     "bl_stress_parser": {
         "parse_stress_request": {
