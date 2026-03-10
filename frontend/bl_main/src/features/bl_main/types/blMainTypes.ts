@@ -7,6 +7,7 @@ export interface Asset {
   selected?: boolean;
 }
 
+/** @deprecated Use BottomUpView / TopDownView instead */
 export interface ActiveView {
   id?: string;
   type: 'relative' | 'absolute';
@@ -15,6 +16,31 @@ export interface ActiveView {
   direction: 'positive' | 'negative' | 'neutral';
   confidence: number;
   expectedReturn?: number;
+}
+
+/** A bottom-up analyst view (absolute or relative). */
+export interface BottomUpView {
+  id: string;
+  type: 'absolute' | 'relative';
+  /** Absolute view: single ticker */
+  asset?: string;
+  /** Relative view: long leg */
+  asset_long?: string;
+  /** Relative view: short leg */
+  asset_short?: string;
+  /** Signed value: expected_return (absolute) or expected_outperformance (relative) */
+  value: number;
+  confidence: number;
+  label?: string;
+}
+
+/** A top-down macro/factor view. */
+export interface TopDownView {
+  id: string;
+  factor: string;
+  shock: number;
+  confidence: number;
+  label?: string;
 }
 
 export interface AnalystSuggestion {
@@ -66,7 +92,6 @@ export interface Portfolio {
 
 export interface BLMainData {
   assets: Asset[];
-  activeViews: ActiveView[];
   analystSuggestions: AnalystSuggestion[];
   analystNews?: AnalystNews[];
   efficientFrontier: EfficientFrontier;

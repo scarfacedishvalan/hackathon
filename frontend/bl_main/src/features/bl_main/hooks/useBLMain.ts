@@ -1,19 +1,20 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { blMainService, portfolioService } from '../services/blMainService';
-import type { ActiveView, BLMainData, ParsedView, Portfolio } from '../types/blMainTypes';
-
-const STORAGE_KEY = 'bl_active_views';
+import type { BottomUpView, TopDownView, BLMainData, Portfolio } from '../types/blMainTypes';
 
 interface UseBLMainReturn {
   data: BLMainData | null;
   loading: boolean;
+  runLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  activeViews: ActiveView[];
+  bottomUpViews: BottomUpView[];
+  topDownViews: TopDownView[];
   parseView: (text: string) => Promise<void>;
   parseViewLoading: boolean;
   parseViewError: Error | null;
-  deleteView: (id: string) => void;
+  deleteBottomUpView: (id: string) => Promise<void>;
+  deleteTopDownView: (id: string) => Promise<void>;
   portfolios: Portfolio[];
   portfoliosLoading: boolean;
   createPortfolio: (portfolio: Omit<Portfolio, 'id'> & { id?: string }) => Promise<void>;
@@ -23,48 +24,15 @@ interface UseBLMainReturn {
   selectedPortfolio: Portfolio | null;
 }
 
-/** Map a ParsedView from the backend into the local ActiveView shape. */
-function toActiveView(parsed: ParsedView): ActiveView {
-  const alpha = parsed.alpha ?? 0;
-  const direction: ActiveView['direction'] =
-    alpha > 0 ? 'positive' : alpha < 0 ? 'negative' : 'neutral';
-
-  const viewType: ActiveView['type'] =
-    parsed.type === 'relative' ? 'relative' : 'absolute';
-
-  const asset =
-    parsed.type === 'relative' && parsed.asset_long && parsed.asset_short
-      ? `${parsed.asset_long} vs ${parsed.asset_short}`
-      : parsed.asset_long ?? parsed.asset ?? parsed.factor ?? '';
-
-  return {
-    id: `parsed-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    type: viewType,
-    asset,
-    value: Math.abs(alpha),
-    direction,
-    confidence: parsed.confidence ?? 0,
-    expectedReturn: alpha,
-  };
-}
-
-/**
- * Custom hook for managing Black-Litterman data
- * Handles loading state and provides refetch capability
- */
 export const useBLMain = (): UseBLMainReturn => {
   const [data, setData] = useState<BLMainData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const [activeViews, setActiveViews] = useState<ActiveView[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [runLoading, setRunLoading] = useState<boolean>(false);
+
+  const [bottomUpViews, setBottomUpViews] = useState<BottomUpView[]>([]);
+  const [topDownViews, setTopDownViews] = useState<TopDownView[]>([]);
   const [parseViewLoading, setParseViewLoading] = useState<boolean>(false);
   const [parseViewError, setParseViewError] = useState<Error | null>(null);
 
@@ -76,6 +44,20 @@ export const useBLMain = (): UseBLMainReturn => {
     () => portfolios.find(p => p.id === selectedPortfolioId) ?? null,
     [portfolios, selectedPortfolioId]
   );
+
+  // ── Load views from backend (adapts current.json) ──────────────────────────
+
+  const loadViews = useCallback(async () => {
+    try {
+      const { bottom_up, top_down } = await blMainService.getCurrentViews();
+      setBottomUpViews(bottom_up);
+      setTopDownViews(top_down);
+    } catch (err) {
+      console.error('Error loading views from backend:', err);
+    }
+  }, []);
+
+  // ── Portfolio helpers ───────────────────────────────────────────────────────
 
   const loadPortfolios = useCallback(async () => {
     setPortfoliosLoading(true);
@@ -97,6 +79,8 @@ export const useBLMain = (): UseBLMainReturn => {
     setPortfolios(prev => prev.filter(p => p.id !== id));
   }, []);
 
+  // ── BL data fetch ───────────────────────────────────────────────────────────
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -113,52 +97,36 @@ export const useBLMain = (): UseBLMainReturn => {
 
   const refetch = useCallback(async () => {
     try {
-      setLoading(true);
+      setRunLoading(true);
       setError(null);
-      // In production, this would include current views and controls
       const result = await blMainService.runOptimization();
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
       console.error('Error running BL optimization:', err);
     } finally {
-      setLoading(false);
+      setRunLoading(false);
     }
   }, []);
 
-  // Persist to localStorage whenever activeViews changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(activeViews));
-  }, [activeViews]);
-
-  // Keep backend current.json in sync with the full active views list.
-  // Fires on every add or delete so the server always mirrors the table.
-  useEffect(() => {
-    blMainService.syncCurrentViews(activeViews).catch((err) =>
-      console.warn('Failed to sync views to backend:', err)
-    );
-  }, [activeViews]);
-
-  // Only seed from fetched data if localStorage is empty
-  useEffect(() => {
-    if (data?.activeViews && activeViews.length === 0) {
-      setActiveViews(data.activeViews);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  // ── Mount ───────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     fetchData();
     loadPortfolios();
-  }, [fetchData, loadPortfolios]);
+    loadViews();
+  }, [fetchData, loadPortfolios, loadViews]);
+
+  // ── Parse view ──────────────────────────────────────────────────────────────
 
   const parseView = useCallback(async (text: string) => {
     try {
       setParseViewLoading(true);
       setParseViewError(null);
-      const parsedViews = await blMainService.parseView(text);
-      const newViews = parsedViews.map(toActiveView);
-      setActiveViews(prev => [...prev, ...newViews]);
+      // Backend parses text and saves to current.json
+      await blMainService.parseView(text);
+      // Reload the adapted views from current.json
+      await loadViews();
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Failed to parse view');
       setParseViewError(e);
@@ -166,11 +134,51 @@ export const useBLMain = (): UseBLMainReturn => {
     } finally {
       setParseViewLoading(false);
     }
-  }, []);
+  }, [loadViews]);
 
-  const deleteView = useCallback((id: string) => {
-    setActiveViews(prev => prev.filter(v => v.id !== id));
-  }, []);
+  // ── Delete views — persisted to current.json via backend ───────────────────
 
-  return { data, loading, error, refetch, activeViews, parseView, parseViewLoading, parseViewError, deleteView, portfolios, portfoliosLoading, createPortfolio, deletePortfolio, selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio };
+  const deleteBottomUpView = useCallback(async (id: string) => {
+    // id format is "bu-{index}" — extract the array index
+    const index = parseInt(id.split('-')[1], 10);
+    try {
+      await blMainService.deleteBottomUpView(index);
+      await loadViews();
+    } catch (err) {
+      console.error('Error deleting bottom-up view:', err);
+    }
+  }, [loadViews]);
+
+  const deleteTopDownView = useCallback(async (id: string) => {
+    // id format is "td-{index}" — extract the array index
+    const index = parseInt(id.split('-')[1], 10);
+    try {
+      await blMainService.deleteTopDownView(index);
+      await loadViews();
+    } catch (err) {
+      console.error('Error deleting top-down view:', err);
+    }
+  }, [loadViews]);
+
+  return {
+    data,
+    loading,
+    runLoading,
+    error,
+    refetch,
+    bottomUpViews,
+    topDownViews,
+    parseView,
+    parseViewLoading,
+    parseViewError,
+    deleteBottomUpView,
+    deleteTopDownView,
+    portfolios,
+    portfoliosLoading,
+    createPortfolio,
+    deletePortfolio,
+    selectedPortfolioId,
+    setSelectedPortfolioId,
+    selectedPortfolio,
+  };
 };

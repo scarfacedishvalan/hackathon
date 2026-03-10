@@ -1,28 +1,42 @@
-import type { BLMainData, ParsedView, Portfolio, ActiveView } from '../types/blMainTypes';
+import type { BLMainData, ParsedView, Portfolio, BottomUpView, TopDownView } from '../types/blMainTypes';
 import { apiClient } from '../../../services/apiClient';
 import mockData from '../mock/mockBlMainData.json';
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 /**
- * Service layer for Black-Litterman data
- * Currently uses mock data but structured for easy backend integration
+ * Call POST /bl/run and merge the chart fields into the mock skeleton so that
+ * non-chart fields (analystSuggestions, analystNews, assets) are always
+ * populated even when the backend hasn't computed them yet.
  */
+async function _runAndMerge(): Promise<BLMainData> {
+  const result = await apiClient.post<Partial<BLMainData>>('/bl/run', {});
+  return {
+    ...(mockData as BLMainData),          // fallback / static fields
+    ...result,                             // live chart data overwrites mock
+  };
+}
+
 export const blMainService = {
   /**
-   * Fetch Black-Litterman data
-   * Replace with apiClient.get('/bl') for real backend
+   * Initial data load — tries POST /bl/run and falls back to mock if the
+   * backend isn't reachable or no recipe exists yet.
    */
   getBlackLittermanData: async (): Promise<BLMainData> => {
-    // Simulate network delay
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(mockData as BLMainData);
-      }, 500);
-    });
+    try {
+      return await _runAndMerge();
+    } catch {
+      // No backend / no current recipe — serve the static mock so the UI
+      // shows something useful on first launch.
+      return mockData as BLMainData;
+    }
   },
 
   /**
    * Parse a natural language investment view via the backend.
-   * POST /views/parse
+   * POST /views/parse  — backend parses text and saves to current.json.
    */
   parseView: async (text: string): Promise<ParsedView[]> => {
     const response = await apiClient.post<{ view: ParsedView[] }>('/views/parse', { text });
@@ -30,32 +44,42 @@ export const blMainService = {
   },
 
   /**
-   * Sync the full active-views list to the server so current.json always
-   * mirrors what the UI is showing.
-   * PUT /views/current
+   * Fetch the adapted view tables from current.json.
+   * GET /views/current
    */
-  syncCurrentViews: async (views: ActiveView[]): Promise<void> => {
-    await apiClient.put('/views/current', { views });
+  getCurrentViews: async (): Promise<{ bottom_up: BottomUpView[]; top_down: TopDownView[] }> => {
+    return apiClient.get<{ bottom_up: BottomUpView[]; top_down: TopDownView[] }>('/views/current');
+  },
+
+  /** GET /views/model_parameters — reads tau, risk_aversion, risk_free_rate from current.json */
+  getModelParameters: async (): Promise<{ tau: number; risk_aversion: number; risk_free_rate: number }> => {
+    return apiClient.get('/views/model_parameters');
+  },
+
+  /** PUT /views/model_parameters — persists updated params to current.json */
+  updateModelParameters: async (params: { tau?: number; risk_aversion?: number; risk_free_rate?: number }): Promise<void> => {
+    await apiClient.put('/views/model_parameters', params);
+  },
+
+  /** DELETE /views/bottom_up/{index} — splices the row from current.json */
+  deleteBottomUpView: async (index: number): Promise<void> => {
+    await apiClient.delete(`/views/bottom_up/${index}`);
+  },
+
+  /** DELETE /views/top_down/{index} — splices the row from current.json */
+  deleteTopDownView: async (index: number): Promise<void> => {
+    await apiClient.delete(`/views/top_down/${index}`);
   },
 
   /**
-   * Run Black-Litterman optimization
-   * This would send views and controls to backend
+   * Re-run BL optimisation and return fresh chart data merged with mock.
+   * Called by the "Run" / "Refresh" button in the UI.
    */
-  runOptimization: async (params?: {
+  runOptimization: async (_params?: {
     views?: unknown[];
     controls?: unknown;
   }): Promise<BLMainData> => {
-    // Future implementation:
-    // return apiClient.post('/bl/run', params);
-    
-    // For now, simulate optimization by returning mock data
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log('Running optimization with params:', params);
-        resolve(mockData as BLMainData);
-      }, 800);
-    });
+    return _runAndMerge();
   },
 };
 

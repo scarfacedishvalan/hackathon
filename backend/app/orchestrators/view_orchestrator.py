@@ -9,7 +9,6 @@ no FastAPI routes.
 import json
 import os
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -60,35 +59,8 @@ def _recipe_path(name: str) -> Path:
     return _RECIPES_DIR / f"{safe}.json"
 
 
-def save_current_views(views: List[Dict[str, Any]]) -> Path:
-    """
-    Overwrite ``current.json`` with a frontend-supplied list of active views.
-
-    Called when the UI syncs its full active-views state to the server
-    (e.g. after a delete or after appending a newly-parsed view).
-
-    Args:
-        views: List of ``ActiveView``-shaped dicts sent from the frontend.
-
-    Returns:
-        Path to the saved file.
-    """
-    _RECIPES_DIR.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "name": "current",
-        "saved_at": datetime.now(timezone.utc).isoformat(),
-        "raw_result": None,  # not available for frontend-driven syncs
-        "normalised_views": views,
-    }
-    path = _recipe_path("current")
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
-    return path
-
-
 def save_recipe(
     raw_result: Dict[str, Any],
-    normalised: List[Dict[str, Any]],
     name: str = "current",
 ) -> Path:
     """
@@ -97,24 +69,20 @@ def save_recipe(
     ``current.json`` is always overwritten.  Any other *name* creates a
     named snapshot that can be retrieved later.
 
+    The file contains the raw parser output as-is — no wrapper, no
+    normalisation — so it can be consumed directly by ``run_bl_recipe``.
+
     Args:
         raw_result:  Raw parser output from ``BlackLittermanLLMParser``.
-        normalised:  Normalised view list produced by ``parse_view``.
         name:        Recipe name (default ``"current"``).
 
     Returns:
         Path to the saved file.
     """
     _RECIPES_DIR.mkdir(parents=True, exist_ok=True)
-    payload = {
-        "name": name,
-        "saved_at": datetime.now(timezone.utc).isoformat(),
-        "raw_result": raw_result,
-        "normalised_views": normalised,
-    }
     path = _recipe_path(name)
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
+        json.dump(raw_result, f, indent=2)
     return path
 
 
@@ -241,6 +209,115 @@ def _normalize_view(raw_view: Dict[str, Any], view_category: str) -> Dict[str, A
 
 
 # ---------------------------------------------------------------------------
+# Mutation helpers  (append on parse; splice on delete)
+# ---------------------------------------------------------------------------
+
+
+def _append_views_to_current(new_result: Dict[str, Any]) -> None:
+    """
+    Append the bottom-up views and factor shocks from *new_result* into the
+    existing ``current.json``.  All other sections (meta, universe,
+    model_parameters, constraints) are preserved from the existing file.
+    If ``current.json`` does not yet exist, *new_result* is written as-is.
+    """
+    try:
+        existing = load_recipe("current")
+    except FileNotFoundError:
+        save_recipe(new_result, "current")
+        return
+
+    existing.setdefault("bottom_up_views", [])
+    for v in new_result.get("bottom_up_views", []):
+        existing["bottom_up_views"].append(v)
+
+    existing.setdefault("top_down_views", {})
+    existing["top_down_views"].setdefault("factor_shocks", [])
+    for shock in new_result.get("top_down_views", {}).get("factor_shocks", []):
+        existing["top_down_views"]["factor_shocks"].append(shock)
+
+    save_recipe(existing, "current")
+
+
+def get_model_parameters() -> Dict[str, float]:
+    """
+    Return the ``model_parameters`` block from ``current.json``.
+
+    Falls back to ``market_data.json`` model_defaults when ``current.json``
+    is absent or has no ``model_parameters`` key.
+    """
+    defaults: Dict[str, float] = {"tau": 0.05, "risk_aversion": 2.5, "risk_free_rate": 0.02}
+    try:
+        recipe = load_recipe("current")
+        params = recipe.get("model_parameters")
+        if params:
+            return {k: float(v) for k, v in params.items()}
+    except FileNotFoundError:
+        pass
+    return defaults
+
+
+def update_model_parameters(params: Dict[str, float]) -> None:
+    """
+    Merge *params* into the ``model_parameters`` block of ``current.json``
+    and persist.  Only ``tau``, ``risk_aversion``, and ``risk_free_rate``
+    are accepted; unknown keys are silently ignored.
+
+    Creates ``current.json`` with bare model_parameters if it does not
+    exist yet.
+    """
+    allowed = {"tau", "risk_aversion", "risk_free_rate"}
+    safe_params = {k: float(v) for k, v in params.items() if k in allowed}
+    try:
+        recipe = load_recipe("current")
+    except FileNotFoundError:
+        recipe = {}
+    recipe.setdefault("model_parameters", {})
+    recipe["model_parameters"].update(safe_params)
+    save_recipe(recipe, "current")
+
+
+def delete_bottom_up_view(index: int) -> None:
+    """
+    Remove the bottom-up view at array position *index* from ``current.json``.
+
+    Raises:
+        FileNotFoundError: if ``current.json`` does not exist.
+        IndexError: if *index* is out of range.
+    """
+    recipe = load_recipe("current")
+    views: List[Dict[str, Any]] = recipe.get("bottom_up_views", [])
+    if index < 0 or index >= len(views):
+        raise IndexError(
+            f"bottom_up_views index {index} out of range (len={len(views)})"
+        )
+    views.pop(index)
+    recipe["bottom_up_views"] = views
+    save_recipe(recipe, "current")
+
+
+def delete_top_down_view(index: int) -> None:
+    """
+    Remove the factor shock at array position *index* from
+    ``current.json → top_down_views.factor_shocks``.
+
+    Raises:
+        FileNotFoundError: if ``current.json`` does not exist.
+        IndexError: if *index* is out of range.
+    """
+    recipe = load_recipe("current")
+    shocks: List[Dict[str, Any]] = (
+        recipe.get("top_down_views", {}).get("factor_shocks", [])
+    )
+    if index < 0 or index >= len(shocks):
+        raise IndexError(
+            f"factor_shocks index {index} out of range (len={len(shocks)})"
+        )
+    shocks.pop(index)
+    recipe.setdefault("top_down_views", {})["factor_shocks"] = shocks
+    save_recipe(recipe, "current")
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -301,8 +378,8 @@ def parse_view(
     for shock in raw_result.get("top_down_views", {}).get("factor_shocks", []):
         normalised.append(_normalize_view(shock, "top_down"))
 
-    # Always persist the latest result so the UI can consume it
-    save_recipe(raw_result, normalised, name="current")
+    # Append new views into existing current.json (preserves prior views)
+    _append_views_to_current(raw_result)
 
     return normalised
 

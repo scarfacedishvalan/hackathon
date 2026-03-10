@@ -13,7 +13,15 @@ import {
 import './BLMainPage.css';
 
 export const BLMainPage: React.FC = () => {
-  const { data, loading, activeViews, parseView, parseViewLoading, deleteView, portfolios, portfoliosLoading, createPortfolio, deletePortfolio, selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio } = useBLMain();
+  const {
+    data, loading,
+    bottomUpViews, topDownViews,
+    parseView, parseViewLoading,
+    deleteBottomUpView, deleteTopDownView,
+    portfolios, portfoliosLoading,
+    createPortfolio, deletePortfolio,
+    selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio,
+  } = useBLMain();
 
   if (loading) {
     return (
@@ -38,17 +46,14 @@ export const BLMainPage: React.FC = () => {
       <div className="left-column">
         <AssetSelection assets={data.assets} />
         <CreateView parseView={parseView} parseViewLoading={parseViewLoading} />
-        <ActiveViews views={activeViews} onDelete={deleteView} />
-        <AnalystSuggestions suggestions={data.analystSuggestions} />
-        <ModelControls
-          portfolios={portfolios}
-          portfoliosLoading={portfoliosLoading}
-          createPortfolio={createPortfolio}
-          deletePortfolio={deletePortfolio}
-          selectedPortfolioId={selectedPortfolioId}
-          setSelectedPortfolioId={setSelectedPortfolioId}
-          selectedPortfolio={selectedPortfolio}
+        <ActiveViews
+          bottomUpViews={bottomUpViews}
+          topDownViews={topDownViews}
+          onDeleteBottomUp={deleteBottomUpView}
+          onDeleteTopDown={deleteTopDownView}
         />
+        <AnalystSuggestions suggestions={data.analystSuggestions} />
+        <ModelControls />
       </div>
 
       {/* Right Column */}

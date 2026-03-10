@@ -23,7 +23,7 @@ const PlayIcon: React.FC = () => (
 );
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { refetch, loading } = useBLMain();
+  const { refetch, runLoading } = useBLMain();
 
   return (
     <div className="app-container">
@@ -34,11 +34,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <Button
             variant="primary"
             size="large"
-            icon={<PlayIcon />}
+            icon={runLoading ? undefined : <PlayIcon />}
             onClick={refetch}
-            disabled={loading}
+            disabled={runLoading}
           >
-            Run Black-Litterman
+            {runLoading ? 'Running…' : 'Run Black-Litterman'}
           </Button>
         </div>
       </header>
