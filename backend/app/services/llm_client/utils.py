@@ -245,6 +245,186 @@ def chat_and_record(
         raise
 
 
+def chat_with_history(
+    messages: list[dict],
+    service: str,
+    operation: str,
+    tools: Optional[list[dict]] = None,
+    model: str = "gpt-4o",
+    temperature: float = 0.2,
+    db_path: Optional[Union[str, Path]] = None,
+    agent_cost_db_path: Optional[Union[str, Path]] = None,
+    agent_metadata: Optional[Dict[str, Any]] = None,
+) -> tuple[Optional[str], Optional[list]]:
+    """
+    Multi-turn LLM call that supports tool-use (function calling).
+
+    Designed for agentic ReAct loops where the caller accumulates the
+    ``messages`` list across steps.  Each call:
+
+    * Sends the full ``messages`` history to the model.
+    * Optionally includes ``tools`` (OpenAI function-calling schema).
+    * Writes a token/cost record to ``llm_usage.db`` (always).
+    * If ``agent_cost_db_path`` is supplied, also writes a step record
+      to ``agent_costs.db`` with richer audit metadata.
+
+    Parameters
+    ----------
+    messages:
+        Accumulated conversation history.
+        e.g. [{"role": "system", ...}, {"role": "user", ...}, ...]
+    service, operation:
+        Tracking labels (same as ``chat_and_record``).
+    tools:
+        Optional list of OpenAI tool schemas.
+    model:
+        Model name (default: gpt-4o).
+    temperature:
+        Sampling temperature (default: 0.2 for agent determinism).
+    db_path:
+        Path to ``llm_usage.db``; defaults to ``DEFAULT_DB_PATH``.
+    agent_cost_db_path:
+        Path to ``agent_costs.db``; required for per-step audit tracking.
+    agent_metadata:
+        Extra context written to ``agent_costs.db``.
+        Expected keys: ``audit_id``, ``thesis_name``, ``step``, ``tool_called``.
+
+    Returns
+    -------
+    (content, tool_calls)
+        ``content`` is the text reply (None if the model chose to call a tool).
+        ``tool_calls`` is a list of OpenAI tool-call objects (None if no tools).
+    """
+    from app.services.llm_client.agent_cost_tracker import (
+        AgentCostTracker,
+        AgentStepRecord,
+    )
+
+    # Resolve database paths
+    if db_path is None:
+        db_path = DEFAULT_DB_PATH
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+
+    tracker = LLMUsageTracker(str(db_path))
+    call_id = str(uuid.uuid4())
+    start_time = datetime.now()
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY environment variable not set.")
+    client = OpenAI(api_key=api_key)
+
+    try:
+        kwargs: Dict[str, Any] = dict(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+        )
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+
+        response = client.chat.completions.create(**kwargs)
+
+        end_time = datetime.now()
+        latency_ms = int((end_time - start_time).total_seconds() * 1000)
+
+        usage = response.usage
+        prompt_tokens = usage.prompt_tokens
+        completion_tokens = usage.completion_tokens
+        total_tokens = usage.total_tokens
+        cost = _calculate_cost(model, prompt_tokens, completion_tokens)
+
+        choice = response.choices[0]
+        content: Optional[str] = choice.message.content
+        tool_calls = choice.message.tool_calls  # list[ChatCompletionMessageToolCall] | None
+
+        # ---- write to llm_usage.db ----------------------------------------
+        record = LLMCallRecord(
+            call_id=call_id,
+            timestamp=start_time,
+            service=service,
+            operation=operation,
+            model=model,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            input_length=sum(len(m.get("content") or "") for m in messages),
+            output_length=len(content or ""),
+            temperature=temperature,
+            max_tokens=0,
+            success=True,
+            latency_ms=latency_ms,
+            cost_usd=cost,
+        )
+        tracker.record_call(record)
+
+        # ---- write to agent_costs.db (if path supplied) --------------------
+        if agent_cost_db_path and agent_metadata:
+            act = AgentCostTracker(agent_cost_db_path)
+            step_record = AgentStepRecord(
+                audit_id=agent_metadata.get("audit_id", call_id),
+                timestamp=start_time,
+                thesis_name=agent_metadata.get("thesis_name", "unknown"),
+                step=agent_metadata.get("step", 0),
+                tool_called=agent_metadata.get("tool_called"),
+                model=model,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
+                cost_usd=cost,
+                latency_ms=latency_ms,
+                success=True,
+            )
+            act.record_step(step_record)
+
+        return content, tool_calls
+
+    except Exception as exc:
+        end_time = datetime.now()
+        latency_ms = int((end_time - start_time).total_seconds() * 1000)
+
+        record = LLMCallRecord(
+            call_id=call_id,
+            timestamp=start_time,
+            service=service,
+            operation=operation,
+            model=model,
+            prompt_tokens=0,
+            completion_tokens=0,
+            total_tokens=0,
+            input_length=sum(len(m.get("content") or "") for m in messages),
+            output_length=0,
+            temperature=temperature,
+            max_tokens=0,
+            success=False,
+            error_message=str(exc),
+            latency_ms=latency_ms,
+            cost_usd=0.0,
+        )
+        tracker.record_call(record)
+
+        if agent_cost_db_path and agent_metadata:
+            act = AgentCostTracker(agent_cost_db_path)
+            step_record = AgentStepRecord(
+                audit_id=agent_metadata.get("audit_id", call_id),
+                timestamp=start_time,
+                thesis_name=agent_metadata.get("thesis_name", "unknown"),
+                step=agent_metadata.get("step", 0),
+                tool_called=agent_metadata.get("tool_called"),
+                model=model,
+                prompt_tokens=0,
+                completion_tokens=0,
+                total_tokens=0,
+                cost_usd=0.0,
+                latency_ms=latency_ms,
+                success=False,
+            )
+            act.record_step(step_record)
+
+        raise
+
+
 def _estimate_tokens(text: str) -> int:
     """
     Rough estimate: ~4 chars per token for English text.

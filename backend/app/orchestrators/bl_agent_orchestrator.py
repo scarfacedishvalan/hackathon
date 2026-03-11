@@ -1,0 +1,352 @@
+"""
+BL Agent Orchestrator
+
+Runs a ReAct (Reason + Act) loop that uses GPT-4o with tool-calling to:
+  1. Explore a Black-Litterman recipe
+  2. Stress-test assumptions / views
+  3. Find allocations suited to a stated risk profile
+  4. Synthesise findings into a narrative
+
+The agent terminates when it calls the ``synthesise`` tool, or when
+MAX_STEPS is reached.
+
+Public API
+----------
+run_agent(thesis_name, goal, max_steps=MAX_STEPS) -> dict
+    Execute a full agent run and return the audit record.
+
+list_audits(limit=50) -> list[dict]
+    Return summary rows from agent_costs.db.
+
+load_audit(audit_id) -> dict
+    Load a previously-saved audit JSON from data/agent_audits/.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+
+from app.orchestrators.bl_agent_tools import TOOLS, dispatch_tool
+from app.orchestrators.bl_orchestrator import run_black_litterman
+from app.orchestrators.view_orchestrator import load_recipe
+from app.services.llm_client import (
+    AgentCostTracker,
+    chat_with_history,
+)
+from app.services.price_data.load_data import load_market_data
+
+# ---------------------------------------------------------------------------
+# Paths & tunables
+# ---------------------------------------------------------------------------
+
+_BACKEND_DIR = Path(__file__).resolve().parents[2]
+AGENT_COSTS_DB = _BACKEND_DIR / "data" / "agent_costs.db"
+AGENT_AUDITS_DIR = _BACKEND_DIR / "data" / "agent_audits"
+AGENT_AUDITS_DIR.mkdir(parents=True, exist_ok=True)
+
+MAX_STEPS = 8
+AGENT_MODEL = "gpt-4o"
+
+# ---------------------------------------------------------------------------
+# System prompt
+# ---------------------------------------------------------------------------
+
+AGENT_SYSTEM_PROMPT = """You are an expert quantitative portfolio analyst assistant.
+You are given a Black-Litterman recipe — a set of investor views, model parameters,
+and universe constraints — and a stated goal.
+
+Your task is to reason carefully and use the available tools to:
+  1. Understand the base recipe (call get_recipe_summary first).
+  2. Run the base scenario to establish the benchmark allocation.
+  3. Stress-test critical assumptions (confidence levels, view magnitudes,
+     model parameters) by running targeted scenarios.
+  4. If the goal involves a risk profile, explore weight_bounds or
+     risk_aversion adjustments to find a suitable allocation.
+  5. Compare scenarios to understand sensitivity.
+  6. When you have gathered enough evidence, call synthesise() with a
+     thorough narrative, risk flags, and (optionally) your recommended weights.
+
+Be systematic. Use tool results to decide the next tool to call — do not
+call synthesise too early. Aim for at least 3 scenario runs before
+synthesising unless the recipe is trivially simple.
+
+Output only tool calls. Do not return free-form text outside of the
+synthesise narrative field."""
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+def _load_price_data() -> pd.DataFrame:
+    import contextlib, io
+    with contextlib.redirect_stdout(io.StringIO()):
+        price_df, *_ = load_market_data()
+    return price_df
+
+
+def _build_base_summary(recipe: dict, price_df: pd.DataFrame) -> dict:
+    """Run the unmodified recipe and return a result summary for caching."""
+    from app.orchestrators.bl_agent_tools import _summarise_result
+    result = run_black_litterman(recipe, price_df)
+    return _summarise_result(result, recipe)
+
+
+def _tool_call_to_message(tc) -> dict:
+    """Convert an OpenAI ChatCompletionMessageToolCall to a 'tool' message."""
+    return {
+        "tool_call_id": tc.id,
+        "role": "tool",
+        "name": tc.function.name,
+        "content": "",  # filled in after dispatch
+    }
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
+
+def run_agent(
+    thesis_name: str,
+    goal: str,
+    max_steps: int = MAX_STEPS,
+) -> dict:
+    """
+    Execute a full agentic BL analysis run.
+
+    Parameters
+    ----------
+    thesis_name:
+        The name of a BL recipe stored in ``data/bl_recipes/<name>.json``.
+    goal:
+        Natural-language description of what the agent should analyse,
+        e.g. "Stress-test all views and find allocation for a conservative
+        investor with max 15% per position."
+    max_steps:
+        Hard cap on ReAct iterations (default: 8).
+
+    Returns
+    -------
+    audit : dict
+        Full audit record including base recipe snapshot, step log,
+        synthesis output, cost breakdown, and final recommended weights.
+        The same dict is written to ``data/agent_audits/<audit_id>.json``.
+    """
+    audit_id = str(uuid.uuid4())
+    run_start = datetime.now()
+
+    # ---- Load recipe & price data ----------------------------------------
+    recipe = load_recipe(thesis_name)
+    price_df = _load_price_data()
+
+    # ---- Establish base run -----------------------------------------------
+    try:
+        from app.orchestrators.bl_agent_tools import _summarise_result, _quiet_bl
+        with _quiet_bl():
+            raw_base = run_black_litterman(recipe, price_df)
+        base_summary = _summarise_result(raw_base, recipe, price_df)
+    except Exception as exc:
+        base_summary = {"error": str(exc)}
+
+    # ---- Run cache (label -> summary) ------------------------------------
+    run_cache: Dict[str, dict] = {"base": base_summary}
+
+    # ---- Conversation history --------------------------------------------
+    messages: List[Dict[str, Any]] = [
+        {"role": "system", "content": AGENT_SYSTEM_PROMPT},
+        {
+            "role": "user",
+            "content": (
+                f"Thesis: '{thesis_name}'\n"
+                f"Goal: {goal}\n\n"
+                f"Base BL result summary:\n{json.dumps(base_summary, indent=2)}"
+            ),
+        },
+    ]
+
+    # ---- Audit bookkeeping -----------------------------------------------
+    steps_log: List[Dict[str, Any]] = []
+    synthesis: Optional[Dict[str, Any]] = None
+
+    # ---- ReAct loop -------------------------------------------------------
+    for step_idx in range(max_steps):
+        agent_metadata = {
+            "audit_id": audit_id,
+            "thesis_name": thesis_name,
+            "step": step_idx,
+            "tool_called": None,  # filled after we know which tool was called
+        }
+
+        content, tool_calls = chat_with_history(
+            messages=messages,
+            service="bl_agent",
+            operation="react_step",
+            tools=TOOLS,
+            model=AGENT_MODEL,
+            temperature=0.2,
+            agent_cost_db_path=AGENT_COSTS_DB,
+            agent_metadata=agent_metadata,
+        )
+
+        # Append assistant message to history
+        assistant_msg: Dict[str, Any] = {"role": "assistant", "content": content}
+        if tool_calls:
+            # OpenAI expects the tool_calls list in the assistant message
+            assistant_msg["tool_calls"] = [
+                {
+                    "id": tc.id,
+                    "type": "function",
+                    "function": {
+                        "name": tc.function.name,
+                        "arguments": tc.function.arguments,
+                    },
+                }
+                for tc in tool_calls
+            ]
+        messages.append(assistant_msg)
+
+        if not tool_calls:
+            # Model produced plain text — treat as implicit synthesis
+            steps_log.append(
+                {
+                    "step": step_idx,
+                    "type": "text_termination",
+                    "content": content,
+                }
+            )
+            synthesis = {"narrative": content or "", "done": True}
+            break
+
+        # Process each tool call
+        for tc in tool_calls:
+            tool_name: str = tc.function.name
+            try:
+                tool_args: dict = json.loads(tc.function.arguments)
+            except json.JSONDecodeError:
+                tool_args = {}
+
+            tool_result = dispatch_tool(
+                tool_name=tool_name,
+                tool_args=tool_args,
+                base_recipe=recipe,
+                run_cache=run_cache,
+                price_df=price_df,
+            )
+
+            result_text = json.dumps(tool_result)
+
+            # Record step in audit log
+            steps_log.append(
+                {
+                    "step": step_idx,
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "result": tool_result,
+                }
+            )
+
+            # Append tool result to conversation
+            messages.append(
+                {
+                    "tool_call_id": tc.id,
+                    "role": "tool",
+                    "name": tool_name,
+                    "content": result_text,
+                }
+            )
+
+            # Check for termination
+            if tool_name == "synthesise" and tool_result.get("done"):
+                synthesis = tool_result
+                break
+
+        if synthesis and synthesis.get("done"):
+            break
+
+    # ---- Build cost breakdown from agent_costs.db ------------------------
+    act = AgentCostTracker(AGENT_COSTS_DB)
+    cost_breakdown = act.get_audit_cost(audit_id)
+    step_costs = act.get_audit_steps(audit_id)
+
+    # ---- Compute weight delta vs base ------------------------------------
+    final_weights: Optional[Dict[str, float]] = None
+    if synthesis and synthesis.get("recommended_weights"):
+        final_weights = synthesis["recommended_weights"]
+    else:
+        # Use the last successfully-run scenario's weights
+        for lbl in reversed(list(run_cache.keys())):
+            if lbl != "base" and "weights" in run_cache[lbl]:
+                final_weights = run_cache[lbl]["weights"]
+                break
+
+    weight_delta_vs_base: Optional[Dict[str, float]] = None
+    if final_weights and "weights" in base_summary:
+        from app.orchestrators.bl_agent_tools import _weight_delta
+        weight_delta_vs_base = _weight_delta(base_summary["weights"], final_weights)
+
+    # ---- Assemble audit record -------------------------------------------
+    audit: Dict[str, Any] = {
+        "audit_id": audit_id,
+        "thesis_name": thesis_name,
+        "goal": goal,
+        "run_timestamp": run_start.isoformat(),
+        "model": AGENT_MODEL,
+        "base_recipe_snapshot": recipe,
+        "base_result_summary": base_summary,
+        "steps": steps_log,
+        "mutations_applied": [
+            s["args"].get("mutations")
+            for s in steps_log
+            if s.get("tool") == "run_bl_scenario"
+        ],
+        "scenarios_run": {k: v for k, v in run_cache.items() if k != "base"},
+        "synthesis": synthesis or {"narrative": "Max steps reached without synthesis."},
+        "final_weights": final_weights,
+        "weight_delta_vs_base": weight_delta_vs_base,
+        "cost_breakdown": cost_breakdown,
+        "step_costs": step_costs,
+    }
+
+    # ---- Persist to disk -------------------------------------------------
+    audit_path = AGENT_AUDITS_DIR / f"{audit_id}.json"
+    with open(audit_path, "w", encoding="utf-8") as f:
+        json.dump(audit, f, indent=2)
+
+    return audit
+
+
+# ---------------------------------------------------------------------------
+# Query helpers
+# ---------------------------------------------------------------------------
+
+def list_audits(limit: int = 50) -> List[dict]:
+    """
+    List past agent runs from agent_costs.db.
+
+    Returns summary rows (audit_id, thesis_name, first_timestamp,
+    steps, total_tokens, total_cost_usd).
+    """
+    act = AgentCostTracker(AGENT_COSTS_DB)
+    return act.list_audit_summaries(limit=limit)
+
+
+def load_audit(audit_id: str) -> dict:
+    """
+    Load a previously-saved full audit JSON.
+
+    Raises
+    ------
+    FileNotFoundError if audit does not exist on disk.
+    """
+    audit_path = AGENT_AUDITS_DIR / f"{audit_id}.json"
+    if not audit_path.exists():
+        raise FileNotFoundError(f"No audit found for id '{audit_id}' at {audit_path}")
+    with open(audit_path, "r", encoding="utf-8") as f:
+        return json.load(f)

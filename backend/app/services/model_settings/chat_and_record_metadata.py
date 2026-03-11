@@ -65,6 +65,14 @@ CHAT_AND_RECORD_METADATA = {
             "temperature": 0,  # Deterministic for stress test specification
         }
     },
+    "bl_agent": {
+        "react_step": {
+            "service": "bl_agent",
+            "operation": "react_step",
+            "model": "gpt-4o",
+            "temperature": 0.2,  # Low temperature for consistent reasoning steps
+        }
+    },
 }
 
 

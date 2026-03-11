@@ -270,9 +270,11 @@ class PriceData:
     
 if __name__ == "__main__":
     # Example usage
-    asset_list = ["AAPL", "MSFT", "GOOGL"]
-    price_data = PriceData()
-    print("Assets:", price_data.get_assets())
-    print("Time period (years):", price_data.get_time_period())
-    print("\nSummary Returns:")
-    print(price_data.get_summary_returns())
+    # asset_list = ["AAPL", "MSFT", "GOOGL"]
+    # price_data = PriceData()
+    # print("Assets:", price_data.get_assets())
+    # print("Time period (years):", price_data.get_time_period())
+    # print("\nSummary Returns:")
+    # print(price_data.get_summary_returns())
+    df = read_from_sqlite()
+    print(df.head())

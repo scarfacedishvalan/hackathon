@@ -4,7 +4,7 @@ import { Button } from '@shared/components';
 import { SaveThesisModal } from './SaveThesisModal';
 import './AppLayout.css';
 
-export type AppPage = 'bl_main' | 'backtest';
+export type AppPage = 'bl_main' | 'backtest' | 'agent';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -38,6 +38,7 @@ const SaveIcon: React.FC = () => (
 const NAV_TABS: { id: AppPage; label: string }[] = [
   { id: 'bl_main',   label: 'Portfolio Optimizer' },
   { id: 'backtest',  label: 'Backtest' },
+  { id: 'agent',     label: 'Agent Analysis' },
 ];
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNavigate }) => {

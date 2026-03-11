@@ -3,7 +3,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { useBacktest } from '../context/BacktestContext';
+import { useState, useCallback } from 'react';
+import { useBacktest, BacktestProvider } from '../context/BacktestContext';
 import { RecipeDisplay } from '../components/RecipeDisplay';
 import type { BacktestMetrics, BacktestTrade } from '../types/backtestTypes';
 import './BacktestPage.css';
@@ -146,7 +147,7 @@ const EXAMPLES = [
 
 // -- Main Page ----------------------------------------------------------------
 
-export const BacktestPage: React.FC = () => {
+const BacktestTabPanel: React.FC = () => {
   const {
     step, nlInput, setNlInput,
     parseLoading, parseError, parseStrategy,
@@ -278,6 +279,82 @@ export const BacktestPage: React.FC = () => {
           {runResult.trades.length > 0 && <TradesTable trades={runResult.trades} />}
         </div>
       )}
+    </div>
+  );
+};
+
+// -- Tab management ----------------------------------------------------------
+
+interface BacktestTab {
+  id: string;
+  label: string;
+}
+
+let tabCounter = 1;
+
+export const BacktestPage: React.FC = () => {
+  const [tabs, setTabs] = useState<BacktestTab[]>(() => [
+    { id: 'tab-1', label: 'Backtest 1' },
+  ]);
+  const [activeId, setActiveId] = useState('tab-1');
+
+  const addTab = useCallback(() => {
+    tabCounter += 1;
+    const id = `tab-${tabCounter}`;
+    const label = `Backtest ${tabCounter}`;
+    setTabs(prev => [...prev, { id, label }]);
+    setActiveId(id);
+  }, []);
+
+  const closeTab = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTabs(prev => {
+      if (prev.length === 1) return prev; // keep at least one
+      const next = prev.filter(t => t.id !== id);
+      if (activeId === id) {
+        // activate the neighbour
+        const idx = prev.findIndex(t => t.id === id);
+        setActiveId(next[Math.max(0, idx - 1)].id);
+      }
+      return next;
+    });
+  }, [activeId]);
+
+  return (
+    <div className="backtest-tabs-root">
+      {/* subtab strip */}
+      <div className="bt-subtabs">
+        {tabs.map(tab => (
+          <div
+            key={tab.id}
+            className={`bt-subtab${tab.id === activeId ? ' bt-subtab--active' : ''}`}
+            onClick={() => setActiveId(tab.id)}
+          >
+            <span className="bt-subtab-label">{tab.label}</span>
+            {tabs.length > 1 && (
+              <button
+                className="bt-subtab-close"
+                onClick={e => closeTab(tab.id, e)}
+                title="Close tab"
+              >
+                &#10005;
+              </button>
+            )}
+          </div>
+        ))}
+        <button className="bt-subtab-add" onClick={addTab} title="New backtest">
+          &#43;
+        </button>
+      </div>
+
+      {/* one provider+panel per tab; key ensures isolated state */}
+      {tabs.map(tab => (
+        <div key={tab.id} style={{ display: tab.id === activeId ? 'block' : 'none' }}>
+          <BacktestProvider>
+            <BacktestTabPanel />
+          </BacktestProvider>
+        </div>
+      ))}
     </div>
   );
 };

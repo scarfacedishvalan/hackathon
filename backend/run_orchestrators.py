@@ -20,6 +20,82 @@ def load_current_recipe() -> dict:
     return load_recipe("current")
 
 # ---------------------------------------------------------------------------
+# Agent orchestrator example
+# ---------------------------------------------------------------------------
+
+
+def run_agent_example(
+    thesis_name: str = "current",
+    goal: str = (
+        "Stress-test all views by varying confidence from 0.2 to 0.9 and "
+        "analyse the allocation for a moderate-risk investor with max 25% per position."
+    ),
+    max_steps: int = 8,
+):
+    """Run the agentic BL orchestrator on a named recipe."""
+    from app.orchestrators.bl_agent_orchestrator import run_agent, list_audits
+
+    print("\n" + "=" * 60)
+    print("BL AGENT ORCHESTRATOR")
+    print("=" * 60)
+    print(f"Thesis : {thesis_name}")
+    print(f"Goal   : {goal}")
+    print(f"Max steps: {max_steps}")
+    print("-" * 60)
+
+    audit = run_agent(thesis_name=thesis_name, goal=goal, max_steps=max_steps)
+
+    print(f"Audit ID      : {audit['audit_id']}")
+    print(f"Tool calls    : {len(audit['steps'])}")
+    print(f"LLM iterations: {audit.get('cost_breakdown', {}).get('steps', '?')}")
+
+    cost = audit.get("cost_breakdown", {})
+    print(f"Total cost: ${cost.get('total_cost_usd', 0):.4f} USD")
+    print(f"Total tokens: {cost.get('total_tokens', 0):,}")
+
+    print("\n" + "-" * 60)
+    print("STEP LOG")
+    for s in audit["steps"]:
+        tool = s.get("tool", s.get("type", "?"))
+        args_preview = ""
+        if "args" in s:
+            args_preview = " | label=" + s["args"].get("label", "")
+        print(f"  step {s['step']:2d}: {tool}{args_preview}")
+
+    print("\n" + "-" * 60)
+    print("SYNTHESIS")
+    synthesis = audit.get("synthesis", {})
+    print(synthesis.get("narrative", "(none)"))
+
+    if synthesis.get("risk_flags"):
+        print("\nRisk flags:")
+        for flag in synthesis["risk_flags"]:
+            print(f"  - {flag}")
+
+    if audit.get("weight_delta_vs_base"):
+        print("\nWeight delta vs base:")
+        for asset, delta in sorted(
+            audit["weight_delta_vs_base"].items(), key=lambda x: abs(x[1]), reverse=True
+        ):
+            if abs(delta) > 0.0001:
+                print(f"  {asset:6s}  {delta:+.2%}")
+
+    print("\n" + "-" * 60)
+    print("Recent audits:")
+    for row in list_audits(limit=5):
+        print(
+            f"  {row['audit_id'][:8]}...  "
+            f"{row['thesis_name']:12s}  "
+            f"{row['first_timestamp'][:19]}  "
+            f"steps={row['steps']}  "
+            f"${row['total_cost_usd']:.4f}"
+        )
+
+    print("=" * 60)
+    return audit
+
+
+# ---------------------------------------------------------------------------
 # News API example
 # ---------------------------------------------------------------------------
 
@@ -153,9 +229,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run orchestrator examples")
     parser.add_argument(
         "--example",
-        choices=["views", "bl", "news", "all"],
-        default="news",
-        help="Which example to run (default: news)",
+        choices=["views", "bl", "news", "agent", "all"],
+        default="agent",
+        help="Which example to run (default: agent)",
+    )
+    parser.add_argument(
+        "--thesis",
+        default="current",
+        help="Recipe name for the agent example (default: current)",
+    )
+    parser.add_argument(
+        "--goal",
+        default=(
+            "Stress-test all views by varying confidence and find an allocation "
+            "for a moderate-risk investor with max 25% per position."
+        ),
+        help="Goal text for the agent example",
     )
     args = parser.parse_args()
 
@@ -167,3 +256,6 @@ if __name__ == "__main__":
 
     if args.example in ("news", "all"):
         run_news_example()
+
+    if args.example in ("agent", "all"):
+        run_agent_example(thesis_name=args.thesis, goal=args.goal)

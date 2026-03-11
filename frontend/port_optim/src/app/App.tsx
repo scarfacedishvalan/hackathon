@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { AppLayout, type AppPage } from './AppLayout';
 import { Providers } from './providers';
 import { BLMainPage, BLMainProvider } from '@features/bl_main';
-import { BacktestPage, BacktestProvider } from '@features/backtest';
+import { BacktestPage } from '@features/backtest';
+import { AgentPage } from '@features/agent';
 
 export const App: React.FC = () => {
   const [activePage, setActivePage] = useState<AppPage>('bl_main');
@@ -10,11 +11,11 @@ export const App: React.FC = () => {
   return (
     <Providers>
       <BLMainProvider>
-        <BacktestProvider>
-          <AppLayout activePage={activePage} onNavigate={setActivePage}>
-            {activePage === 'bl_main' ? <BLMainPage /> : <BacktestPage />}
-          </AppLayout>
-        </BacktestProvider>
+        <AppLayout activePage={activePage} onNavigate={setActivePage}>
+          {activePage === 'bl_main' && <BLMainPage />}
+          {activePage === 'backtest' && <BacktestPage />}
+          {activePage === 'agent' && <AgentPage />}
+        </AppLayout>
       </BLMainProvider>
     </Providers>
   );

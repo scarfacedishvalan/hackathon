@@ -1,0 +1,219 @@
+.agent-page {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: calc(100vh - 110px); /* below header + nav */
+  overflow: hidden;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────── */
+.agent-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 16px;
+  border-right: 1px solid #e5e7eb;
+  background: #fff;
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: 18px;
+}
+
+.sidebar-section--audits {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin: 0 0 8px;
+}
+
+/* Recipe list */
+.thesis-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-empty {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.thesis-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  text-align: left;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.thesis-item:hover {
+  background: #f9fafb;
+}
+
+.thesis-item--active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.thesis-dot {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* Goal textarea */
+.goal-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #374151;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.goal-input:focus {
+  outline: none;
+  border-color: #93c5fd;
+  background: #fff;
+}
+
+.goal-input:disabled {
+  opacity: 0.6;
+}
+
+/* Run button */
+.run-btn {
+  width: 100%;
+  padding: 9px 0;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 10px;
+}
+
+.run-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.run-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.run-btn--running {
+  background: #6b7280;
+}
+
+.run-error {
+  font-size: 11px;
+  color: #dc2626;
+  margin: 0;
+  word-break: break-word;
+}
+
+/* Audit list */
+.audit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.audit-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.audit-list-item:hover {
+  background: #f9fafb;
+}
+
+.audit-list-item--active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.audit-list-thesis {
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.audit-list-meta {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+/* ── Main panel ───────────────────────────────────────────────────── */
+.agent-main {
+  padding: 20px;
+  overflow-y: auto;
+  background: #f3f4f6;
+}
+
+/* Empty / loading states */
+.agent-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+}
+
+.agent-empty p { margin: 0; }
+
+.agent-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.agent-spinner-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
