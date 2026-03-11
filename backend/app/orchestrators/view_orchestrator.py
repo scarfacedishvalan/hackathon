@@ -238,6 +238,28 @@ def _append_views_to_current(new_result: Dict[str, Any]) -> None:
     save_recipe(existing, "current")
 
 
+def save_thesis(name: str) -> str:
+    """
+    Persist a named copy of ``current.json`` in the same directory.
+
+    The file name is derived from *name* by lower-casing and replacing
+    every run of whitespace / special characters with ``_``.
+
+    Returns:
+        The sanitised file stem used (without ``.json``).
+
+    Raises:
+        FileNotFoundError: If ``current.json`` does not exist.
+    """
+    import re
+    recipe = load_recipe("current")  # raises FileNotFoundError if absent
+    safe = re.sub(r"[^a-z0-9]+", "_", name.lower().strip()).strip("_") or "thesis"
+    recipe.setdefault("meta", {})["name"] = name
+    recipe["meta"].pop("description", None)
+    save_recipe(recipe, safe)
+    return safe
+
+
 def get_universe() -> List[str]:
     """
     Return the ``universe.assets`` list from ``current.json``.

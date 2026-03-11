@@ -7,7 +7,7 @@ A production-ready financial dashboard for Black-Litterman portfolio optimizatio
 This application follows a feature-based architecture with clear separation of concerns:
 
 ```
-frontend/bl_main/
+frontend/port_optim/
 ├── src/
 │   ├── app/                    # Application shell
 │   │   ├── App.tsx            # Root component
@@ -92,7 +92,7 @@ Global service utilities like API clients that are used application-wide.
 1. Navigate to the project directory:
 ```bash
 set PATH="C:\Program Files\nodejs\";%PATH%
-cd frontend/bl_main
+cd frontend/port_optim
 ```
 
 2. Install dependencies:

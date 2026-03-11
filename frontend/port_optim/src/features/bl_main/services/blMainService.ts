@@ -81,6 +81,11 @@ export const blMainService = {
   }): Promise<BLMainData> => {
     return _runAndMerge();
   },
+  /** POST /views/thesis — save a named copy of current.json */
+  saveThesis: async (name: string): Promise<string> => {
+    const res = await apiClient.post<{ name: string }>('/views/thesis', { name });
+    return res.name;
+  },
 };
 
 export const portfolioService = {

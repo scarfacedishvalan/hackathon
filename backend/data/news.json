@@ -1,6 +1,636 @@
 {
   "items": [
     {
+      "id": "d3af1fb82a5d",
+      "heading": "AAPL Shows Resilience Amid Market Volatility",
+      "translatedView": "AAPL Shows Resilience Amid Market Volatility",
+      "link": "https://simulation.example.com/aapl/129f03f4c1",
+      "source": "MarketWatch AI",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-11T11:14:39.764202+00:00"
+    },
+    {
+      "id": "26ba5ffc19a7",
+      "heading": "AAPL Faces Headwinds as Market Outlook Deteriorates",
+      "translatedView": "AAPL Faces Headwinds as Market Outlook Deteriorates",
+      "link": "https://simulation.example.com/aapl/3e073d97cd",
+      "source": "Reuters Mock",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-11T11:14:41.176585+00:00"
+    },
+    {
+      "id": "086e55a44e06",
+      "heading": "AAPL Holds Steady as Market Outlook Remains Mixed",
+      "translatedView": "AAPL Holds Steady as Market Outlook Remains Mixed",
+      "link": "https://simulation.example.com/aapl/3d125520a6",
+      "source": "Bloomberg Sim",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-11T11:14:43.185290+00:00"
+    },
+    {
+      "id": "0774044b1621",
+      "heading": "Analysts Split on AAPL's Future Amid Market Uncertainty",
+      "translatedView": "Analysts Split on AAPL's Future Amid Market Uncertainty",
+      "link": "https://simulation.example.com/aapl/c2538fabbe",
+      "source": "Financial Times AI",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-11T11:14:44.267158+00:00"
+    },
+    {
+      "id": "b6c18bc613cd",
+      "heading": "AAPL's Strategic Moves Amid Uncertain Market Conditions",
+      "translatedView": "AAPL's Strategic Moves Amid Uncertain Market Conditions",
+      "link": "https://simulation.example.com/aapl/860b22ea9a",
+      "source": "Wall Street Observer",
+      "ticker": "AAPL",
+      "fetched_at": "2026-03-11T11:14:46.089276+00:00"
+    },
+    {
+      "id": "de1dc45bf156",
+      "heading": "Amazon's Stock Faces Headwinds Amid Market Uncertainty",
+      "translatedView": "Amazon's Stock Faces Headwinds Amid Market Uncertainty",
+      "link": "https://simulation.example.com/amzn/14b0b4ecfc",
+      "source": "MarketWatch AI",
+      "ticker": "AMZN",
+      "fetched_at": "2026-03-11T11:15:05.093438+00:00"
+    },
+    {
+      "id": "35b09c8576d5",
+      "heading": "Amazon's E-Commerce Growth Shines Amid Market Volatility",
+      "translatedView": "Amazon's E-Commerce Growth Shines Amid Market Volatility",
+      "link": "https://simulation.example.com/amzn/0afb347521",
+      "source": "Bloomberg Sim",
+      "ticker": "AMZN",
+      "fetched_at": "2026-03-11T11:15:06.375643+00:00"
+    },
+    {
+      "id": "cb9a81996039",
+      "heading": "Amazon Stock Stagnates Amid Broader Market Declines",
+      "translatedView": "Amazon Stock Stagnates Amid Broader Market Declines",
+      "link": "https://simulation.example.com/amzn/1053f4e4b0",
+      "source": "Reuters Mock",
+      "ticker": "AMZN",
+      "fetched_at": "2026-03-11T11:15:08.097299+00:00"
+    },
+    {
+      "id": "46d330ef20ac",
+      "heading": "Analysts Remain Bullish on Amazon's Long-Term Potential",
+      "translatedView": "Analysts Remain Bullish on Amazon's Long-Term Potential",
+      "link": "https://simulation.example.com/amzn/28c66d1afb",
+      "source": "Financial Times Sim",
+      "ticker": "AMZN",
+      "fetched_at": "2026-03-11T11:15:09.632959+00:00"
+    },
+    {
+      "id": "6aac8feb2b3c",
+      "heading": "Amazon Reports Mixed Signals in a Tough Market Environment",
+      "translatedView": "Amazon Reports Mixed Signals in a Tough Market Environment",
+      "link": "https://simulation.example.com/amzn/b926ad08c4",
+      "source": "Wall Street Sim",
+      "ticker": "AMZN",
+      "fetched_at": "2026-03-11T11:15:11.257442+00:00"
+    },
+    {
+      "id": "d84701733900",
+      "heading": "BAC Shares Surge Amid Optimistic Market Outlook",
+      "translatedView": "BAC Shares Surge Amid Optimistic Market Outlook",
+      "link": "https://simulation.example.com/bac/03e5ef97cf",
+      "source": "MarketWatch AI",
+      "ticker": "BAC",
+      "fetched_at": "2026-03-11T11:15:30.470594+00:00"
+    },
+    {
+      "id": "3e214dd0d084",
+      "heading": "BAC Faces Headwinds Despite Positive Market Sentiment",
+      "translatedView": "BAC Faces Headwinds Despite Positive Market Sentiment",
+      "link": "https://simulation.example.com/bac/19a8c29ea2",
+      "source": "Reuters Mock",
+      "ticker": "BAC",
+      "fetched_at": "2026-03-11T11:15:31.684071+00:00"
+    },
+    {
+      "id": "6cf9291cef57",
+      "heading": "Bank of America: A Stable Bet in a Volatile Market",
+      "translatedView": "Bank of America: A Stable Bet in a Volatile Market",
+      "link": "https://simulation.example.com/bac/1c56441b35",
+      "source": "Bloomberg Sim",
+      "ticker": "BAC",
+      "fetched_at": "2026-03-11T11:15:32.714583+00:00"
+    },
+    {
+      "id": "3d1d771ed57b",
+      "heading": "BAC's Growth Potential Dimmed by Market Uncertainty",
+      "translatedView": "BAC's Growth Potential Dimmed by Market Uncertainty",
+      "link": "https://simulation.example.com/bac/2e5cc3d595",
+      "source": "Simulated News Network",
+      "ticker": "BAC",
+      "fetched_at": "2026-03-11T11:15:36.071790+00:00"
+    },
+    {
+      "id": "dcc196fed91b",
+      "heading": "BAC: A Cautious Optimism as Market Trends Shift",
+      "translatedView": "BAC: A Cautious Optimism as Market Trends Shift",
+      "link": "https://simulation.example.com/bac/0d9aefd6a3",
+      "source": "Financial Times Sim",
+      "ticker": "BAC",
+      "fetched_at": "2026-03-11T11:15:37.199114+00:00"
+    },
+    {
+      "id": "962ab239ddcb",
+      "heading": "BND Sees Modest Gains Amid Mixed Market Sentiment",
+      "translatedView": "BND Sees Modest Gains Amid Mixed Market Sentiment",
+      "link": "https://simulation.example.com/bnd/e138863c3f",
+      "source": "MarketWatch AI",
+      "ticker": "BND",
+      "fetched_at": "2026-03-11T11:15:55.235200+00:00"
+    },
+    {
+      "id": "468e9fcfd427",
+      "heading": "BND Under Pressure as Bond Yields Climb",
+      "translatedView": "BND is expected to have a moderately negative return. The rates factor is expected to deliver a moderately positive premium.",
+      "link": "https://simulation.example.com/bnd/71076f9c8e",
+      "source": "Reuters Mock",
+      "ticker": "BND",
+      "fetched_at": "2026-03-11T11:16:01.248348+00:00"
+    },
+    {
+      "id": "34a477f4dab4",
+      "heading": "BND: A Safe Haven Amid Market Turbulence?",
+      "translatedView": "BND: A Safe Haven Amid Market Turbulence?",
+      "link": "https://simulation.example.com/bnd/3f675c2dc7",
+      "source": "Bloomberg Sim",
+      "ticker": "BND",
+      "fetched_at": "2026-03-11T11:16:02.861506+00:00"
+    },
+    {
+      "id": "06834738adda",
+      "heading": "Analysts Split on BND's Future Amid Economic Uncertainty",
+      "translatedView": "Analysts Split on BND's Future Amid Economic Uncertainty",
+      "link": "https://simulation.example.com/bnd/999971d002",
+      "source": "Financial Times Mock",
+      "ticker": "BND",
+      "fetched_at": "2026-03-11T11:16:04.848349+00:00"
+    },
+    {
+      "id": "4f4f8e90c2a8",
+      "heading": "BND's Steady Performance Amid Economic Headwinds",
+      "translatedView": "BND's Steady Performance Amid Economic Headwinds",
+      "link": "https://simulation.example.com/bnd/fc2ffb81bc",
+      "source": "CNBC Sim",
+      "ticker": "BND",
+      "fetched_at": "2026-03-11T11:16:06.153463+00:00"
+    },
+    {
+      "id": "19041e949da3",
+      "heading": "Gold ETFs Shine Amid Market Uncertainty",
+      "translatedView": "Gold ETFs Shine Amid Market Uncertainty",
+      "link": "https://simulation.example.com/gld/f3b4bdee8d",
+      "source": "MarketWatch AI",
+      "ticker": "GLD",
+      "fetched_at": "2026-03-11T11:16:24.704569+00:00"
+    },
+    {
+      "id": "2dec67a15505",
+      "heading": "Analysts Warn of Overbought Conditions for GLD",
+      "translatedView": "Analysts Warn of Overbought Conditions for GLD",
+      "link": "https://simulation.example.com/gld/ecebf687c3",
+      "source": "Bloomberg Sim",
+      "ticker": "GLD",
+      "fetched_at": "2026-03-11T11:16:25.733994+00:00"
+    },
+    {
+      "id": "b33bd3e67c9b",
+      "heading": "GLD Sees Steady Growth Amid Mixed Market Signals",
+      "translatedView": "GLD Sees Steady Growth Amid Mixed Market Signals",
+      "link": "https://simulation.example.com/gld/e3aea4f13a",
+      "source": "Reuters Mock",
+      "ticker": "GLD",
+      "fetched_at": "2026-03-11T11:16:27.115299+00:00"
+    },
+    {
+      "id": "e1f3e50f17ae",
+      "heading": "Market Analysts Divided on GLD’s Future Performance",
+      "translatedView": "Market Analysts Divided on GLD’s Future Performance",
+      "link": "https://simulation.example.com/gld/7a649b2cb0",
+      "source": "Financial Times Simulated",
+      "ticker": "GLD",
+      "fetched_at": "2026-03-11T11:16:28.387370+00:00"
+    },
+    {
+      "id": "0b9e901b2045",
+      "heading": "GLD's Resilience Highlights Investor Sentiment in Turbulent Times",
+      "translatedView": "GLD's Resilience Highlights Investor Sentiment in Turbulent Times",
+      "link": "https://simulation.example.com/gld/de4a9f6fff",
+      "source": "CNBC Simulated",
+      "ticker": "GLD",
+      "fetched_at": "2026-03-11T11:16:29.413455+00:00"
+    },
+    {
+      "id": "f16cd02409ab",
+      "heading": "GOOG Faces Market Headwinds Amid Economic Uncertainty",
+      "translatedView": "GOOG Faces Market Headwinds Amid Economic Uncertainty",
+      "link": "https://simulation.example.com/goog/5639a98fc7",
+      "source": "MarketWatch AI",
+      "ticker": "GOOG",
+      "fetched_at": "2026-03-11T11:16:48.730408+00:00"
+    },
+    {
+      "id": "c867430dee73",
+      "heading": "GOOG Stock Holds Steady Despite Mixed Market Signals",
+      "translatedView": "GOOG Stock Holds Steady Despite Mixed Market Signals",
+      "link": "https://simulation.example.com/goog/a32adc8e2a",
+      "source": "Reuters Mock",
+      "ticker": "GOOG",
+      "fetched_at": "2026-03-11T11:16:50.277567+00:00"
+    },
+    {
+      "id": "cdae935ecadc",
+      "heading": "Bullish Analysts See Bright Future for GOOG",
+      "translatedView": "Bullish Analysts See Bright Future for GOOG",
+      "link": "https://simulation.example.com/goog/e3b0e3746a",
+      "source": "Bloomberg Sim",
+      "ticker": "GOOG",
+      "fetched_at": "2026-03-11T11:16:52.009317+00:00"
+    },
+    {
+      "id": "9698a862e9e0",
+      "heading": "GOOG's Future Cloud Growth Faces Market Risks",
+      "translatedView": "GOOG's Future Cloud Growth Faces Market Risks",
+      "link": "https://simulation.example.com/goog/e035c8ec3b",
+      "source": "Reuters Mock",
+      "ticker": "GOOG",
+      "fetched_at": "2026-03-11T11:16:53.744118+00:00"
+    },
+    {
+      "id": "c5cdf96ca824",
+      "heading": "GOOG's Stock Remains Steady Amid Economic Jitters",
+      "translatedView": "GOOG's Stock Remains Steady Amid Economic Jitters",
+      "link": "https://simulation.example.com/goog/32142ecb8f",
+      "source": "MarketWatch AI",
+      "ticker": "GOOG",
+      "fetched_at": "2026-03-11T11:16:55.415416+00:00"
+    },
+    {
+      "id": "36c097386a41",
+      "heading": "GOOGL Shares Rise Amid Positive Market Sentiment",
+      "translatedView": "GOOGL Shares Rise Amid Positive Market Sentiment",
+      "link": "https://simulation.example.com/googl/75935d0a0e",
+      "source": "MarketWatch AI",
+      "ticker": "GOOGL",
+      "fetched_at": "2026-03-11T11:17:11.097919+00:00"
+    },
+    {
+      "id": "8dce5d4c8a9f",
+      "heading": "Analysts Cautious on GOOGL Amid Market Volatility",
+      "translatedView": "Analysts Cautious on GOOGL Amid Market Volatility",
+      "link": "https://simulation.example.com/googl/4f06e3fe00",
+      "source": "Fictional outlet name",
+      "ticker": "GOOGL",
+      "fetched_at": "2026-03-11T11:17:12.205872+00:00"
+    },
+    {
+      "id": "7b2ebd9ea5ea",
+      "heading": "GOOGL’s Future Tied to AI Innovations and Market Trends",
+      "translatedView": "GOOGL’s Future Tied to AI Innovations and Market Trends",
+      "link": "https://simulation.example.com/googl/2dbd4a51fe",
+      "source": "Reuters Mock",
+      "ticker": "GOOGL",
+      "fetched_at": "2026-03-11T11:17:13.293356+00:00"
+    },
+    {
+      "id": "d25f5b097263",
+      "heading": "GOOGL Stock Faces Headwinds as Market Conditions Shift",
+      "translatedView": "GOOGL Stock Faces Headwinds as Market Conditions Shift",
+      "link": "https://simulation.example.com/googl/9a4d2bebeb",
+      "source": "Fictional outlet name",
+      "ticker": "GOOGL",
+      "fetched_at": "2026-03-11T11:17:14.354437+00:00"
+    },
+    {
+      "id": "a69277401df6",
+      "heading": "GOOGL Maintains Steady Course Amid Mixed Market Signals",
+      "translatedView": "GOOGL Maintains Steady Course Amid Mixed Market Signals",
+      "link": "https://simulation.example.com/googl/0fa21f279b",
+      "source": "Bloomberg Sim",
+      "ticker": "GOOGL",
+      "fetched_at": "2026-03-11T11:17:15.475253+00:00"
+    },
+    {
+      "id": "c6dd30ebfe0a",
+      "heading": "Johnson & Johnson Stock Steady Amid Market Volatility",
+      "translatedView": "Johnson & Johnson Stock Steady Amid Market Volatility",
+      "link": "https://simulation.example.com/jnj/92f4745cf7",
+      "source": "MarketWatch AI",
+      "ticker": "JNJ",
+      "fetched_at": "2026-03-11T11:17:32.934570+00:00"
+    },
+    {
+      "id": "30ba360b199c",
+      "heading": "Analysts Split on JNJ's Future Amid Economic Uncertainty",
+      "translatedView": "Analysts Split on JNJ's Future Amid Economic Uncertainty",
+      "link": "https://simulation.example.com/jnj/cb9543b430",
+      "source": "Bloomberg Sim",
+      "ticker": "JNJ",
+      "fetched_at": "2026-03-11T11:17:34.155638+00:00"
+    },
+    {
+      "id": "b23c53b50467",
+      "heading": "JNJ Shows Signs of Recovery as Market Outlook Improves",
+      "translatedView": "JNJ Shows Signs of Recovery as Market Outlook Improves",
+      "link": "https://simulation.example.com/jnj/27ea682b3d",
+      "source": "Reuters Mock",
+      "ticker": "JNJ",
+      "fetched_at": "2026-03-11T11:17:35.251030+00:00"
+    },
+    {
+      "id": "7ea2727363bd",
+      "heading": "JNJ's Dividend Remains Attractive Despite Market Headwinds",
+      "translatedView": "JNJ's Dividend Remains Attractive Despite Market Headwinds",
+      "link": "https://simulation.example.com/jnj/d9eeef584f",
+      "source": "Financial Times Virtual",
+      "ticker": "JNJ",
+      "fetched_at": "2026-03-11T11:17:36.300204+00:00"
+    },
+    {
+      "id": "1bea0d19ac91",
+      "heading": "Market Analysts Cautiously Optimistic on JNJ's Performance",
+      "translatedView": "Market Analysts Cautiously Optimistic on JNJ's Performance",
+      "link": "https://simulation.example.com/jnj/a86b3e9ae8",
+      "source": "CNN Business Sim",
+      "ticker": "JNJ",
+      "fetched_at": "2026-03-11T11:17:37.339196+00:00"
+    },
+    {
+      "id": "776eb33f6e70",
+      "heading": "JPMorgan Chase Sees Steady Growth Amid Market Uncertainty",
+      "translatedView": "JPMorgan Chase Sees Steady Growth Amid Market Uncertainty",
+      "link": "https://simulation.example.com/jpm/725caa7d7d",
+      "source": "Bloomberg Sim",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-11T11:17:53.265617+00:00"
+    },
+    {
+      "id": "a22a046b4067",
+      "heading": "JPMorgan Faces Pressure as Market Outlook Dims",
+      "translatedView": "JPM is expected to have a moderately negative return.",
+      "link": "https://simulation.example.com/jpm/955ef8f82a",
+      "source": "Reuters Mock",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-11T11:17:55.545669+00:00"
+    },
+    {
+      "id": "ad347e749c1a",
+      "heading": "JPMorgan's Expansion Plans Signal Confidence in Market Stability",
+      "translatedView": "JPMorgan's Expansion Plans Signal Confidence in Market Stability",
+      "link": "https://simulation.example.com/jpm/2cf3ca16ee",
+      "source": "MarketWatch AI",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-11T11:17:57.630691+00:00"
+    },
+    {
+      "id": "951cc1674845",
+      "heading": "JPMorgan's Stock Remains Stable Amid Market Fluctuations",
+      "translatedView": "JPMorgan's Stock Remains Stable Amid Market Fluctuations",
+      "link": "https://simulation.example.com/jpm/386aef9b17",
+      "source": "Financial Times Sim",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-11T11:18:00.242085+00:00"
+    },
+    {
+      "id": "b12e4be0badd",
+      "heading": "JPMorgan's Strategic Moves Amidst Uncertain Economic Climate",
+      "translatedView": "JPMorgan's Strategic Moves Amidst Uncertain Economic Climate",
+      "link": "https://simulation.example.com/jpm/3110cf82c8",
+      "source": "CNBC Sim",
+      "ticker": "JPM",
+      "fetched_at": "2026-03-11T11:18:02.215585+00:00"
+    },
+    {
+      "id": "6bf6ac6f5902",
+      "heading": "Microsoft Stock Surges Amid Positive Market Sentiment",
+      "translatedView": "Microsoft Stock Surges Amid Positive Market Sentiment",
+      "link": "https://simulation.example.com/msft/7f55a1347c",
+      "source": "MarketWatch AI",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-11T11:18:19.992846+00:00"
+    },
+    {
+      "id": "7c637b8c32a0",
+      "heading": "Microsoft Faces Headwinds Despite Market Optimism",
+      "translatedView": "Microsoft Faces Headwinds Despite Market Optimism",
+      "link": "https://simulation.example.com/msft/e02a8c640c",
+      "source": "Fictional Finance News",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-11T11:18:21.711459+00:00"
+    },
+    {
+      "id": "78b020d1c3fe",
+      "heading": "Microsoft's Strategic Moves Align with Positive Market Trends",
+      "translatedView": "Microsoft's Strategic Moves Align with Positive Market Trends",
+      "link": "https://simulation.example.com/msft/daaa5195b4",
+      "source": "Reuters Mock",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-11T11:18:23.035983+00:00"
+    },
+    {
+      "id": "6e3ef14f1ba6",
+      "heading": "Microsoft Stock Volatility Raises Concerns Among Investors",
+      "translatedView": "Microsoft Stock Volatility Raises Concerns Among Investors",
+      "link": "https://simulation.example.com/msft/3eafb8d0a2",
+      "source": "Bloomberg Sim",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-11T11:18:24.224394+00:00"
+    },
+    {
+      "id": "7432d5fc6d0b",
+      "heading": "Microsoft's Diversification Strategy Boosts Resilience in Weak Market",
+      "translatedView": "Microsoft's Diversification Strategy Boosts Resilience in Weak Market",
+      "link": "https://simulation.example.com/msft/1b108778f2",
+      "source": "Financial Times Simulated",
+      "ticker": "MSFT",
+      "fetched_at": "2026-03-11T11:18:25.306488+00:00"
+    },
+    {
+      "id": "a04c7e65f295",
+      "heading": "Procter & Gamble Exceeds Expectations Amid Market Volatility",
+      "translatedView": "Procter & Gamble Exceeds Expectations Amid Market Volatility",
+      "link": "https://simulation.example.com/pg/ddfcc540c0",
+      "source": "MarketWatch AI",
+      "ticker": "PG",
+      "fetched_at": "2026-03-11T11:18:44.819004+00:00"
+    },
+    {
+      "id": "121202939d61",
+      "heading": "Analysts Cautious on Procter & Gamble Amid Economic Uncertainty",
+      "translatedView": "Analysts Cautious on Procter & Gamble Amid Economic Uncertainty",
+      "link": "https://simulation.example.com/pg/db1ef741ad",
+      "source": "Reuters Mock",
+      "ticker": "PG",
+      "fetched_at": "2026-03-11T11:18:45.818460+00:00"
+    },
+    {
+      "id": "6642c8413637",
+      "heading": "Procter & Gamble Maintains Strong Position Amid Mixed Market Signals",
+      "translatedView": "Procter & Gamble Maintains Strong Position Amid Mixed Market Signals",
+      "link": "https://simulation.example.com/pg/d1123d88d3",
+      "source": "Bloomberg Sim",
+      "ticker": "PG",
+      "fetched_at": "2026-03-11T11:18:46.868728+00:00"
+    },
+    {
+      "id": "68bdf01aa0b2",
+      "heading": "Procter & Gamble Stock Faces Pressure as Market Sentiment Shifts",
+      "translatedView": "PG is expected to have a moderately negative return.",
+      "link": "https://simulation.example.com/pg/103a679aff",
+      "source": "Yahoo Finance AI",
+      "ticker": "PG",
+      "fetched_at": "2026-03-11T11:18:48.242449+00:00"
+    },
+    {
+      "id": "cc1955cb0e6c",
+      "heading": "Procter & Gamble's Dividend Resilience Amid Uncertain Market Conditions",
+      "translatedView": "Procter & Gamble's Dividend Resilience Amid Uncertain Market Conditions",
+      "link": "https://simulation.example.com/pg/0fb90af668",
+      "source": "CNBC News Today",
+      "ticker": "PG",
+      "fetched_at": "2026-03-11T11:18:49.494674+00:00"
+    },
+    {
+      "id": "b8144c7f1338",
+      "heading": "Tesla Faces Headwinds Amid Market Uncertainty",
+      "translatedView": "Tesla Faces Headwinds Amid Market Uncertainty",
+      "link": "https://simulation.example.com/tsla/20b83d1059",
+      "source": "MarketWatch AI",
+      "ticker": "TSLA",
+      "fetched_at": "2026-03-11T11:19:08.761563+00:00"
+    },
+    {
+      "id": "84f7cdf8d1d8",
+      "heading": "Bullish Analysts Predict Upswing for Tesla Amid Market Rally",
+      "translatedView": "Bullish Analysts Predict Upswing for Tesla Amid Market Rally",
+      "link": "https://simulation.example.com/tsla/786e79c364",
+      "source": "Bloomberg Sim",
+      "ticker": "TSLA",
+      "fetched_at": "2026-03-11T11:19:09.962207+00:00"
+    },
+    {
+      "id": "c48328da3e2a",
+      "heading": "Tesla's Resilience Tested by Market Headwinds",
+      "translatedView": "Tesla's Resilience Tested by Market Headwinds",
+      "link": "https://simulation.example.com/tsla/93dd070f6f",
+      "source": "Reuters Mock",
+      "ticker": "TSLA",
+      "fetched_at": "2026-03-11T11:19:10.971505+00:00"
+    },
+    {
+      "id": "5c84328ebbde",
+      "heading": "Mixed Signals for Tesla as Market Volatility Continues",
+      "translatedView": "Mixed Signals for Tesla as Market Volatility Continues",
+      "link": "https://simulation.example.com/tsla/57f329dc43",
+      "source": "Financial Times Sim",
+      "ticker": "TSLA",
+      "fetched_at": "2026-03-11T11:19:12.069994+00:00"
+    },
+    {
+      "id": "2db767eba10a",
+      "heading": "Tesla's Innovation Strategy Amidst Market Challenges",
+      "translatedView": "TSLA is expected to have a moderately negative return.",
+      "link": "https://simulation.example.com/tsla/4583797ed2",
+      "source": "CNBC Sim",
+      "ticker": "TSLA",
+      "fetched_at": "2026-03-11T11:19:13.451170+00:00"
+    },
+    {
+      "id": "8ff783fae31d",
+      "heading": "VNQ Faces Pressure Amid Market Uncertainty",
+      "translatedView": "VNQ is expected to have a moderately negative return.",
+      "link": "https://simulation.example.com/vnq/ad0dbfb419",
+      "source": "MarketWatch AI",
+      "ticker": "VNQ",
+      "fetched_at": "2026-03-11T11:19:33.031710+00:00"
+    },
+    {
+      "id": "732eec5997c3",
+      "heading": "VNQ Shows Resilience Despite Market Volatility",
+      "translatedView": "VNQ Shows Resilience Despite Market Volatility",
+      "link": "https://simulation.example.com/vnq/16b7ccc961",
+      "source": "Bloomberg Sim",
+      "ticker": "VNQ",
+      "fetched_at": "2026-03-11T11:19:35.387305+00:00"
+    },
+    {
+      "id": "45ef57804db6",
+      "heading": "VNQ Analysts Split on Future Performance",
+      "translatedView": "VNQ Analysts Split on Future Performance",
+      "link": "https://simulation.example.com/vnq/445deefbb8",
+      "source": "Reuters Mock",
+      "ticker": "VNQ",
+      "fetched_at": "2026-03-11T11:19:36.419613+00:00"
+    },
+    {
+      "id": "6cf1a280f789",
+      "heading": "VNQ: Navigating a Challenging Economic Landscape",
+      "translatedView": "VNQ: Navigating a Challenging Economic Landscape",
+      "link": "https://simulation.example.com/vnq/6b51d36aef",
+      "source": "Financial Times Sim",
+      "ticker": "VNQ",
+      "fetched_at": "2026-03-11T11:19:37.518706+00:00"
+    },
+    {
+      "id": "4d3efdde8214",
+      "heading": "VNQ Decline Signals Broader Market Concerns",
+      "translatedView": "VNQ Decline Signals Broader Market Concerns",
+      "link": "https://simulation.example.com/vnq/cc15b6ffca",
+      "source": "CNBC Simulated",
+      "ticker": "VNQ",
+      "fetched_at": "2026-03-11T11:19:38.626005+00:00"
+    },
+    {
+      "id": "f353b68b460c",
+      "heading": "Walmart Shares Slump Amid Market Volatility",
+      "translatedView": "WMT is expected to have a moderately negative return.",
+      "link": "https://simulation.example.com/wmt/3beec3bf53",
+      "source": "MarketWatch AI",
+      "ticker": "WMT",
+      "fetched_at": "2026-03-11T11:20:01.455274+00:00"
+    },
+    {
+      "id": "5c5e182ed5b9",
+      "heading": "Walmart Shows Resilience as Market Outlook Dims",
+      "translatedView": "Walmart Shows Resilience as Market Outlook Dims",
+      "link": "https://simulation.example.com/wmt/df719e63b3",
+      "source": "Reuters Mock",
+      "ticker": "WMT",
+      "fetched_at": "2026-03-11T11:20:02.731605+00:00"
+    },
+    {
+      "id": "9f423467c758",
+      "heading": "Walmart's Growth Potential Amidst Economic Headwinds",
+      "translatedView": "Walmart's Growth Potential Amidst Economic Headwinds",
+      "link": "https://simulation.example.com/wmt/f0969e3b2f",
+      "source": "Bloomberg Sim",
+      "ticker": "WMT",
+      "fetched_at": "2026-03-11T11:20:03.912853+00:00"
+    },
+    {
+      "id": "efc74c5d1415",
+      "heading": "Walmart Faces Challenges as Market Sentiment Wavers",
+      "translatedView": "Walmart Faces Challenges as Market Sentiment Wavers",
+      "link": "https://simulation.example.com/wmt/563c0d65b2",
+      "source": "Financial Times AI",
+      "ticker": "WMT",
+      "fetched_at": "2026-03-11T11:20:05.264834+00:00"
+    },
+    {
+      "id": "25fb98a16dd6",
+      "heading": "Walmart's E-Commerce Push Drives Investor Interest",
+      "translatedView": "Walmart's E-Commerce Push Drives Investor Interest",
+      "link": "https://simulation.example.com/wmt/314adff2fb",
+      "source": "CNBC Simulated",
+      "ticker": "WMT",
+      "fetched_at": "2026-03-11T11:20:06.344682+00:00"
+    },
+    {
       "id": "5c4bd8642ba7",
       "heading": "Apple Shares Soar After Earnings Beat and Analyst Upgrade",
       "translatedView": "Apple Shares Soar After Earnings Beat and Analyst Upgrade",

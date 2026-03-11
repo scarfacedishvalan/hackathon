@@ -123,6 +123,24 @@ async def update_model_parameters(body: dict):
     return view_orchestrator.get_model_parameters()
 
 
+@router.post("/thesis", status_code=201)
+async def save_thesis(body: dict):
+    """
+    Save a named copy of ``current.json``.
+
+    Request body: ``{ "name": "My Q1 Thesis" }``
+    Returns: ``{ "name": "my_q1_thesis" }`` (the sanitised file stem).
+    """
+    name = (body.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="'name' must be a non-empty string")
+    try:
+        saved = view_orchestrator.save_thesis(name)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return {"name": saved}
+
+
 @router.get("/universe")
 async def get_universe():
     """Return the universe.assets list from current.json."""

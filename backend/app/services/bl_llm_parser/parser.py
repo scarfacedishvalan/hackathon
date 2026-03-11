@@ -202,9 +202,14 @@ class BlackLittermanLLMParser:
             schema=schema
         )
         
+        # Strip markdown fences the model may have added despite instructions
+        text = response.strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+
         # Parse JSON response
         try:
-            result = json.loads(response)
+            result = json.loads(text)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON returned by LLM: {e}")
         
