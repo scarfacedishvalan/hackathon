@@ -11,7 +11,7 @@ const DEFAULT_GOAL =
 const GOAL_EXAMPLES = [
   'Stress-test all views by varying confidence and find an allocation for a moderate-risk investor with max 25% per position.',
   'Maximise Sharpe ratio with sector diversification. No single asset above 20%. Run stress sweep on expected return assumptions.',
-  'Minimise portfolio volatility for a conservative investor. Penalise concentration in correlated assets. Max drawdown constraint of 10%.',
+  'Find a conservative allocation by sweeping risk aversion. Cap each position at 35%. Identify the parameter setting with the lowest volatility and recommend those weights.',
 ];
 
 export const AgentPage: React.FC = () => {
