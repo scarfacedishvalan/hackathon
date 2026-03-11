@@ -9,8 +9,6 @@
       "AAPL",
       "TSLA",
       "JPM",
-      "GLD",
-      "BND",
       "AMZN",
       "MSFT"
     ]
@@ -24,7 +22,7 @@
     "long_only": true,
     "weight_bounds": [
       0.0,
-      0.4
+      1
     ]
   },
   "bottom_up_views": [
@@ -36,39 +34,11 @@
       "label": "Credit modest upside"
     },
     {
-      "type": "relative",
-      "assets": [
-        "TSLA",
-        "JPM"
-      ],
-      "weights": [
-        1,
-        -1
-      ],
-      "expected_outperformance": -0.05,
-      "confidence": 0.6,
-      "label": "TSLA underperform JPM"
-    },
-    {
       "type": "absolute",
       "asset": "MSFT",
       "expected_return": 0.02,
       "confidence": 0.6,
       "label": "Strong earnings report for Microsoft"
-    },
-    {
-      "type": "relative",
-      "assets": [
-        "TSLA",
-        "JPM"
-      ],
-      "weights": [
-        1,
-        -1
-      ],
-      "expected_outperformance": -0.05,
-      "confidence": 0.6,
-      "label": "TSLA expected to underperform JPM by 5%"
     }
   ],
   "top_down_views": {
@@ -96,12 +66,6 @@
         "shock": -0.01,
         "confidence": 0.6,
         "label": "Slightly hurt defensives"
-      },
-      {
-        "factor": "Rates",
-        "shock": 0.02,
-        "confidence": 0.6,
-        "label": "Interest rates boost financials"
       },
       {
         "factor": "Financial",

@@ -87,6 +87,19 @@ TOOL USAGE RULES:
   * If a base scenario result includes a "constraint_warning", acknowledge it in
     your reasoning. An equal-weight result means the cap is fully constraining;
     explore override_expected_return scenarios to find meaningful differences.
+  * run_stress_sweep returns a grid summary — it does NOT save a named scenario
+    whose weights can be used later. If the sweep identifies a parameter value
+    that best satisfies the user's goal (highest Sharpe, lowest vol, best
+    diversification, etc.), you MUST follow up with a dedicated run_bl_scenario
+    call using that parameter override (e.g. mutations:
+    {set_model_parameters: {risk_aversion: 3.0}}) to capture the exact weights
+    as a named scenario. Then pass those weights as recommended_weights in
+    the synthesise call.
+  * ALWAYS populate recommended_weights in synthesise with the allocation that
+    best satisfies the stated goal. Evaluate 'best' relative to the goal —
+    for a Sharpe goal pick highest Sharpe, for a vol goal pick lowest vol,
+    for a diversification goal pick lowest concentration, etc.
+    If no scenario improved on base by any measure, pass the base weights.
 
 CRITICAL — GOAL CONSTRAINTS:
   * If the goal states a per-position cap (e.g. "max 20% per asset", "no single

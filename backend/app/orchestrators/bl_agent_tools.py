@@ -178,8 +178,10 @@ TOOLS: List[Dict[str, Any]] = [
                     "recommended_weights": {
                         "type": "object",
                         "description": (
-                            "Optional final weight recommendation {asset: weight}. "
-                            "Omit if you cannot improve on the base BL result."
+                            "Final weight recommendation {asset: weight} for the "
+                            "allocation that best satisfies the user's stated goal. "
+                            "Always provide this — use the best scenario weights found, "
+                            "or the base weights if no scenario improved on the goal metric."
                         ),
                     },
                     "risk_flags": {

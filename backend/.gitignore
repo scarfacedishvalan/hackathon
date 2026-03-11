@@ -35,3 +35,6 @@ chatgpt_prompts/
 # LLM usage tracking database
 data/*.db
 data/*.db-journal
+
+
+agent_audits/*

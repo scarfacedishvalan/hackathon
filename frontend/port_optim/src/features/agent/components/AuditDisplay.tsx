@@ -3,6 +3,45 @@ import type { AgentAudit } from '../types/agentTypes';
 import StepTimeline from './StepTimeline';
 import './AuditDisplay.css';
 
+/** Render a string that may contain **bold**, *italic*, and `- bullet` lines as JSX. */
+function renderMd(text: string): React.ReactNode {
+  // Split into paragraphs / bullet lines
+  const lines = text.split(/\n+/);
+  return (
+    <>
+      {lines.map((line, li) => {
+        const isBullet = /^\s*[-*]\s/.test(line);
+        const content = parseBoldItalic(isBullet ? line.replace(/^\s*[-*]\s/, '') : line);
+        if (isBullet) {
+          return <li key={li} style={{ marginLeft: 20, marginBottom: 4 }}>{content}</li>;
+        }
+        return line.trim() ? <p key={li} style={{ margin: '0 0 8px' }}>{content}</p> : null;
+      })}
+    </>
+  );
+}
+
+/** Split a line on **bold** and *italic* markers into React nodes. */
+function parseBoldItalic(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  // Pattern: **bold** or *italic*
+  const re = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    if (m[0].startsWith('**')) {
+      parts.push(<strong key={key++}>{m[2]}</strong>);
+    } else {
+      parts.push(<em key={key++}>{m[3]}</em>);
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 function pct(n: number | undefined) {
   if (n == null) return '—';
   return `${(n * 100).toFixed(1)}%`;
@@ -62,14 +101,14 @@ const AuditDisplay: React.FC<Props> = ({ audit }) => {
 
       {/* ── Narrative + Insight Chips ── */}
       <section className="audit-section">
-        <p className="narrative-block">{syn.narrative}</p>
+        <div className="narrative-block">{renderMd(syn.narrative)}</div>
         {syn.risk_flags?.length ? (
           <div className="insights-row">
             {syn.risk_flags.map((f, i) => (
               <div key={i} className="insight-card insight-card--warning">
                 <span className="insight-icon">⚠</span>
                 <div className="insight-body">
-                  <span className="insight-title">{f}</span>
+                  <span className="insight-title">{parseBoldItalic(f)}</span>
                 </div>
               </div>
             ))}

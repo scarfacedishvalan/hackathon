@@ -299,6 +299,10 @@
   border-radius: 0 6px 6px 0;
   padding: 14px 18px;
 }
+.narrative-block p:last-child { margin-bottom: 0; }
+.narrative-block li { line-height: 1.6; }
+.narrative-block strong { color: #111827; font-weight: 700; }
+.narrative-block em { font-style: italic; color: #4b5563; }
 
 /*  Timeline Toggle  */
 .timeline-toggle {
