@@ -217,6 +217,107 @@ def run_bl_example():
 
 
 # ---------------------------------------------------------------------------
+# Admin Console example
+# ---------------------------------------------------------------------------
+
+
+def run_admin_console_example():
+    """Print a summary of LLM usage and agent costs from the tracking databases."""
+    from app.orchestrators.admin_console_orchestrator import get_admin_console_data
+
+    print("\n" + "=" * 60)
+    print("ADMIN CONSOLE — TOKEN BUDGET & COST SUMMARY")
+    print("=" * 60)
+
+    data = get_admin_console_data(llm_recent_limit=10, agent_recent_limit=20)
+
+    print(f"\n  Grand total spend : ${data['grand_total_cost_usd']:.6f} USD")
+
+    # ── LLM Usage ────────────────────────────────────────────────────────────
+    llm = data["llm_usage"]
+    s   = llm["summary"]
+    print("\n" + "-" * 60)
+    print("LLM CALLS  (chat_and_record / llm_usage.db)")
+    print("-" * 60)
+    print(f"  Total calls     : {s['total_calls']}  "
+          f"(ok={s['successful_calls']}  fail={s['failed_calls']})")
+    print(f"  Prompt tokens   : {s['total_prompt_tokens']:,}")
+    print(f"  Completion tkns : {s['total_completion_tokens']:,}")
+    print(f"  Total tokens    : {s['total_tokens']:,}")
+    print(f"  Total cost      : ${s['total_cost_usd']:.6f} USD")
+    print(f"  Avg latency     : {s['avg_latency_ms']:.0f} ms")
+
+    if llm["by_service"]:
+        print("\n  By service / operation:")
+        print(f"  {'Service':<30}  {'Op':<22}  {'Calls':>5}  {'Tokens':>8}  {'Cost':>10}  {'OK%':>6}")
+        print("  " + "-" * 86)
+        for row in llm["by_service"]:
+            print(
+                f"  {row['service']:<30}  {row['operation']:<22}  "
+                f"{row['calls']:>5}  {row['total_tokens']:>8,}  "
+                f"${row['cost_usd']:>9.6f}  {row['success_rate']*100:>5.1f}%"
+            )
+
+    if llm["by_model"]:
+        print("\n  By model:")
+        print(f"  {'Model':<25}  {'Calls':>5}  {'Tokens':>9}  {'Cost':>10}")
+        print("  " + "-" * 56)
+        for row in llm["by_model"]:
+            print(
+                f"  {row['model']:<25}  {row['calls']:>5}  "
+                f"{row['total_tokens']:>9,}  ${row['cost_usd']:>9.6f}"
+            )
+
+    if llm["recent_calls"]:
+        print(f"\n  Most recent {len(llm['recent_calls'])} calls:")
+        print(f"  {'Timestamp':<20}  {'Service':<25}  {'Model':<18}  {'Tokens':>7}  {'Cost':>10}  {'OK'}")
+        print("  " + "-" * 94)
+        for c in llm["recent_calls"]:
+            ok = "✓" if c["success"] else "✗"
+            print(
+                f"  {c['timestamp'][:19]:<20}  {c['service']:<25}  {c['model']:<18}  "
+                f"{c['total_tokens']:>7,}  ${c['cost_usd']:>9.6f}  {ok}"
+            )
+
+    # ── Agent Costs ──────────────────────────────────────────────────────────
+    ag = data["agent_usage"]
+    s  = ag["summary"]
+    print("\n" + "-" * 60)
+    print("AGENT RUNS  (chat_with_history / agent_costs.db)")
+    print("-" * 60)
+    print(f"  Total runs      : {s['total_runs']}")
+    print(f"  Total steps     : {s['total_steps']}  (avg {s['avg_steps_per_run']:.1f} / run)")
+    print(f"  Total tokens    : {s['total_tokens']:,}")
+    print(f"  Total cost      : ${s['total_cost_usd']:.6f} USD  "
+          f"(avg ${s['avg_cost_per_run']:.6f} / run)")
+
+    if ag["by_run"]:
+        print("\n  By agent run:")
+        print(f"  {'Audit ID':<10}  {'Thesis':<14}  {'Steps':>5}  {'Tokens':>8}  {'Cost':>10}  {'Timestamp':<19}  Goal")
+        print("  " + "-" * 110)
+        for row in ag["by_run"]:
+            goal_preview = (row["goal"][:35] + "…") if len(row["goal"]) > 35 else row["goal"]
+            print(
+                f"  {row['audit_id'][:8]:<10}  {row['thesis_name']:<14}  "
+                f"{row['steps']:>5}  {row['total_tokens']:>8,}  "
+                f"${row['cost_usd']:>9.6f}  {row['run_timestamp'][:19]:<19}  {goal_preview}"
+            )
+
+    if ag["by_tool"]:
+        print("\n  By tool:")
+        print(f"  {'Tool':<35}  {'Calls':>5}  {'Tokens':>8}  {'Cost':>10}  Avg latency")
+        print("  " + "-" * 72)
+        for row in ag["by_tool"]:
+            print(
+                f"  {row['tool_called']:<35}  {row['calls']:>5}  "
+                f"{row['total_tokens']:>8,}  ${row['cost_usd']:>9.6f}  "
+                f"{row['avg_latency_ms']:.0f} ms"
+            )
+
+    print("=" * 60)
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -229,23 +330,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run orchestrator examples")
     parser.add_argument(
         "--example",
-        choices=["views", "bl", "news", "agent", "all"],
-        default="agent",
+        choices=["views", "bl", "news", "agent", "admin", "all"],
+        default="admin",
         help="Which example to run (default: agent)",
     )
-    parser.add_argument(
-        "--thesis",
-        default="current",
-        help="Recipe name for the agent example (default: current)",
-    )
-    parser.add_argument(
-        "--goal",
-        default=(
-            "Stress-test all views by varying confidence and find an allocation "
-            "for a moderate-risk investor with max 25% per position."
-        ),
-        help="Goal text for the agent example",
-    )
+    # parser.add_argument(
+    #     "--thesis",
+    #     default="current",
+    #     help="Recipe name for the agent example (default: current)",
+    # )
+    # parser.add_argument(
+    #     "--goal",
+    #     default=(
+    #         "Stress-test all views by varying confidence and find an allocation "
+    #         "for a moderate-risk investor with max 25% per position."
+    #     ),
+    #     help="Goal text for the agent example",
+    # )
     args = parser.parse_args()
 
     if args.example in ("views", "all"):
@@ -259,3 +360,6 @@ if __name__ == "__main__":
 
     if args.example in ("agent", "all"):
         run_agent_example(thesis_name=args.thesis, goal=args.goal)
+
+    if args.example in ("admin", "all"):
+        run_admin_console_example()

@@ -7,10 +7,12 @@
   "universe": {
     "assets": [
       "AAPL",
-      "MSFT",
-      "AMZN",
       "TSLA",
-      "JPM"
+      "JPM",
+      "GLD",
+      "BND",
+      "AMZN",
+      "MSFT"
     ]
   },
   "model_parameters": {
@@ -53,6 +55,20 @@
       "expected_return": 0.02,
       "confidence": 0.6,
       "label": "Strong earnings report for Microsoft"
+    },
+    {
+      "type": "relative",
+      "assets": [
+        "TSLA",
+        "JPM"
+      ],
+      "weights": [
+        1,
+        -1
+      ],
+      "expected_outperformance": -0.05,
+      "confidence": 0.6,
+      "label": "TSLA expected to underperform JPM by 5%"
     }
   ],
   "top_down_views": {

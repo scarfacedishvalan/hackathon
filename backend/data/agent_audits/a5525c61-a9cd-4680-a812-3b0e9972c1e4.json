@@ -1,0 +1,661 @@
+{
+  "audit_id": "a5525c61-a9cd-4680-a812-3b0e9972c1e4",
+  "thesis_name": "alpha_tilt",
+  "goal": "Minimise portfolio volatility for a conservative investor. Penalise concentration in correlated assets. Max drawdown constraint of 10%.",
+  "run_timestamp": "2026-03-12T03:42:13.086372",
+  "model": "gpt-4o",
+  "base_recipe_snapshot": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "AMZN",
+        "TSLA",
+        "JPM"
+      ]
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 2.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true,
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    "bottom_up_views": [
+      {
+        "type": "absolute",
+        "asset": "AMZN",
+        "expected_return": 0.055,
+        "confidence": 0.6,
+        "label": "Credit modest upside"
+      },
+      {
+        "type": "relative",
+        "assets": [
+          "TSLA",
+          "JPM"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": -0.05,
+        "confidence": 0.6,
+        "label": "TSLA underperform JPM"
+      },
+      {
+        "type": "absolute",
+        "asset": "MSFT",
+        "expected_return": 0.02,
+        "confidence": 0.6,
+        "label": "Strong earnings report for Microsoft"
+      }
+    ],
+    "top_down_views": {
+      "factor_model": {
+        "factors": [
+          "Rates",
+          "Growth"
+        ]
+      },
+      "factor_shocks": [
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Rising rates"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.04,
+          "confidence": 0.6,
+          "label": "Strongly benefit financials"
+        },
+        {
+          "factor": "Defensive",
+          "shock": -0.01,
+          "confidence": 0.6,
+          "label": "Slightly hurt defensives"
+        },
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        }
+      ]
+    }
+  },
+  "base_result_summary": {
+    "portfolio_return": 0.062,
+    "portfolio_vol": 0.2633,
+    "sharpe": 0.2354,
+    "top_weights": {
+      "AAPL": 0.4,
+      "JPM": 0.4,
+      "AMZN": 0.1479,
+      "TSLA": 0.0521,
+      "MSFT": 0.0
+    },
+    "weights": {
+      "AAPL": 0.4,
+      "MSFT": 0.0,
+      "AMZN": 0.1479,
+      "TSLA": 0.0521,
+      "JPM": 0.4
+    },
+    "return_delta_vs_prior": {
+      "AAPL": -0.0978,
+      "MSFT": -0.097,
+      "AMZN": -0.1061,
+      "TSLA": -0.1779,
+      "JPM": -0.0273
+    }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "tool": "get_recipe_summary",
+      "args": {},
+      "result": {
+        "name": "Q1_macro_alpha_blend",
+        "universe": [
+          "AAPL",
+          "MSFT",
+          "AMZN",
+          "TSLA",
+          "JPM"
+        ],
+        "model_parameters": {
+          "tau": 0.05,
+          "risk_aversion": 2.0,
+          "risk_free_rate": 0.02
+        },
+        "constraints": {
+          "long_only": true,
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        },
+        "bottom_up_views": [],
+        "factor_shocks": []
+      }
+    },
+    {
+      "step": 1,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "base_scenario",
+        "mutations": {}
+      },
+      "result": {
+        "label": "base_scenario",
+        "status": "ok",
+        "portfolio_return": 0.062,
+        "portfolio_vol": 0.2633,
+        "sharpe": 0.2354,
+        "top_weights": {
+          "AAPL": 0.4,
+          "JPM": 0.4,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "MSFT": 0.0
+        },
+        "weights": {
+          "AAPL": 0.4,
+          "MSFT": 0.0,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "JPM": 0.4
+        },
+        "return_delta_vs_prior": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "weight_delta_vs_base": {
+          "AAPL": 0.0,
+          "AMZN": 0.0,
+          "JPM": 0.0,
+          "MSFT": 0.0,
+          "TSLA": 0.0
+        }
+      }
+    },
+    {
+      "step": 1,
+      "tool": "run_stress_sweep",
+      "args": {
+        "sweep_parameter": "risk_aversion",
+        "grid": [
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0
+        ]
+      },
+      "result": {
+        "sweep_parameter": "risk_aversion",
+        "grid_results": [
+          {
+            "value": 1.0,
+            "sharpe": 0.1611,
+            "portfolio_return": 0.0419,
+            "portfolio_vol": 0.26,
+            "top_weights": {
+              "JPM": 0.4,
+              "AAPL": 0.3208,
+              "AMZN": 0.2424,
+              "TSLA": 0.0369,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 1.5,
+            "sharpe": 0.198,
+            "portfolio_return": 0.0518,
+            "portfolio_vol": 0.2617,
+            "top_weights": {
+              "JPM": 0.4,
+              "AAPL": 0.3885,
+              "AMZN": 0.1677,
+              "TSLA": 0.0438,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 2.0,
+            "sharpe": 0.2354,
+            "portfolio_return": 0.062,
+            "portfolio_vol": 0.2633,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.4,
+              "AMZN": 0.1479,
+              "TSLA": 0.0521,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 2.5,
+            "sharpe": 0.273,
+            "portfolio_return": 0.0721,
+            "portfolio_vol": 0.2643,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.4,
+              "AMZN": 0.1414,
+              "TSLA": 0.0586,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 3.0,
+            "sharpe": 0.311,
+            "portfolio_return": 0.0822,
+            "portfolio_vol": 0.2644,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.3696,
+              "AMZN": 0.1375,
+              "TSLA": 0.0636,
+              "MSFT": 0.0292
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": 1,
+      "tool": "run_stress_sweep",
+      "args": {
+        "sweep_parameter": "tau",
+        "grid": [
+          0.01,
+          0.03,
+          0.05,
+          0.07,
+          0.1
+        ]
+      },
+      "result": {
+        "sweep_parameter": "tau",
+        "grid_results": [
+          {
+            "value": 0.01,
+            "sharpe": 0.2354,
+            "portfolio_return": 0.062,
+            "portfolio_vol": 0.2633,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.4,
+              "AMZN": 0.1479,
+              "TSLA": 0.0521,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 0.03,
+            "sharpe": 0.2354,
+            "portfolio_return": 0.062,
+            "portfolio_vol": 0.2633,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.4,
+              "AMZN": 0.1479,
+              "TSLA": 0.0521,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 0.05,
+            "sharpe": 0.2354,
+            "portfolio_return": 0.062,
+            "portfolio_vol": 0.2633,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.4,
+              "AMZN": 0.1479,
+              "TSLA": 0.0521,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 0.07,
+            "sharpe": 0.2354,
+            "portfolio_return": 0.062,
+            "portfolio_vol": 0.2633,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.4,
+              "AMZN": 0.1479,
+              "TSLA": 0.0521,
+              "MSFT": 0.0
+            }
+          },
+          {
+            "value": 0.1,
+            "sharpe": 0.2354,
+            "portfolio_return": 0.062,
+            "portfolio_vol": 0.2633,
+            "top_weights": {
+              "AAPL": 0.4,
+              "JPM": 0.4,
+              "AMZN": 0.1479,
+              "TSLA": 0.0521,
+              "MSFT": 0.0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "step": 2,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "conservative_bounds",
+        "mutations": {
+          "weight_bounds": [
+            0.0,
+            0.3
+          ]
+        }
+      },
+      "result": {
+        "label": "conservative_bounds",
+        "status": "ok",
+        "portfolio_return": 0.0607,
+        "portfolio_vol": 0.264,
+        "sharpe": 0.23,
+        "top_weights": {
+          "AAPL": 0.3,
+          "JPM": 0.3,
+          "AMZN": 0.2062,
+          "MSFT": 0.1196,
+          "TSLA": 0.0742
+        },
+        "weights": {
+          "AAPL": 0.3,
+          "MSFT": 0.1196,
+          "AMZN": 0.2062,
+          "TSLA": 0.0742,
+          "JPM": 0.3
+        },
+        "return_delta_vs_prior": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "weight_delta_vs_base": {
+          "AAPL": -0.1,
+          "AMZN": 0.0583,
+          "JPM": -0.1,
+          "MSFT": 0.1196,
+          "TSLA": 0.0221
+        }
+      }
+    },
+    {
+      "step": 3,
+      "tool": "compare_scenarios",
+      "args": {
+        "label_a": "base_scenario",
+        "label_b": "conservative_bounds"
+      },
+      "result": {
+        "scenario_a": "base_scenario",
+        "scenario_b": "conservative_bounds",
+        "sharpe_a": 0.2354,
+        "sharpe_b": 0.23,
+        "portfolio_return_a": 0.062,
+        "portfolio_return_b": 0.0607,
+        "portfolio_vol_a": 0.2633,
+        "portfolio_vol_b": 0.264,
+        "weight_delta_b_minus_a": {
+          "AAPL": -0.1,
+          "AMZN": 0.0583,
+          "JPM": -0.1,
+          "MSFT": 0.1196,
+          "TSLA": 0.0221
+        },
+        "return_delta_a": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "return_delta_b": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        }
+      }
+    },
+    {
+      "step": 4,
+      "tool": "synthesise",
+      "args": {
+        "narrative": "The base Black-Litterman scenario for the 'alpha_tilt' thesis resulted in a portfolio with a return of 6.2%, volatility of 26.33%, and a Sharpe ratio of 0.2354. The portfolio was heavily concentrated in AAPL and JPM, each at 40%, with smaller allocations to AMZN, TSLA, and no allocation to MSFT.\n\nStress-testing the model parameters showed that the portfolio's performance was not sensitive to changes in the tau parameter, as the results remained consistent across different tau values. However, varying the risk aversion parameter indicated that increasing risk aversion slightly improved the Sharpe ratio, but also increased the portfolio's return and volatility, which is not ideal for a conservative investor.\n\nTo address the goal of minimizing volatility and penalizing concentration in correlated assets, a scenario with tighter weight bounds (0.0 to 0.3) was tested. This resulted in a more diversified portfolio with reduced concentration in AAPL and JPM, and increased allocations to MSFT and AMZN. The portfolio return slightly decreased to 6.07%, and volatility increased marginally to 26.4%, with a Sharpe ratio of 0.23.\n\nThe conservative bounds scenario achieved a more balanced allocation, reducing concentration risk, but did not significantly reduce volatility. The max drawdown constraint of 10% was not explicitly tested, but the increased diversification should help mitigate drawdown risk.\n\n**Recommendation:** Adopt the conservative bounds scenario to achieve a more diversified portfolio, while monitoring for further volatility reduction strategies. Consider additional constraints or diversification strategies to further reduce volatility if necessary.",
+        "risk_flags": [
+          "High concentration in AAPL and JPM in base scenario",
+          "Volatility remains high for a conservative profile",
+          "Max drawdown constraint not explicitly tested"
+        ]
+      },
+      "result": {
+        "done": true,
+        "narrative": "The base Black-Litterman scenario for the 'alpha_tilt' thesis resulted in a portfolio with a return of 6.2%, volatility of 26.33%, and a Sharpe ratio of 0.2354. The portfolio was heavily concentrated in AAPL and JPM, each at 40%, with smaller allocations to AMZN, TSLA, and no allocation to MSFT.\n\nStress-testing the model parameters showed that the portfolio's performance was not sensitive to changes in the tau parameter, as the results remained consistent across different tau values. However, varying the risk aversion parameter indicated that increasing risk aversion slightly improved the Sharpe ratio, but also increased the portfolio's return and volatility, which is not ideal for a conservative investor.\n\nTo address the goal of minimizing volatility and penalizing concentration in correlated assets, a scenario with tighter weight bounds (0.0 to 0.3) was tested. This resulted in a more diversified portfolio with reduced concentration in AAPL and JPM, and increased allocations to MSFT and AMZN. The portfolio return slightly decreased to 6.07%, and volatility increased marginally to 26.4%, with a Sharpe ratio of 0.23.\n\nThe conservative bounds scenario achieved a more balanced allocation, reducing concentration risk, but did not significantly reduce volatility. The max drawdown constraint of 10% was not explicitly tested, but the increased diversification should help mitigate drawdown risk.\n\n**Recommendation:** Adopt the conservative bounds scenario to achieve a more diversified portfolio, while monitoring for further volatility reduction strategies. Consider additional constraints or diversification strategies to further reduce volatility if necessary.",
+        "recommended_weights": null,
+        "risk_flags": [
+          "High concentration in AAPL and JPM in base scenario",
+          "Volatility remains high for a conservative profile",
+          "Max drawdown constraint not explicitly tested"
+        ]
+      }
+    }
+  ],
+  "mutations_applied": [
+    {},
+    {
+      "weight_bounds": [
+        0.0,
+        0.3
+      ]
+    }
+  ],
+  "scenarios_run": {
+    "base_scenario": {
+      "portfolio_return": 0.062,
+      "portfolio_vol": 0.2633,
+      "sharpe": 0.2354,
+      "top_weights": {
+        "AAPL": 0.4,
+        "JPM": 0.4,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "MSFT": 0.0
+      },
+      "weights": {
+        "AAPL": 0.4,
+        "MSFT": 0.0,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "JPM": 0.4
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0978,
+        "MSFT": -0.097,
+        "AMZN": -0.1061,
+        "TSLA": -0.1779,
+        "JPM": -0.0273
+      },
+      "weight_delta_vs_base": {
+        "AAPL": 0.0,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "MSFT": 0.0,
+        "TSLA": 0.0
+      }
+    },
+    "conservative_bounds": {
+      "portfolio_return": 0.0607,
+      "portfolio_vol": 0.264,
+      "sharpe": 0.23,
+      "top_weights": {
+        "AAPL": 0.3,
+        "JPM": 0.3,
+        "AMZN": 0.2062,
+        "MSFT": 0.1196,
+        "TSLA": 0.0742
+      },
+      "weights": {
+        "AAPL": 0.3,
+        "MSFT": 0.1196,
+        "AMZN": 0.2062,
+        "TSLA": 0.0742,
+        "JPM": 0.3
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0978,
+        "MSFT": -0.097,
+        "AMZN": -0.1061,
+        "TSLA": -0.1779,
+        "JPM": -0.0273
+      },
+      "weight_delta_vs_base": {
+        "AAPL": -0.1,
+        "AMZN": 0.0583,
+        "JPM": -0.1,
+        "MSFT": 0.1196,
+        "TSLA": 0.0221
+      }
+    }
+  },
+  "synthesis": {
+    "done": true,
+    "narrative": "The base Black-Litterman scenario for the 'alpha_tilt' thesis resulted in a portfolio with a return of 6.2%, volatility of 26.33%, and a Sharpe ratio of 0.2354. The portfolio was heavily concentrated in AAPL and JPM, each at 40%, with smaller allocations to AMZN, TSLA, and no allocation to MSFT.\n\nStress-testing the model parameters showed that the portfolio's performance was not sensitive to changes in the tau parameter, as the results remained consistent across different tau values. However, varying the risk aversion parameter indicated that increasing risk aversion slightly improved the Sharpe ratio, but also increased the portfolio's return and volatility, which is not ideal for a conservative investor.\n\nTo address the goal of minimizing volatility and penalizing concentration in correlated assets, a scenario with tighter weight bounds (0.0 to 0.3) was tested. This resulted in a more diversified portfolio with reduced concentration in AAPL and JPM, and increased allocations to MSFT and AMZN. The portfolio return slightly decreased to 6.07%, and volatility increased marginally to 26.4%, with a Sharpe ratio of 0.23.\n\nThe conservative bounds scenario achieved a more balanced allocation, reducing concentration risk, but did not significantly reduce volatility. The max drawdown constraint of 10% was not explicitly tested, but the increased diversification should help mitigate drawdown risk.\n\n**Recommendation:** Adopt the conservative bounds scenario to achieve a more diversified portfolio, while monitoring for further volatility reduction strategies. Consider additional constraints or diversification strategies to further reduce volatility if necessary.",
+    "recommended_weights": null,
+    "risk_flags": [
+      "High concentration in AAPL and JPM in base scenario",
+      "Volatility remains high for a conservative profile",
+      "Max drawdown constraint not explicitly tested"
+    ]
+  },
+  "final_weights": {
+    "AAPL": 0.3,
+    "MSFT": 0.1196,
+    "AMZN": 0.2062,
+    "TSLA": 0.0742,
+    "JPM": 0.3
+  },
+  "weight_delta_vs_base": {
+    "AAPL": -0.1,
+    "AMZN": 0.0583,
+    "JPM": -0.1,
+    "MSFT": 0.1196,
+    "TSLA": 0.0221
+  },
+  "cost_breakdown": {
+    "steps": 5,
+    "total_tokens": 10868,
+    "total_cost_usd": 0.03149,
+    "success_steps": 5
+  },
+  "step_costs": [
+    {
+      "audit_id": "a5525c61-a9cd-4680-a812-3b0e9972c1e4",
+      "timestamp": "2026-03-12T03:42:13.239254",
+      "thesis_name": "alpha_tilt",
+      "step": 0,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 999,
+      "completion_tokens": 11,
+      "total_tokens": 1010,
+      "cost_usd": 0.0026075,
+      "latency_ms": 1960,
+      "success": 1
+    },
+    {
+      "audit_id": "a5525c61-a9cd-4680-a812-3b0e9972c1e4",
+      "timestamp": "2026-03-12T03:42:15.228180",
+      "thesis_name": "alpha_tilt",
+      "step": 1,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 1122,
+      "completion_tokens": 124,
+      "total_tokens": 1246,
+      "cost_usd": 0.004045,
+      "latency_ms": 3892,
+      "success": 1
+    },
+    {
+      "audit_id": "a5525c61-a9cd-4680-a812-3b0e9972c1e4",
+      "timestamp": "2026-03-12T03:42:20.708837",
+      "thesis_name": "alpha_tilt",
+      "step": 2,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2431,
+      "completion_tokens": 33,
+      "total_tokens": 2464,
+      "cost_usd": 0.0064075,
+      "latency_ms": 2523,
+      "success": 1
+    },
+    {
+      "audit_id": "a5525c61-a9cd-4680-a812-3b0e9972c1e4",
+      "timestamp": "2026-03-12T03:42:23.409312",
+      "thesis_name": "alpha_tilt",
+      "step": 3,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2729,
+      "completion_tokens": 26,
+      "total_tokens": 2755,
+      "cost_usd": 0.0070825,
+      "latency_ms": 1361,
+      "success": 1
+    },
+    {
+      "audit_id": "a5525c61-a9cd-4680-a812-3b0e9972c1e4",
+      "timestamp": "2026-03-12T03:42:24.795860",
+      "thesis_name": "alpha_tilt",
+      "step": 4,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 3011,
+      "completion_tokens": 382,
+      "total_tokens": 3393,
+      "cost_usd": 0.0113475,
+      "latency_ms": 10683,
+      "success": 1
+    }
+  ]
+}

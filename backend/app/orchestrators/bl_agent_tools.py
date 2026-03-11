@@ -306,8 +306,8 @@ def _summarise_result(
         "portfolio_return": round(port_ret, 4),
         "portfolio_vol": round(port_vol, 4),
         "sharpe": round(sharpe, 4),
-        "top_weights": {k: round(v, 4) for k, v in top_weights},
-        "weights": {k: round(v, 4) for k, v in weights.items()},
+        "top_weights": {k: round(float(v), 4) for k, v in top_weights},
+        "weights": {k: round(float(v), 4) for k, v in weights.items()},
         "return_delta_vs_prior": return_deltas,
     }
 
@@ -330,6 +330,7 @@ def dispatch_tool(
     base_recipe: dict,
     run_cache: Dict[str, dict],
     price_df: pd.DataFrame,
+    goal_mutations: Optional[dict] = None,
 ) -> dict:
     """
     Execute a tool call from the agent loop.
@@ -341,6 +342,8 @@ def dispatch_tool(
     base_recipe Original (unmodified) recipe.
     run_cache   Dict[label -> result_summary]; caller accumulates this.
     price_df    Price DataFrame required by run_black_litterman.
+    goal_mutations  Hard constraints extracted from the goal (e.g. weight_bounds)
+                    that are always merged into every scenario mutation.
 
     Returns
     -------
@@ -379,17 +382,50 @@ def dispatch_tool(
                 }
                 for s in factor_shocks
             ],
+            "view_labels": [v.get("label") for v in bottom_up] + [s.get("label") for s in factor_shocks],
+            "sweepable_confidence_params": [
+                f"confidence/{v.get('label')}" for v in bottom_up
+            ] + [
+                f"confidence/{s.get('label')}" for s in factor_shocks
+            ],
+            "note": (
+                f"To stress-test expected return assumptions use run_bl_scenario with "
+                f"override_expected_return: {{asset: new_return}} mutations, or "
+                f"run_stress_sweep with sweep_parameter='risk_aversion'. "
+                f"Use ONLY the exact labels listed in view_labels for confidence sweeps."
+            ),
         }
 
     # ------------------------------------------------------------------ #
     elif tool_name == "run_bl_scenario":
         label: str = tool_args["label"]
         mutations: dict = tool_args.get("mutations", {})
+        # Hard-merge goal-level constraints (e.g. weight_bounds) so they are
+        # always applied even if the model omitted them from the mutation dict.
+        if goal_mutations:
+            merged = copy.deepcopy(goal_mutations)
+            merged.update(mutations)   # agent mutations win on non-critical keys
+            # But goal weight_bounds always takes priority (more restrictive)
+            if "weight_bounds" in goal_mutations:
+                merged["weight_bounds"] = goal_mutations["weight_bounds"]
+            mutations = merged
         mutated_recipe = _apply_mutations(base_recipe, mutations)
         try:
             with _quiet_bl():
                 result = run_black_litterman(mutated_recipe, price_df)
             summary = _summarise_result(result, mutated_recipe, price_df)
+
+            # Detect equal-weight trap: when cap * n_assets == 1.0 the optimizer
+            # is fully constrained and posterior views have no effect.
+            wb = mutations.get("weight_bounds")
+            if wb is not None:
+                n = len(summary.get("weights", {}))
+                if n > 0 and abs(wb[1] * n - 1.0) < 0.01:
+                    summary["constraint_warning"] = (
+                        f"Weight cap {wb[1]:.0%} × {n} assets = 100%: portfolio is "
+                        f"forced to equal-weight. Views cannot differentiate allocation. "
+                        f"Consider loosening the cap or varying expected returns directly."
+                    )
 
             # Compute delta vs base
             if "base" in run_cache:
@@ -407,6 +443,13 @@ def dispatch_tool(
         sweep_param: str = tool_args["sweep_parameter"]
         grid: list = tool_args["grid"]
         base_mutations: dict = tool_args.get("base_mutations", {})
+        # Merge goal-level constraints into every sweep step
+        if goal_mutations:
+            merged_base = copy.deepcopy(goal_mutations)
+            merged_base.update(base_mutations)
+            if "weight_bounds" in goal_mutations:
+                merged_base["weight_bounds"] = goal_mutations["weight_bounds"]
+            base_mutations = merged_base
 
         rows = []
         for value in grid:

@@ -1,0 +1,741 @@
+{
+  "audit_id": "2f3d537c-2d9f-433a-9d1b-c4057841835f",
+  "thesis_name": "alpha_tilt",
+  "goal": "Maximise Sharpe ratio with sector diversification.  Run stress sweep on expected return assumptions.",
+  "run_timestamp": "2026-03-12T04:31:55.678222",
+  "model": "gpt-4o",
+  "base_recipe_snapshot": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "AMZN",
+        "TSLA",
+        "JPM"
+      ]
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 2.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true,
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    "bottom_up_views": [
+      {
+        "type": "absolute",
+        "asset": "AMZN",
+        "expected_return": 0.055,
+        "confidence": 0.6,
+        "label": "Credit modest upside"
+      },
+      {
+        "type": "relative",
+        "assets": [
+          "TSLA",
+          "JPM"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": -0.05,
+        "confidence": 0.6,
+        "label": "TSLA underperform JPM"
+      },
+      {
+        "type": "absolute",
+        "asset": "MSFT",
+        "expected_return": 0.02,
+        "confidence": 0.6,
+        "label": "Strong earnings report for Microsoft"
+      }
+    ],
+    "top_down_views": {
+      "factor_model": {
+        "factors": [
+          "Rates",
+          "Growth"
+        ]
+      },
+      "factor_shocks": [
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Rising rates"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.04,
+          "confidence": 0.6,
+          "label": "Strongly benefit financials"
+        },
+        {
+          "factor": "Defensive",
+          "shock": -0.01,
+          "confidence": 0.6,
+          "label": "Slightly hurt defensives"
+        },
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        }
+      ]
+    }
+  },
+  "base_result_summary": {
+    "portfolio_return": 0.062,
+    "portfolio_vol": 0.2633,
+    "sharpe": 0.2354,
+    "top_weights": {
+      "AAPL": 0.4,
+      "JPM": 0.4,
+      "AMZN": 0.1479,
+      "TSLA": 0.0521,
+      "MSFT": 0.0
+    },
+    "weights": {
+      "AAPL": 0.4,
+      "MSFT": 0.0,
+      "AMZN": 0.1479,
+      "TSLA": 0.0521,
+      "JPM": 0.4
+    },
+    "return_delta_vs_prior": {
+      "AAPL": -0.0978,
+      "MSFT": -0.097,
+      "AMZN": -0.1061,
+      "TSLA": -0.1779,
+      "JPM": -0.0273
+    }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "tool": "get_recipe_summary",
+      "args": {},
+      "result": {
+        "name": "Q1_macro_alpha_blend",
+        "universe": [
+          "AAPL",
+          "MSFT",
+          "AMZN",
+          "TSLA",
+          "JPM"
+        ],
+        "model_parameters": {
+          "tau": 0.05,
+          "risk_aversion": 2.0,
+          "risk_free_rate": 0.02
+        },
+        "constraints": {
+          "long_only": true,
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        },
+        "bottom_up_views": [],
+        "factor_shocks": [],
+        "view_labels": [],
+        "sweepable_confidence_params": [],
+        "note": "To stress-test expected return assumptions use run_bl_scenario with override_expected_return: {asset: new_return} mutations, or run_stress_sweep with sweep_parameter='risk_aversion'. Use ONLY the exact labels listed in view_labels for confidence sweeps."
+      }
+    },
+    {
+      "step": 1,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "increase_JPM_return",
+        "mutations": {
+          "override_expected_return": {
+            "JPM": 0.1
+          },
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        }
+      },
+      "result": {
+        "label": "increase_JPM_return",
+        "status": "ok",
+        "portfolio_return": 0.062,
+        "portfolio_vol": 0.2633,
+        "sharpe": 0.2354,
+        "top_weights": {
+          "AAPL": 0.4,
+          "JPM": 0.4,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "MSFT": 0.0
+        },
+        "weights": {
+          "AAPL": 0.4,
+          "MSFT": 0.0,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "JPM": 0.4
+        },
+        "return_delta_vs_prior": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "weight_delta_vs_base": {
+          "AAPL": 0.0,
+          "AMZN": 0.0,
+          "JPM": 0.0,
+          "MSFT": 0.0,
+          "TSLA": 0.0
+        }
+      }
+    },
+    {
+      "step": 2,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "increase_AAPL_return",
+        "mutations": {
+          "override_expected_return": {
+            "AAPL": 0.1
+          },
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        }
+      },
+      "result": {
+        "label": "increase_AAPL_return",
+        "status": "ok",
+        "portfolio_return": 0.062,
+        "portfolio_vol": 0.2633,
+        "sharpe": 0.2354,
+        "top_weights": {
+          "AAPL": 0.4,
+          "JPM": 0.4,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "MSFT": 0.0
+        },
+        "weights": {
+          "AAPL": 0.4,
+          "MSFT": 0.0,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "JPM": 0.4
+        },
+        "return_delta_vs_prior": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "weight_delta_vs_base": {
+          "AAPL": 0.0,
+          "AMZN": 0.0,
+          "JPM": 0.0,
+          "MSFT": 0.0,
+          "TSLA": 0.0
+        }
+      }
+    },
+    {
+      "step": 2,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "increase_AMZN_return",
+        "mutations": {
+          "override_expected_return": {
+            "AMZN": 0.1
+          },
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        }
+      },
+      "result": {
+        "label": "increase_AMZN_return",
+        "status": "ok",
+        "portfolio_return": 0.062,
+        "portfolio_vol": 0.2633,
+        "sharpe": 0.2354,
+        "top_weights": {
+          "AAPL": 0.4,
+          "JPM": 0.4,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "MSFT": 0.0
+        },
+        "weights": {
+          "AAPL": 0.4,
+          "MSFT": 0.0,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "JPM": 0.4
+        },
+        "return_delta_vs_prior": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "weight_delta_vs_base": {
+          "AAPL": 0.0,
+          "AMZN": 0.0,
+          "JPM": 0.0,
+          "MSFT": 0.0,
+          "TSLA": 0.0
+        }
+      }
+    },
+    {
+      "step": 2,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "increase_TSLA_return",
+        "mutations": {
+          "override_expected_return": {
+            "TSLA": 0.1
+          },
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        }
+      },
+      "result": {
+        "label": "increase_TSLA_return",
+        "status": "ok",
+        "portfolio_return": 0.062,
+        "portfolio_vol": 0.2633,
+        "sharpe": 0.2354,
+        "top_weights": {
+          "AAPL": 0.4,
+          "JPM": 0.4,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "MSFT": 0.0
+        },
+        "weights": {
+          "AAPL": 0.4,
+          "MSFT": 0.0,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "JPM": 0.4
+        },
+        "return_delta_vs_prior": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "weight_delta_vs_base": {
+          "AAPL": 0.0,
+          "AMZN": 0.0,
+          "JPM": 0.0,
+          "MSFT": 0.0,
+          "TSLA": 0.0
+        }
+      }
+    },
+    {
+      "step": 2,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "increase_MSFT_return",
+        "mutations": {
+          "override_expected_return": {
+            "MSFT": 0.1
+          },
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        }
+      },
+      "result": {
+        "label": "increase_MSFT_return",
+        "status": "ok",
+        "portfolio_return": 0.062,
+        "portfolio_vol": 0.2633,
+        "sharpe": 0.2354,
+        "top_weights": {
+          "AAPL": 0.4,
+          "JPM": 0.4,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "MSFT": 0.0
+        },
+        "weights": {
+          "AAPL": 0.4,
+          "MSFT": 0.0,
+          "AMZN": 0.1479,
+          "TSLA": 0.0521,
+          "JPM": 0.4
+        },
+        "return_delta_vs_prior": {
+          "AAPL": -0.0978,
+          "MSFT": -0.097,
+          "AMZN": -0.1061,
+          "TSLA": -0.1779,
+          "JPM": -0.0273
+        },
+        "weight_delta_vs_base": {
+          "AAPL": 0.0,
+          "AMZN": 0.0,
+          "JPM": 0.0,
+          "MSFT": 0.0,
+          "TSLA": 0.0
+        }
+      }
+    },
+    {
+      "step": 3,
+      "tool": "synthesise",
+      "args": {
+        "narrative": "The base Black-Litterman scenario resulted in a portfolio with a Sharpe ratio of 0.2354, with significant allocations to AAPL and JPM, each at 40%, and smaller allocations to AMZN and TSLA. The portfolio is constrained by a maximum weight of 40% per asset, which is fully utilized by AAPL and JPM, indicating a potential constraint warning.\n\nTo stress-test the expected return assumptions, I ran scenarios where the expected returns of each asset were increased to 10%. However, none of these scenarios resulted in any change in the portfolio weights or the Sharpe ratio. This suggests that the current weight constraints are fully binding, and the portfolio is not sensitive to changes in expected returns under the current constraints.\n\nGiven the goal of maximizing the Sharpe ratio with sector diversification, the current constraints may be too restrictive to allow for meaningful diversification. The equal-weight result across scenarios indicates that the portfolio is not responsive to changes in expected returns, likely due to the binding weight constraints.\n\nRecommendation: Consider relaxing the weight constraints or exploring alternative diversification strategies to achieve the desired sector diversification and Sharpe ratio improvement.",
+        "risk_flags": [
+          "Constraint warning: Maximum weight constraint is fully binding, limiting diversification.",
+          "Portfolio is not responsive to changes in expected returns due to binding constraints."
+        ]
+      },
+      "result": {
+        "done": true,
+        "narrative": "The base Black-Litterman scenario resulted in a portfolio with a Sharpe ratio of 0.2354, with significant allocations to AAPL and JPM, each at 40%, and smaller allocations to AMZN and TSLA. The portfolio is constrained by a maximum weight of 40% per asset, which is fully utilized by AAPL and JPM, indicating a potential constraint warning.\n\nTo stress-test the expected return assumptions, I ran scenarios where the expected returns of each asset were increased to 10%. However, none of these scenarios resulted in any change in the portfolio weights or the Sharpe ratio. This suggests that the current weight constraints are fully binding, and the portfolio is not sensitive to changes in expected returns under the current constraints.\n\nGiven the goal of maximizing the Sharpe ratio with sector diversification, the current constraints may be too restrictive to allow for meaningful diversification. The equal-weight result across scenarios indicates that the portfolio is not responsive to changes in expected returns, likely due to the binding weight constraints.\n\nRecommendation: Consider relaxing the weight constraints or exploring alternative diversification strategies to achieve the desired sector diversification and Sharpe ratio improvement.",
+        "recommended_weights": null,
+        "risk_flags": [
+          "Constraint warning: Maximum weight constraint is fully binding, limiting diversification.",
+          "Portfolio is not responsive to changes in expected returns due to binding constraints."
+        ]
+      }
+    }
+  ],
+  "mutations_applied": [
+    {
+      "override_expected_return": {
+        "JPM": 0.1
+      },
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    {
+      "override_expected_return": {
+        "AAPL": 0.1
+      },
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    {
+      "override_expected_return": {
+        "AMZN": 0.1
+      },
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    {
+      "override_expected_return": {
+        "TSLA": 0.1
+      },
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    {
+      "override_expected_return": {
+        "MSFT": 0.1
+      },
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    }
+  ],
+  "scenarios_run": {
+    "increase_JPM_return": {
+      "portfolio_return": 0.062,
+      "portfolio_vol": 0.2633,
+      "sharpe": 0.2354,
+      "top_weights": {
+        "AAPL": 0.4,
+        "JPM": 0.4,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "MSFT": 0.0
+      },
+      "weights": {
+        "AAPL": 0.4,
+        "MSFT": 0.0,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "JPM": 0.4
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0978,
+        "MSFT": -0.097,
+        "AMZN": -0.1061,
+        "TSLA": -0.1779,
+        "JPM": -0.0273
+      },
+      "weight_delta_vs_base": {
+        "AAPL": 0.0,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "MSFT": 0.0,
+        "TSLA": 0.0
+      }
+    },
+    "increase_AAPL_return": {
+      "portfolio_return": 0.062,
+      "portfolio_vol": 0.2633,
+      "sharpe": 0.2354,
+      "top_weights": {
+        "AAPL": 0.4,
+        "JPM": 0.4,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "MSFT": 0.0
+      },
+      "weights": {
+        "AAPL": 0.4,
+        "MSFT": 0.0,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "JPM": 0.4
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0978,
+        "MSFT": -0.097,
+        "AMZN": -0.1061,
+        "TSLA": -0.1779,
+        "JPM": -0.0273
+      },
+      "weight_delta_vs_base": {
+        "AAPL": 0.0,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "MSFT": 0.0,
+        "TSLA": 0.0
+      }
+    },
+    "increase_AMZN_return": {
+      "portfolio_return": 0.062,
+      "portfolio_vol": 0.2633,
+      "sharpe": 0.2354,
+      "top_weights": {
+        "AAPL": 0.4,
+        "JPM": 0.4,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "MSFT": 0.0
+      },
+      "weights": {
+        "AAPL": 0.4,
+        "MSFT": 0.0,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "JPM": 0.4
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0978,
+        "MSFT": -0.097,
+        "AMZN": -0.1061,
+        "TSLA": -0.1779,
+        "JPM": -0.0273
+      },
+      "weight_delta_vs_base": {
+        "AAPL": 0.0,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "MSFT": 0.0,
+        "TSLA": 0.0
+      }
+    },
+    "increase_TSLA_return": {
+      "portfolio_return": 0.062,
+      "portfolio_vol": 0.2633,
+      "sharpe": 0.2354,
+      "top_weights": {
+        "AAPL": 0.4,
+        "JPM": 0.4,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "MSFT": 0.0
+      },
+      "weights": {
+        "AAPL": 0.4,
+        "MSFT": 0.0,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "JPM": 0.4
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0978,
+        "MSFT": -0.097,
+        "AMZN": -0.1061,
+        "TSLA": -0.1779,
+        "JPM": -0.0273
+      },
+      "weight_delta_vs_base": {
+        "AAPL": 0.0,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "MSFT": 0.0,
+        "TSLA": 0.0
+      }
+    },
+    "increase_MSFT_return": {
+      "portfolio_return": 0.062,
+      "portfolio_vol": 0.2633,
+      "sharpe": 0.2354,
+      "top_weights": {
+        "AAPL": 0.4,
+        "JPM": 0.4,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "MSFT": 0.0
+      },
+      "weights": {
+        "AAPL": 0.4,
+        "MSFT": 0.0,
+        "AMZN": 0.1479,
+        "TSLA": 0.0521,
+        "JPM": 0.4
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0978,
+        "MSFT": -0.097,
+        "AMZN": -0.1061,
+        "TSLA": -0.1779,
+        "JPM": -0.0273
+      },
+      "weight_delta_vs_base": {
+        "AAPL": 0.0,
+        "AMZN": 0.0,
+        "JPM": 0.0,
+        "MSFT": 0.0,
+        "TSLA": 0.0
+      }
+    }
+  },
+  "synthesis": {
+    "done": true,
+    "narrative": "The base Black-Litterman scenario resulted in a portfolio with a Sharpe ratio of 0.2354, with significant allocations to AAPL and JPM, each at 40%, and smaller allocations to AMZN and TSLA. The portfolio is constrained by a maximum weight of 40% per asset, which is fully utilized by AAPL and JPM, indicating a potential constraint warning.\n\nTo stress-test the expected return assumptions, I ran scenarios where the expected returns of each asset were increased to 10%. However, none of these scenarios resulted in any change in the portfolio weights or the Sharpe ratio. This suggests that the current weight constraints are fully binding, and the portfolio is not sensitive to changes in expected returns under the current constraints.\n\nGiven the goal of maximizing the Sharpe ratio with sector diversification, the current constraints may be too restrictive to allow for meaningful diversification. The equal-weight result across scenarios indicates that the portfolio is not responsive to changes in expected returns, likely due to the binding weight constraints.\n\nRecommendation: Consider relaxing the weight constraints or exploring alternative diversification strategies to achieve the desired sector diversification and Sharpe ratio improvement.",
+    "recommended_weights": null,
+    "risk_flags": [
+      "Constraint warning: Maximum weight constraint is fully binding, limiting diversification.",
+      "Portfolio is not responsive to changes in expected returns due to binding constraints."
+    ]
+  },
+  "final_weights": {
+    "AAPL": 0.4,
+    "MSFT": 0.0,
+    "AMZN": 0.1479,
+    "TSLA": 0.0521,
+    "JPM": 0.4
+  },
+  "weight_delta_vs_base": {
+    "AAPL": 0.0,
+    "AMZN": 0.0,
+    "JPM": 0.0,
+    "MSFT": 0.0,
+    "TSLA": 0.0
+  },
+  "cost_breakdown": {
+    "steps": 4,
+    "total_tokens": 8216,
+    "total_cost_usd": 0.025654999999999997,
+    "success_steps": 4
+  },
+  "step_costs": [
+    {
+      "audit_id": "2f3d537c-2d9f-433a-9d1b-c4057841835f",
+      "timestamp": "2026-03-12T04:31:56.945099",
+      "thesis_name": "alpha_tilt",
+      "step": 0,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 1281,
+      "completion_tokens": 11,
+      "total_tokens": 1292,
+      "cost_usd": 0.0033125,
+      "latency_ms": 1615,
+      "success": 1
+    },
+    {
+      "audit_id": "2f3d537c-2d9f-433a-9d1b-c4057841835f",
+      "timestamp": "2026-03-12T04:31:58.590870",
+      "thesis_name": "alpha_tilt",
+      "step": 1,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 1474,
+      "completion_tokens": 194,
+      "total_tokens": 1668,
+      "cost_usd": 0.005625,
+      "latency_ms": 3159,
+      "success": 1
+    },
+    {
+      "audit_id": "2f3d537c-2d9f-433a-9d1b-c4057841835f",
+      "timestamp": "2026-03-12T04:32:01.922095",
+      "thesis_name": "alpha_tilt",
+      "step": 2,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 1781,
+      "completion_tokens": 197,
+      "total_tokens": 1978,
+      "cost_usd": 0.006422499999999999,
+      "latency_ms": 2575,
+      "success": 1
+    },
+    {
+      "audit_id": "2f3d537c-2d9f-433a-9d1b-c4057841835f",
+      "timestamp": "2026-03-12T04:32:05.070492",
+      "thesis_name": "alpha_tilt",
+      "step": 3,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2998,
+      "completion_tokens": 280,
+      "total_tokens": 3278,
+      "cost_usd": 0.010294999999999999,
+      "latency_ms": 9233,
+      "success": 1
+    }
+  ]
+}

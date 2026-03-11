@@ -77,8 +77,101 @@ Be systematic. Use tool results to decide the next tool to call — do not
 call synthesise too early. Aim for at least 3 scenario runs before
 synthesising unless the recipe is trivially simple.
 
+TOOL USAGE RULES:
+  * run_stress_sweep sweep_parameter for confidence MUST use one of the exact
+    labels returned in the recipe summary's "sweepable_confidence_params" field.
+    NEVER invent a view label — only use labels that exist in the recipe.
+  * To stress-test "expected return assumptions", use run_bl_scenario with
+    override_expected_return: {asset: value} mutations — one scenario per asset
+    or a combined scenario. Do NOT use confidence sweeps for this purpose.
+  * If a base scenario result includes a "constraint_warning", acknowledge it in
+    your reasoning. An equal-weight result means the cap is fully constraining;
+    explore override_expected_return scenarios to find meaningful differences.
+
+CRITICAL — GOAL CONSTRAINTS:
+  * If the goal states a per-position cap (e.g. "max 20% per asset", "no single
+    asset above X%"), you MUST include weight_bounds: [0.0, X] in the mutations
+    of EVERY run_bl_scenario and run_stress_sweep call, without exception.
+  * Do NOT run any scenario without applying stated position limits — a result
+    that violates the goal constraint is meaningless.
+  * Any goal_mutations provided in the user message must be included in every
+    mutation dict you pass to run_bl_scenario or run_stress_sweep.
+
 Output only tool calls. Do not return free-form text outside of the
 synthesise narrative field."""
+
+
+# ---------------------------------------------------------------------------
+# Goal-constraint extraction  (LLM-powered, regex fallback)
+# ---------------------------------------------------------------------------
+
+import re as _re
+
+_CONSTRAINT_EXTRACTION_PROMPT = """\
+You are a constraint parser for a portfolio optimisation system.
+
+Given a natural-language goal, extract any hard portfolio constraints and
+return ONLY a valid JSON object (no markdown, no explanation).
+
+Supported output keys (omit keys that are not mentioned):
+  "weight_bounds": [min_float, max_float]   -- per-asset weight limits (0–1 scale)
+  "risk_aversion": float                    -- override risk-aversion parameter
+  "long_only": bool                         -- true = no short positions
+
+Examples
+--------
+Goal: "No single asset above 20%, moderate risk"
+Output: {"weight_bounds": [0.0, 0.2]}
+
+Goal: "Conservative investor, max 15% per position, long only"
+Output: {"weight_bounds": [0.0, 0.15], "long_only": true}
+
+Goal: "Maximise Sharpe with no constraints"
+Output: {}
+
+Goal: "Keep each name under a quarter of the portfolio"
+Output: {"weight_bounds": [0.0, 0.25]}
+
+Now parse the following goal and return ONLY the JSON object:
+"""
+
+def _extract_goal_mutations(goal: str) -> dict:
+    """
+    Use the LLM to extract hard portfolio constraints from the goal string.
+    Falls back to a simple regex if the LLM call fails.
+    """
+    # --- LLM extraction ---
+    try:
+        content, _ = chat_with_history(
+            messages=[
+                {"role": "user", "content": _CONSTRAINT_EXTRACTION_PROMPT + goal},
+            ],
+            service="bl_agent",
+            operation="extract_goal_constraints",
+            model="gpt-4o-mini",   # cheap — single-shot extraction
+            temperature=0.0,
+            agent_cost_db_path=AGENT_COSTS_DB,
+        )
+        if content:
+            # Strip markdown code fences if the model added them
+            cleaned = content.strip().strip("```json").strip("```").strip()
+            parsed = json.loads(cleaned)
+            if isinstance(parsed, dict):
+                return parsed
+    except Exception:
+        pass  # fall through to regex
+
+    # --- Regex fallback ---
+    mutations: dict = {}
+    cap_pattern = _re.compile(
+        r'(?:max(?:imum)?|no\s+single\s+asset\s+above|cap\s+of|<=?)\s*'
+        r'(\d+(?:\.\d+)?)\s*%',
+        _re.IGNORECASE,
+    )
+    match = cap_pattern.search(goal)
+    if match:
+        mutations['weight_bounds'] = [0.0, float(match.group(1)) / 100.0]
+    return mutations
 
 
 # ---------------------------------------------------------------------------
@@ -146,12 +239,17 @@ def run_agent(
     recipe = load_recipe(thesis_name)
     price_df = _load_price_data()
 
+    # ---- Extract hard constraints from the goal --------------------------
+    goal_mutations = _extract_goal_mutations(goal)
+
     # ---- Establish base run -----------------------------------------------
     try:
-        from app.orchestrators.bl_agent_tools import _summarise_result, _quiet_bl
+        from app.orchestrators.bl_agent_tools import _summarise_result, _quiet_bl, _apply_mutations
         with _quiet_bl():
-            raw_base = run_black_litterman(recipe, price_df)
-        base_summary = _summarise_result(raw_base, recipe, price_df)
+            # Apply goal-level constraints (e.g. weight cap) to the base run
+            base_recipe_for_run = _apply_mutations(recipe, goal_mutations) if goal_mutations else recipe
+            raw_base = run_black_litterman(base_recipe_for_run, price_df)
+        base_summary = _summarise_result(raw_base, base_recipe_for_run, price_df)
     except Exception as exc:
         base_summary = {"error": str(exc)}
 
@@ -165,8 +263,13 @@ def run_agent(
             "role": "user",
             "content": (
                 f"Thesis: '{thesis_name}'\n"
-                f"Goal: {goal}\n\n"
-                f"Base BL result summary:\n{json.dumps(base_summary, indent=2)}"
+                f"Goal: {goal}\n"
+                + (
+                    f"\nGoal constraints (MUST be included in every mutation): "
+                    f"{json.dumps(goal_mutations)}\n"
+                    if goal_mutations else ""
+                )
+                + f"\nBase BL result summary:\n{json.dumps(base_summary, indent=2)}"
             ),
         },
     ]
@@ -238,6 +341,7 @@ def run_agent(
                 base_recipe=recipe,
                 run_cache=run_cache,
                 price_df=price_df,
+                goal_mutations=goal_mutations,
             )
 
             result_text = json.dumps(tool_result)

@@ -8,155 +8,196 @@ function pct(n: number | undefined) {
   return `${(n * 100).toFixed(1)}%`;
 }
 
-function delta(n: number) {
+function deltaPct(n: number) {
   const sign = n >= 0 ? '+' : '';
   return `${sign}${(n * 100).toFixed(1)}%`;
 }
 
-interface Props {
-  audit: AgentAudit;
+function deltaFixed(n: number, places = 3) {
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}${n.toFixed(places)}`;
 }
+
+interface Props { audit: AgentAudit }
 
 const AuditDisplay: React.FC<Props> = ({ audit }) => {
   const [stepsOpen, setStepsOpen] = useState(false);
 
   const base = audit.base_result_summary;
-  const syn = audit.synthesis;
-  const cost = audit.cost_breakdown;
+  const syn  = audit.synthesis;
 
-  // Derive final sharpe / return / vol from scenarios_run or base
-  const scenariosRun = (audit.scenarios_run ?? {}) as Record<string, any>;
-  const scenarioKeys = Object.keys(scenariosRun);
-  const lastScenario = scenarioKeys.length
+  // Derive final metrics from last scenario or fall back to base
+  const scenariosRun  = ((audit as any).scenarios_run ?? {}) as Record<string, any>;
+  const scenarioKeys  = Object.keys(scenariosRun);
+  const lastScenario  = scenarioKeys.length
     ? scenariosRun[scenarioKeys[scenarioKeys.length - 1]]
     : null;
 
-  const finalSharpe  = lastScenario?.sharpe       ?? base.sharpe;
-  const finalReturn  = lastScenario?.portfolio_return ?? base.portfolio_return;
-  const finalVol     = lastScenario?.portfolio_vol    ?? base.portfolio_vol;
+  const finalSharpe = lastScenario?.sharpe            ?? base.sharpe;
+  const finalReturn = lastScenario?.portfolio_return  ?? base.portfolio_return;
+  const finalVol    = lastScenario?.portfolio_vol     ?? base.portfolio_vol;
 
-  const weightDelta = audit.weight_delta_vs_base ?? {};
-  const allAssets = Array.from(
-    new Set([
-      ...Object.keys(base.weights ?? {}),
-      ...Object.keys(weightDelta),
-    ])
+  const weightDelta  = audit.weight_delta_vs_base ?? {};
+  const finalWeights = audit.final_weights ?? base.weights ?? {};
+  const allAssets    = Array.from(
+    new Set([...Object.keys(base.weights ?? {}), ...Object.keys(weightDelta)])
   ).sort();
 
-  const finalWeights = audit.final_weights ?? base.weights ?? {};
+  const stepCount = audit.steps?.length ?? 0;
 
   return (
     <div className="audit-display">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="audit-header">
-        <div className="audit-header__left">
-          <span className="audit-thesis">{audit.thesis_name}</span>
-          <span className="audit-goal">{audit.goal}</span>
+        <div className="audit-header__main">
+          <span className="audit-thesis-badge">{audit.thesis_name}</span>
+          <p className="audit-goal">{audit.goal}</p>
         </div>
-        <div className="audit-header__right">
-          <span className="audit-meta">{audit.model}</span>
-          <span className="audit-meta">{new Date(audit.run_timestamp).toLocaleString()}</span>
-          <span className="audit-meta audit-meta--cost">${cost?.total_cost_usd?.toFixed(4)} / {cost?.total_tokens?.toLocaleString()} tok</span>
+        <div className="audit-header__meta">
+          <span className="meta-chip">{audit.model}</span>
+          <span className="meta-chip">{new Date(audit.run_timestamp).toLocaleString()}</span>
         </div>
       </div>
 
-      {/* Synthesis */}
+      {/* ── Narrative + Insight Chips ── */}
       <section className="audit-section">
-        <div className="audit-narrative">{syn.narrative}</div>
+        <p className="narrative-block">{syn.narrative}</p>
         {syn.risk_flags?.length ? (
-          <div className="risk-flags">
+          <div className="insights-row">
             {syn.risk_flags.map((f, i) => (
-              <span key={i} className="risk-chip">⚠ {f}</span>
+              <div key={i} className="insight-card insight-card--warning">
+                <span className="insight-icon">⚠</span>
+                <div className="insight-body">
+                  <span className="insight-title">{f}</span>
+                </div>
+              </div>
             ))}
           </div>
         ) : null}
       </section>
 
-      {/* Metrics + Allocation side-by-side */}
-      <div className="audit-grid">
-        {/* Allocation delta table */}
-        <section className="audit-section audit-section--allocation">
-          <h3 className="audit-section__title">Allocation</h3>
+      {/* ── Allocation Table ── */}
+      <section className="audit-section">
+        <h3 className="section-title">Allocation</h3>
+        <div className="alloc-table-wrap">
           <table className="alloc-table">
+            <colgroup>
+              <col className="col-asset" />
+              <col className="col-num" />
+              <col className="col-num" />
+              <col className="col-num" />
+            </colgroup>
             <thead>
               <tr>
-                <th>Asset</th>
-                <th>Base</th>
-                <th>Final</th>
-                <th>Delta</th>
+                <th className="th-asset">Asset</th>
+                <th className="th-num">Base</th>
+                <th className="th-num">Final</th>
+                <th className="th-num">Delta</th>
               </tr>
             </thead>
             <tbody>
               {allAssets.map(asset => {
-                const baseW = base.weights?.[asset] ?? 0;
-                const finalW = finalWeights[asset] ?? 0;
-                const d = weightDelta[asset] ?? (finalW - baseW);
+                const baseW  = base.weights?.[asset] ?? 0;
+                const finalW = finalWeights[asset]   ?? 0;
+                const d      = weightDelta[asset]    ?? (finalW - baseW);
+                const upCls  = d >  0.001 ? 'val--positive' : '';
+                const dnCls  = d < -0.001 ? 'val--negative' : '';
                 return (
                   <tr key={asset}>
                     <td className="alloc-asset">{asset}</td>
-                    <td>{pct(baseW)}</td>
-                    <td className="alloc-final">{pct(finalW)}</td>
-                    <td className={`alloc-delta ${d > 0.001 ? 'alloc-delta--up' : d < -0.001 ? 'alloc-delta--down' : ''}`}>
-                      {Math.abs(d) > 0.0001 ? delta(d) : '—'}
+                    <td className="alloc-num">{pct(baseW)}</td>
+                    <td className="alloc-num">{pct(finalW)}</td>
+                    <td className={`alloc-num alloc-delta ${upCls || dnCls || 'delta-neutral'}`}>
+                      {Math.abs(d) > 0.0001 ? deltaPct(d) : '—'}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </section>
+        </div>
+      </section>
 
-        {/* Metrics */}
-        <section className="audit-section audit-section--metrics">
-          <h3 className="audit-section__title">Metrics</h3>
-          <div className="metrics-grid">
-            <MetricRow label="Sharpe"  base={base.sharpe}             final={finalSharpe}  fmt={n => n.toFixed(4)} />
-            <MetricRow label="Return"  base={base.portfolio_return}   final={finalReturn}  fmt={n => pct(n)} />
-            <MetricRow label="Vol"     base={base.portfolio_vol}      final={finalVol}     fmt={n => pct(n)} />
-            <div className="metric-row metric-row--plain">
-              <span className="metric-label">LLM calls</span>
-              <span className="metric-value">{cost?.steps ?? '—'}</span>
-            </div>
-            <div className="metric-row metric-row--plain">
-              <span className="metric-label">Tool calls</span>
-              <span className="metric-value">{audit.steps?.length ?? '—'}</span>
-            </div>
-            <div className="metric-row metric-row--plain">
-              <span className="metric-label">Cost</span>
-              <span className="metric-value">${cost?.total_cost_usd?.toFixed(4)}</span>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* Collapsible step timeline */}
+      {/* ── Metric Stat Cards ── */}
       <section className="audit-section">
-        <button className="steps-toggle" onClick={() => setStepsOpen(o => !o)}>
-          <span>{stepsOpen ? '▲' : '▼'} Agent steps</span>
-          <span className="steps-toggle__count">{audit.steps?.length ?? 0} tool calls, {cost?.steps ?? 0} LLM calls</span>
+        <h3 className="section-title">Metrics</h3>
+        <div className="metrics-row">
+          <MetricCard
+            label="Sharpe"
+            base={base.sharpe}
+            final={finalSharpe}
+            fmt={n => n.toFixed(3)}
+            deltaFmt={n => deltaFixed(n, 3)}
+            invertGood={false}
+          />
+          <MetricCard
+            label="Return"
+            base={base.portfolio_return}
+            final={finalReturn}
+            fmt={n => pct(n)}
+            deltaFmt={n => deltaPct(n)}
+            invertGood={false}
+          />
+          <MetricCard
+            label="Volatility"
+            base={base.portfolio_vol}
+            final={finalVol}
+            fmt={n => pct(n)}
+            deltaFmt={n => deltaPct(n)}
+            invertGood={true}
+          />
+        </div>
+      </section>
+
+      {/* ── Agent Steps Collapsible ── */}
+      <section className="audit-section">
+        <button className="timeline-toggle" onClick={() => setStepsOpen(o => !o)}>
+          <span className="timeline-toggle__arrow">{stepsOpen ? '▲' : '▼'}</span>
+          <span className="timeline-toggle__label">Agent Reasoning</span>
+          <span className="timeline-toggle__count">{stepCount} steps</span>
         </button>
         {stepsOpen && <StepTimeline steps={audit.steps ?? []} />}
       </section>
+
     </div>
   );
 };
 
-interface MetricRowProps {
+/* ── Metric stat card ── */
+interface MetricCardProps {
   label: string;
   base: number;
   final: number;
   fmt: (n: number) => string;
+  deltaFmt: (n: number) => string;
+  invertGood: boolean;   // true = lower is better (volatility)
 }
 
-const MetricRow: React.FC<MetricRowProps> = ({ label, base, final, fmt }) => {
-  const up = final > base + 0.0001;
-  const down = final < base - 0.0001;
+const MetricCard: React.FC<MetricCardProps> = ({ label, base, final, fmt, deltaFmt, invertGood }) => {
+  const diff = final - base;
+  const improved = invertGood ? diff < -0.0001 : diff > 0.0001;
+  const worsened = invertGood ? diff > 0.0001  : diff < -0.0001;
+
+  const arrowCls  = improved ? 'arrow--pos' : worsened ? 'arrow--neg' : '';
+  const deltaCls  = improved ? 'val--positive' : worsened ? 'val--negative' : '';
+  const arrowChar = diff > 0.0001 ? '▲' : diff < -0.0001 ? '▼' : '—';
+
   return (
-    <div className="metric-row">
-      <span className="metric-label">{label}</span>
-      <span className="metric-base">{fmt(base)}</span>
-      <span className="metric-arrow">{up ? '▲' : down ? '▼' : '—'}</span>
-      <span className={`metric-final ${up ? 'metric--up' : down ? 'metric--down' : ''}`}>{fmt(final)}</span>
+    <div className="metric-card">
+      <span className="metric-card__label">{label}</span>
+      <div className="metric-card__compare">
+        <div className="metric-card__base-wrap">
+          <span className="metric-card__base-label">Base</span>
+          <span className="metric-card__base-val">{fmt(base)}</span>
+        </div>
+        <span className={`metric-card__arrow ${arrowCls}`}>{arrowChar}</span>
+        <div className="metric-card__final-wrap">
+          <span className="metric-card__final-label">Final</span>
+          <span className="metric-card__final-val">{fmt(final)}</span>
+        </div>
+      </div>
+      <span className={`metric-card__delta ${deltaCls}`}>{deltaFmt(diff)}</span>
     </div>
   );
 };

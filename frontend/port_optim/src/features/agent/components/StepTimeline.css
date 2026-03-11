@@ -1,67 +1,93 @@
 .step-timeline {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  padding: 4px 0;
 }
 
-.step-row {
-  border: 1px solid #e5e7eb;
-  border-radius: 5px;
+/* ── each step row ── */
+.tl-item {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  gap: 0;
+}
+
+/* vertical connector line, sits between node circles */
+.tl-connector {
+  position: absolute;
+  left: 14px;          /* centres on the 30px node (30/2 - 1) */
+  top: 32px;           /* start just below node */
+  width: 2px;
+  height: calc(100% - 4px);
+  background: #e5e7eb;
+  z-index: 0;
+}
+
+/* ── node circle ── */
+.tl-node {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #eff6ff;
+  border: 2px solid #bfdbfe;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+  margin-right: 12px;
+  margin-top: 5px;
+}
+
+.tl-node--terminal {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+  font-size: 13px;
+}
+
+/* ── card ── */
+.tl-content {
+  flex: 1;
   background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
   overflow: hidden;
 }
 
-.step-row--terminal {
-  border-color: #2563eb22;
-  background: #f0f5ff;
+.tl-item--terminal .tl-content {
+  border-color: #bfdbfe;
+  background: #eff6ff;
 }
 
-.step-row__header {
+/* ── header button inside card ── */
+.tl-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 14px;
   background: transparent;
   border: none;
-  cursor: pointer;
   text-align: left;
   font-size: 13px;
   color: #374151;
   transition: background 0.1s;
 }
+.tl-header:hover:not(:disabled) { background: #f9fafb; }
+.tl-item--terminal .tl-header   { color: #1e40af; }
 
-.step-row__header:hover {
-  background: #f9fafb;
-}
+.tl-icon    { font-size: 14px; flex-shrink: 0; }
+.tl-label   { flex: 1; font-weight: 600; }
+.tl-item--terminal .tl-label { font-weight: 700; }
+.tl-chevron { font-size: 10px; color: #9ca3af; }
 
-.step-icon {
-  font-size: 14px;
-  width: 18px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.step-num {
-  color: #9ca3af;
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  min-width: 42px;
-}
-
-.step-label {
-  flex: 1;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 12px;
-  color: #1f2937;
-}
-
-.step-chevron {
-  font-size: 10px;
-  color: #9ca3af;
-}
-
-.step-result {
+/* ── expanded detail pane ── */
+.tl-detail {
   margin: 0;
   padding: 10px 14px;
   font-size: 11px;
@@ -71,6 +97,7 @@
   background: #f8fafc;
   border-top: 1px solid #e5e7eb;
   color: #374151;
-  max-height: 300px;
+  max-height: 280px;
   overflow-y: auto;
+  line-height: 1.55;
 }
