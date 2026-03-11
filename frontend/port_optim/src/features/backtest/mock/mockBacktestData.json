@@ -1,0 +1,66 @@
+﻿{
+  "parsedRecipe": {
+    "strategy_name": "SmaCross",
+    "timeframe": "daily",
+    "data": { "symbol": "AAPL", "source": null, "path": null, "start": "2021-01-01", "end": "2022-12-31" },
+    "backtest": { "cash": 10000, "commission": "0.1%", "margin": null, "trade_on_close": null, "hedging": null, "exclusive_orders": null },
+    "strategy_params": { "fast": 10, "slow": 30 },
+    "rules": { "entry": "Buy when SMA(10) crosses above SMA(30)", "exit": "Sell when SMA(10) crosses below SMA(30)" },
+    "risk": { "stop_loss": null, "take_profit": null, "trailing_stop": null },
+    "optimize": { "metric": null, "maximize": null, "constraint": null, "params": null }
+  },
+  "runResult": {
+    "recipe": {
+      "strategy_name": "SmaCross", "timeframe": "daily",
+      "data": { "symbol": "AAPL", "source": null, "path": null, "start": "2021-01-01", "end": "2022-12-31" },
+      "backtest": { "cash": 10000, "commission": "0.1%", "margin": null, "trade_on_close": null, "hedging": null, "exclusive_orders": null },
+      "strategy_params": { "fast": 10, "slow": 30 },
+      "rules": { "entry": "Buy when SMA(10) crosses above SMA(30)", "exit": "Sell when SMA(10) crosses below SMA(30)" },
+      "risk": { "stop_loss": null, "take_profit": null, "trailing_stop": null },
+      "optimize": { "metric": null, "maximize": null, "constraint": null, "params": null }
+    },
+    "metrics": {
+      "start": "2021-01-04", "end": "2022-12-30", "duration": "728 days 00:00:00",
+      "equityFinal": 11243.50, "equityPeak": 12105.30,
+      "returnPct": 12.44, "buyHoldReturnPct": 8.91,
+      "annualReturnPct": 6.08, "annualVolatilityPct": 21.35,
+      "sharpeRatio": 0.28, "sortinoRatio": 0.41, "calmarRatio": 0.31,
+      "maxDrawdownPct": -19.72, "avgDrawdownPct": -5.84,
+      "numTrades": 14, "winRatePct": 57.14,
+      "bestTradePct": 18.35, "worstTradePct": -11.22, "avgTradePct": 1.43,
+      "profitFactor": 1.62, "sqn": 0.87
+    },
+    "equityCurve": [
+      { "date": "2021-01-04", "equity": 10000.00 },
+      { "date": "2021-02-01", "equity": 10215.40 },
+      { "date": "2021-03-01", "equity": 10480.20 },
+      { "date": "2021-04-01", "equity": 10863.50 },
+      { "date": "2021-05-01", "equity": 10712.80 },
+      { "date": "2021-06-01", "equity": 11094.60 },
+      { "date": "2021-07-01", "equity": 11523.10 },
+      { "date": "2021-08-01", "equity": 11840.70 },
+      { "date": "2021-09-01", "equity": 11382.30 },
+      { "date": "2021-10-01", "equity": 12105.30 },
+      { "date": "2021-11-01", "equity": 11954.80 },
+      { "date": "2021-12-01", "equity": 12031.20 },
+      { "date": "2022-01-01", "equity": 11420.50 },
+      { "date": "2022-02-01", "equity": 11068.90 },
+      { "date": "2022-03-01", "equity": 11235.60 },
+      { "date": "2022-04-01", "equity": 10825.40 },
+      { "date": "2022-05-01", "equity": 10540.20 },
+      { "date": "2022-06-01", "equity": 9731.80 },
+      { "date": "2022-07-01", "equity": 10345.60 },
+      { "date": "2022-08-01", "equity": 10812.30 },
+      { "date": "2022-09-01", "equity": 10483.70 },
+      { "date": "2022-10-01", "equity": 10820.40 },
+      { "date": "2022-11-01", "equity": 11180.60 },
+      { "date": "2022-12-30", "equity": 11243.50 }
+    ],
+    "trades": [
+      { "entryTime": "2021-01-19", "exitTime": "2021-02-26", "entryPrice": 143.16, "exitPrice": 127.79, "pnl": -107.25, "returnPct": -10.73, "size": 69 },
+      { "entryTime": "2021-03-09", "exitTime": "2021-04-08", "entryPrice": 121.09, "exitPrice": 130.36, "pnl": 64.90, "returnPct": 7.66, "size": 52 },
+      { "entryTime": "2021-06-22", "exitTime": "2021-09-20", "entryPrice": 133.41, "exitPrice": 142.94, "pnl": 635.95, "returnPct": 7.14, "size": 66 },
+      { "entryTime": "2022-01-25", "exitTime": "2022-03-04", "entryPrice": 159.78, "exitPrice": 164.32, "pnl": 267.19, "returnPct": 2.84, "size": 59 }
+    ]
+  }
+}

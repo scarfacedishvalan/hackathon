@@ -32,6 +32,37 @@
   min-height: calc(100vh - 80px);
 }
 
+/* ── Navigation Tabs ─────────────────────────────────────────────── */
+.app-nav {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  border-top: 1px solid #f0f0f0;
+  max-width: 100%;
+}
+
+.nav-tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  color: #2563eb;
+}
+
+.nav-tab--active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
 .header-actions {
   display: flex;
   align-items: center;

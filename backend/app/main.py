@@ -11,6 +11,7 @@ from app.api.routers.views_router import router as views_router
 from app.api.routers.portfolios_router import router as portfolios_router
 from app.api.routers.bl_router import router as bl_router
 from app.api.routers.news_router import router as news_router
+from app.api.routers.backtest_router import router as backtest_router
 from app.db.database import init_db, seed_portfolios
 
 MOCK_PATH = (
@@ -42,3 +43,4 @@ app.include_router(views_router)
 app.include_router(portfolios_router)
 app.include_router(bl_router)
 app.include_router(news_router)
+app.include_router(backtest_router)

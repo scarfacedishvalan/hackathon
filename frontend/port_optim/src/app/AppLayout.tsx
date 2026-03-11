@@ -4,8 +4,12 @@ import { Button } from '@shared/components';
 import { SaveThesisModal } from './SaveThesisModal';
 import './AppLayout.css';
 
+export type AppPage = 'bl_main' | 'backtest';
+
 interface AppLayoutProps {
   children: React.ReactNode;
+  activePage: AppPage;
+  onNavigate: (page: AppPage) => void;
 }
 
 const PlayIcon: React.FC = () => (
@@ -31,7 +35,12 @@ const SaveIcon: React.FC = () => (
   </svg>
 );
 
-export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+const NAV_TABS: { id: AppPage; label: string }[] = [
+  { id: 'bl_main',   label: 'Portfolio Optimizer' },
+  { id: 'backtest',  label: 'Backtest' },
+];
+
+export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNavigate }) => {
   const { refetch, runLoading, saveThesis, saveThesisLoading } = useBLMain();
   const [thesisModalOpen, setThesisModalOpen] = useState(false);
 
@@ -40,27 +49,44 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       {/* Sticky Header */}
       <header className="app-header">
         <div className="header-content">
-          <h1 className="app-title">Black-Litterman Portfolio System</h1>
+          <h1 className="app-title">Portfolio Dashboard</h1>
           <div className="header-actions">
-            <button
-              className="save-thesis-btn"
-              onClick={() => setThesisModalOpen(true)}
-              disabled={saveThesisLoading}
-            >
-              <SaveIcon />
-              {saveThesisLoading ? 'Saving…' : 'Save Thesis'}
-            </button>
-            <Button
-              variant="primary"
-              size="large"
-              icon={runLoading ? undefined : <PlayIcon />}
-              onClick={refetch}
-              disabled={runLoading}
-            >
-              {runLoading ? 'Running…' : 'Run Black-Litterman'}
-            </Button>
+            {activePage === 'bl_main' && (
+              <>
+                <button
+                  className="save-thesis-btn"
+                  onClick={() => setThesisModalOpen(true)}
+                  disabled={saveThesisLoading}
+                >
+                  <SaveIcon />
+                  {saveThesisLoading ? 'Saving…' : 'Save Thesis'}
+                </button>
+                <Button
+                  variant="primary"
+                  size="large"
+                  icon={runLoading ? undefined : <PlayIcon />}
+                  onClick={refetch}
+                  disabled={runLoading}
+                >
+                  {runLoading ? 'Running…' : 'Run Black-Litterman'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
+
+        {/* Navigation Tabs */}
+        <nav className="app-nav">
+          {NAV_TABS.map(tab => (
+            <button
+              key={tab.id}
+              className={`nav-tab${activePage === tab.id ? ' nav-tab--active' : ''}`}
+              onClick={() => onNavigate(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </header>
 
       {/* Main Content */}
