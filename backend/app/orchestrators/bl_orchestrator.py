@@ -222,6 +222,8 @@ def _compute_chart_data(
     prior_vol = float(np.sqrt(w_mkt @ Sigma @ w_mkt))
     post_ret = float(w_bl @ mu_bl)
     post_vol = float(np.sqrt(w_bl @ Sigma @ w_bl))
+    prior_sharpe = (prior_ret - risk_free_rate) / prior_vol if prior_vol > 1e-9 else 0.0
+    post_sharpe  = (post_ret  - risk_free_rate) / post_vol  if post_vol  > 1e-9 else 0.0
 
     # ── Efficient frontier curve ───────────────────────────────────────────────
 
@@ -303,4 +305,16 @@ def _compute_chart_data(
         },
         "allocation": allocation,
         "topDownContribution": top_down_contribution,
+        "portfolioStats": {
+            "prior": {
+                "ret":    round(prior_ret,    6),
+                "vol":    round(prior_vol,    6),
+                "sharpe": round(prior_sharpe, 4),
+            },
+            "posterior": {
+                "ret":    round(post_ret,    6),
+                "vol":    round(post_vol,    6),
+                "sharpe": round(post_sharpe, 4),
+            },
+        },
     }

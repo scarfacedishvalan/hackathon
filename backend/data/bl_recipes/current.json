@@ -66,12 +66,6 @@
         "shock": -0.01,
         "confidence": 0.6,
         "label": "Slightly hurt defensives"
-      },
-      {
-        "factor": "Financial",
-        "shock": 0.02,
-        "confidence": 0.6,
-        "label": "Interest rates boost financials"
       }
     ]
   }

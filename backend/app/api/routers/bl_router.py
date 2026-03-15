@@ -35,6 +35,10 @@ async def run_bl():
           "topDownContribution": [
             {"sector": str, "returnContribution": float, "riskContribution": float}, ...
           ],
+          "portfolioStats": {
+            "prior":     {"ret": float, "vol": float, "sharpe": float},
+            "posterior": {"ret": float, "vol": float, "sharpe": float}
+          },
           "weights":           {ticker: float, ...},
           "posterior_returns": {ticker: float, ...},
           "prior_returns":     {ticker: float, ...},
@@ -74,6 +78,7 @@ async def run_bl():
         "efficientFrontier":   result.get("efficientFrontier"),
         "allocation":          result.get("allocation"),
         "topDownContribution": result.get("topDownContribution"),
+        "portfolioStats":      result.get("portfolioStats"),
         "weights":             result.get("weights"),
         "posterior_returns":   result.get("posterior_returns"),
         "prior_returns":       result.get("prior_returns"),

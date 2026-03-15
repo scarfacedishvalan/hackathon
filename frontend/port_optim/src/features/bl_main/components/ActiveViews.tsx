@@ -144,15 +144,46 @@ export const ActiveViews: React.FC<ActiveViewsProps> = ({
 }) => {
   return (
     <>
-      <Card title="Bottom-Up Views">
-        <BottomUpTable views={bottomUpViews} onDelete={onDeleteBottomUp} />
-      </Card>
+      <div className="active-views-columns">
+        <Card title="Bottom-Up Views">
+          <BottomUpTable views={bottomUpViews} onDelete={onDeleteBottomUp} />
+        </Card>
 
-      <Card title="Top-Down Factor Views">
-        <TopDownTable views={topDownViews} onDelete={onDeleteTopDown} />
-      </Card>
+        <Card title="Top-Down Factor Views">
+          <TopDownTable views={topDownViews} onDelete={onDeleteTopDown} />
+        </Card>
+      </div>
 
       <style>{`
+        .active-views-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          align-items: start;
+        }
+        @media (max-width: 900px) {
+          .active-views-columns {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* Uniform header and row heights across both tables */
+        .active-views-columns .data-table th {
+          height: 44px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          vertical-align: middle;
+          box-sizing: border-box;
+        }
+        .active-views-columns .data-table td {
+          height: 48px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          vertical-align: middle;
+          box-sizing: border-box;
+        }
         .type-badge {
           display: inline-block;
           padding: 2px 8px;

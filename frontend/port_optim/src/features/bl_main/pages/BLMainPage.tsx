@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useBLMain } from '../context/BLMainContext';
+import { Button } from '@shared/components';
+import { SaveThesisModal } from '../../../app/SaveThesisModal';
 import {
   AssetSelection,
   CreateView,
@@ -9,8 +11,62 @@ import {
   EfficientFrontierChart,
   BLAllocationChart,
   TopDownContribution,
+  PortfolioStats,
 } from '../components';
 import './BLMainPage.css';
+
+const ASSET_VIEW_EXAMPLES = [
+  'AAPL will outperform MSFT by 3% over the next quarter.',
+  'TSLA expected to underperform JPM by 5%.',
+];
+
+const FACTOR_VIEW_EXAMPLES = [
+  'Growth factor is expected to deliver a +4% annualized excess return (factor premium) over cash',
+  'Rising rates will strongly benefit financials and slightly hurt defensives.',
+];
+
+interface PastableExamplesProps {
+  onCopy: (text: string) => void;
+}
+
+const PastableExamples: React.FC<PastableExamplesProps> = ({ onCopy }) => (
+  <div className="pastable-examples-card">
+    <div className="examples-section">
+      <div className="examples-category">
+        <h4 className="examples-title">Asset Views</h4>
+        {ASSET_VIEW_EXAMPLES.map((ex, i) => (
+          <div key={i} className="example-item">
+            <p className="example-text">{ex}</p>
+            <button className="copy-btn" onClick={() => onCopy(ex)} title="Copy to input">📋</button>
+          </div>
+        ))}
+      </div>
+      <div className="examples-category">
+        <h4 className="examples-title">Factor Views</h4>
+        {FACTOR_VIEW_EXAMPLES.map((ex, i) => (
+          <div key={i} className="example-item">
+            <p className="example-text">{ex}</p>
+            <button className="copy-btn" onClick={() => onCopy(ex)} title="Copy to input">📋</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+const PlayIcon: React.FC = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3.5 2.5L12.5 8L3.5 13.5V2.5Z" fill="currentColor" />
+  </svg>
+);
+
+const SaveIcon: React.FC = () => (
+  <svg width="13" height="13" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 2h7l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
+      stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" fill="none"/>
+    <path d="M9 2v4H5V2M5 9h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+  </svg>
+);
 
 export const BLMainPage: React.FC = () => {
   const {
@@ -22,7 +78,12 @@ export const BLMainPage: React.FC = () => {
     portfolios, portfoliosLoading,
     createPortfolio, deletePortfolio,
     selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio,
+    refetch, runLoading,
+    saveThesis, saveThesisLoading,
   } = useBLMain();
+
+  const [thesisModalOpen, setThesisModalOpen] = useState(false);
+  const [viewInput, setViewInput] = useState('');
 
   if (loading) {
     return (
@@ -43,26 +104,77 @@ export const BLMainPage: React.FC = () => {
 
   return (
     <div className="bl-main-page">
-      {/* Left Column */}
-      <div className="left-column">
-        <AssetSelection />
-        <CreateView parseView={parseView} parseViewLoading={parseViewLoading} />
-        <ActiveViews
-          bottomUpViews={bottomUpViews}
-          topDownViews={topDownViews}
-          onDeleteBottomUp={deleteBottomUpView}
-          onDeleteTopDown={deleteTopDownView}
-        />
-        <AnalystSuggestions suggestions={data.analystSuggestions} onViewAdded={loadViews} />
-        <ModelControls />
+
+      {/* Action row */}
+      <div className="bl-action-row">
+        <Button
+          variant="secondary"
+          icon={<SaveIcon />}
+          className="bl-save-thesis-btn"
+          onClick={() => setThesisModalOpen(true)}
+          disabled={saveThesisLoading}
+        >
+          {saveThesisLoading ? 'Saving…' : 'Save Thesis'}
+        </Button>
+        <Button
+          variant="secondary"
+          icon={runLoading ? undefined : <PlayIcon />}
+          className="bl-run-btn"
+          onClick={refetch}
+          disabled={runLoading}
+        >
+          {runLoading ? 'Running…' : 'Run Black-Litterman'}
+        </Button>
       </div>
 
-      {/* Right Column */}
-      <div className="right-column">
-        <EfficientFrontierChart data={data.efficientFrontier} />
-        <BLAllocationChart data={data.allocation} />
-        <TopDownContribution data={data.topDownContribution} />
+      {/* 1. Asset Universe */}
+      <AssetSelection />
+
+      {/* 2. View Engine: Create View + Pastable Examples side by side */}
+      <div className="view-editor-row">
+        <div className="view-editor-left">
+          <CreateView parseView={parseView} parseViewLoading={parseViewLoading} value={viewInput} onChange={setViewInput} />
+        </div>
+        <div className="view-editor-right">
+          <PastableExamples onCopy={setViewInput} />
+        </div>
       </div>
+
+      {/* 3. Active Views: Bottom-Up + Top-Down side by side (full width) */}
+      <ActiveViews
+        bottomUpViews={bottomUpViews}
+        topDownViews={topDownViews}
+        onDeleteBottomUp={deleteBottomUpView}
+        onDeleteTopDown={deleteTopDownView}
+      />
+
+      {/* 3. Allocation Chart + Portfolio Stats */}
+      {data.portfolioStats ? (
+        <div className="allocation-panel">
+          <PortfolioStats data={data.portfolioStats} />
+          <BLAllocationChart data={data.allocation} />
+        </div>
+      ) : (
+        <BLAllocationChart data={data.allocation} />
+      )}
+
+      {/* 4. Efficient Frontier */}
+      <EfficientFrontierChart data={data.efficientFrontier} />
+
+      {/* 5. Remaining sections */}
+      <TopDownContribution data={data.topDownContribution} />
+      <AnalystSuggestions suggestions={data.analystSuggestions} onViewAdded={loadViews} />
+      <ModelControls />
+
+      {/* Save Thesis Modal */}
+      {thesisModalOpen && (
+        <SaveThesisModal
+          onSave={saveThesis}
+          onClose={() => setThesisModalOpen(false)}
+          saving={saveThesisLoading}
+        />
+      )}
+
     </div>
   );
 };

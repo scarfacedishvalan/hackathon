@@ -82,6 +82,17 @@ export interface SectorContribution {
   riskContribution: number;
 }
 
+export interface PortfolioSnapshot {
+  ret: number;
+  vol: number;
+  sharpe: number;
+}
+
+export interface PortfolioStats {
+  prior: PortfolioSnapshot;
+  posterior: PortfolioSnapshot;
+}
+
 export interface PortfolioHolding {
   ticker: string;
   weight: number;
@@ -100,6 +111,7 @@ export interface BLMainData {
   efficientFrontier: EfficientFrontier;
   allocation: AllocationData[];
   topDownContribution: SectorContribution[];
+  portfolioStats?: PortfolioStats;
   portfolios?: Portfolio[];
 }
 

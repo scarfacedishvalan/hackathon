@@ -1,34 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, Button } from '@shared/components';
 import './CreateView.css';
 
 interface CreateViewProps {
   parseView: (text: string) => Promise<void>;
   parseViewLoading: boolean;
+  value: string;
+  onChange: (v: string) => void;
 }
 
-export const CreateView: React.FC<CreateViewProps> = ({ parseView, parseViewLoading }) => {
-  const [assetInput, setAssetInput] = useState('');
+export const CreateView: React.FC<CreateViewProps> = ({ parseView, parseViewLoading, value, onChange }) => {
 
   const handleCreate = async () => {
-    if (!assetInput.trim()) return;
-    await parseView(assetInput);
-    setAssetInput('');
+    if (!value.trim()) return;
+    await parseView(value);
+    onChange('');
   };
-
-  const copyToInput = (text: string) => {
-    setAssetInput(text);
-  };
-
-  const assetViewExamples = [
-    "AAPL will outperform MSFT by 3% over the next quarter.",
-    "TSLA expected to underperform JPM by 5%."
-  ];
-
-  const factorViewExamples = [
-    "Growth factor is expected to deliver a +4% annualized excess return (factor premium) over cash",
-    "Rising rates will strongly benefit financials and slightly hurt defensives."
-  ];
 
   return (
     <Card title="Create New View">
@@ -37,50 +24,16 @@ export const CreateView: React.FC<CreateViewProps> = ({ parseView, parseViewLoad
           <label className="form-label">View Input</label>
           <textarea
             className="form-textarea"
-            value={assetInput}
-            onChange={(e) => setAssetInput(e.target.value)}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
             placeholder="AAPL will beat MSFT by 2%. Growth prospects are strong."
-            rows={4}
+            rows={7}
           />
         </div>
 
         <Button variant="secondary" onClick={handleCreate} className="create-btn" disabled={parseViewLoading}>
           {parseViewLoading ? 'Parsing...' : 'Add View'}
         </Button>
-
-        <div className="examples-section">
-          <div className="examples-category">
-            <h4 className="examples-title">Asset Views</h4>
-            {assetViewExamples.map((example, idx) => (
-              <div key={idx} className="example-item">
-                <p className="example-text">{example}</p>
-                <button 
-                  className="copy-btn" 
-                  onClick={() => copyToInput(example)}
-                  title="Copy to input"
-                >
-                  📋
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="examples-category">
-            <h4 className="examples-title">Factor Views</h4>
-            {factorViewExamples.map((example, idx) => (
-              <div key={idx} className="example-item">
-                <p className="example-text">{example}</p>
-                <button 
-                  className="copy-btn" 
-                  onClick={() => copyToInput(example)}
-                  title="Copy to input"
-                >
-                  📋
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </Card>
   );

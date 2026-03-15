@@ -6,8 +6,10 @@ for Black-Litterman portfolio optimization.
 """
 import json
 from pathlib import Path
+from datetime import datetime, timedelta
 
 import numpy as np
+import pandas as pd
 
 from app.services.price_data.data_fetch import read_from_sqlite
 
@@ -84,3 +86,88 @@ def load_market_data(as_dict: bool = False):
             'asset_names': assets
         }
     return price_df, market_caps, B, factor_names, assets
+
+
+def fetch_close_prices_yfinance(
+    tickers: list[str],
+    years: int = 5,
+    end_date: datetime | None = None,
+) -> pd.DataFrame:
+    """
+    Fetch historical daily Close prices from Yahoo Finance for a list of tickers.
+
+    Args:
+        tickers:  List of ticker symbols, e.g. ['AAPL', 'MSFT', 'TSLA'].
+        years:    Number of calendar years of history to fetch (default 5).
+        end_date: End date for the fetch window (default: today).
+
+    Returns:
+        pd.DataFrame with DatetimeIndex (UTC-aware → tz-naive normalised to date),
+        one column per ticker containing adjusted Close prices.
+        Tickers that could not be fetched are silently dropped with a warning.
+
+    Example:
+        >>> df = fetch_close_prices_yfinance(['AAPL', 'MSFT'])
+        >>> df.tail()
+    """
+    try:
+        import yfinance as yf
+    except ImportError as exc:
+        raise ImportError(
+            "yfinance is required for fetch_close_prices_yfinance. "
+            "Install it with:  pip install yfinance"
+        ) from exc
+
+    if end_date is None:
+        end_date = datetime.today()
+
+    start_date = end_date - timedelta(days=365 * years)
+
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    print(f"Fetching {years}-year Close prices for {len(tickers)} tickers "
+          f"({start_str} → {end_str}) …")
+
+    raw = yf.download(
+        tickers=tickers,
+        start=start_str,
+        end=end_str,
+        auto_adjust=True,   # returns adjusted prices; 'Close' == adj close
+        progress=False,
+        threads=True,
+    )
+
+    # yfinance returns MultiIndex columns when >1 ticker: (field, ticker)
+    if isinstance(raw.columns, pd.MultiIndex):
+        close = raw["Close"].copy()
+    else:
+        # Single ticker — raw is a regular DataFrame with field columns
+        close = raw[["Close"]].copy()
+        close.columns = tickers[:1]
+
+    # Normalise index: strip timezone, keep date only
+    if close.index.tz is not None:
+        close.index = close.index.tz_localize(None)
+    close.index = pd.to_datetime(close.index).normalize()
+    close.index.name = "Date"
+
+    # Drop tickers that are entirely NaN (bad symbols)
+    missing = [t for t in close.columns if close[t].isna().all()]
+    if missing:
+        print(f"Warning: no data returned for {missing}; dropping them.")
+        close = close.drop(columns=missing)
+
+    # Forward-fill minor gaps (weekends already excluded by yfinance)
+    close = close.ffill().dropna()
+
+    print(f"✓ Fetched Close prices: {close.shape[1]} tickers, "
+          f"{len(close)} trading days "
+          f"({close.index[0].date()} → {close.index[-1].date()})")
+
+    return close
+
+
+if __name__ == "__main__":
+    df = fetch_close_prices_yfinance(['AAPL', 'MSFT', 'NVDA'])
+    print(df.head())

@@ -20,10 +20,12 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
   const [error, setError] = useState<string | null>(null);
 
   // ── Load cached news on mount ─────────────────────────────────────────────
+  const MAX_ROWS = 5;
+
   const loadNews = useCallback(async () => {
     const items = await newsService.getNews();
     setAllNews(items);
-    setFilteredNews(items);
+    setFilteredNews(items.slice(0, MAX_ROWS));
   }, []);
 
   useEffect(() => { loadNews(); }, [loadNews]);
@@ -35,7 +37,7 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
     try {
       const items = await newsService.fetchNews();
       setAllNews(items);
-      setFilteredNews(items);
+      setFilteredNews(items.slice(0, MAX_ROWS));
       setSearchTerm('');
     } catch (e) {
       setError('Failed to fetch news. Check the backend is running.');
@@ -47,17 +49,19 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
   // ── Search / filter ──────────────────────────────────────────────────────
   const handleSearch = () => {
     if (!searchTerm.trim()) {
-      setFilteredNews(allNews);
+      setFilteredNews(allNews.slice(0, MAX_ROWS));
       return;
     }
     const term = searchTerm.toLowerCase();
     setFilteredNews(
-      allNews.filter(
-        (n) =>
-          n.heading.toLowerCase().includes(term) ||
-          n.translatedView.toLowerCase().includes(term) ||
-          (n.ticker ?? '').toLowerCase().includes(term),
-      ),
+      allNews
+        .filter(
+          (n) =>
+            n.heading.toLowerCase().includes(term) ||
+            n.translatedView.toLowerCase().includes(term) ||
+            (n.ticker ?? '').toLowerCase().includes(term),
+        )
+        .slice(0, MAX_ROWS),
     );
   };
 

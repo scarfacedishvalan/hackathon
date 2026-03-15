@@ -1,20 +1,100 @@
 .bl-main-page {
-  display: grid;
-  grid-template-columns: 800px 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
   padding: 24px;
   max-width: 1800px;
   margin: 0 auto;
 }
 
-.left-column {
+/* Action buttons row */
+.bl-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.bl-save-thesis-btn {
+  background: #16a34a !important;
+  color: white !important;
+}
+.bl-save-thesis-btn:hover:not(:disabled) {
+  background: #15803d !important;
+}
+
+.bl-run-btn {
+  background: #4338ca !important;
+  color: white !important;
+}
+.bl-run-btn:hover:not(:disabled) {
+  background: #3730a3 !important;
+}
+
+/* Allocation panel: Stats (fixed) | Chart (fluid) */
+.allocation-panel {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .allocation-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* View editor row: Create View (65%) | Pastable Examples (35%) */
+.view-editor-row {
+  display: grid;
+  grid-template-columns: 65fr 35fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.view-editor-left,
+.view-editor-right {
   display: flex;
   flex-direction: column;
 }
 
-.right-column {
+/* Cards inside the editor row stretch to equal height */
+.view-editor-left .card,
+.view-editor-right .card {
+  flex: 1;
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+.view-editor-left .card .card-content,
+.view-editor-right .card .card-content {
   display: flex;
   flex-direction: column;
+}
+
+@media (max-width: 900px) {
+  .view-editor-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Pastable Examples card */
+.pastable-examples-card {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-sizing: border-box;
+}
+
+/* Reset examples-section spacing when inside the pastable card */
+.pastable-examples-card .examples-section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .loading-container,
