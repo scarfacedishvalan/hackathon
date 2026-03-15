@@ -31,16 +31,22 @@
   background: #3730a3 !important;
 }
 
-/* Allocation panel: Stats (fixed) | Chart (fluid) */
+/* Allocation panel: Chart (60%) | Stats (40%) */
 .allocation-panel {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 60fr 40fr;
   gap: 24px;
   align-items: start;
 }
 
 @media (max-width: 900px) {
   .allocation-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .frontier-stats-panel {
     grid-template-columns: 1fr;
   }
 }

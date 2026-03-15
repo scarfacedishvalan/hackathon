@@ -13,6 +13,7 @@ import {
   TopDownContribution,
   PortfolioStats,
 } from '../components';
+import BLCalculationSteps from '../components/BLCalculationSteps';
 import './BLMainPage.css';
 
 const ASSET_VIEW_EXAMPLES = [
@@ -151,8 +152,8 @@ export const BLMainPage: React.FC = () => {
       {/* 3. Allocation Chart + Portfolio Stats */}
       {data.portfolioStats ? (
         <div className="allocation-panel">
-          <PortfolioStats data={data.portfolioStats} />
           <BLAllocationChart data={data.allocation} />
+          <PortfolioStats data={data.portfolioStats} />
         </div>
       ) : (
         <BLAllocationChart data={data.allocation} />
@@ -165,6 +166,11 @@ export const BLMainPage: React.FC = () => {
       <TopDownContribution data={data.topDownContribution} />
       <AnalystSuggestions suggestions={data.analystSuggestions} onViewAdded={loadViews} />
       <ModelControls />
+
+      {/* 6. Black-Litterman Calculation Steps */}
+      {data.calculationSteps && data.calculationSteps.length > 0 && (
+        <BLCalculationSteps steps={data.calculationSteps} />
+      )}
 
       {/* Save Thesis Modal */}
       {thesisModalOpen && (

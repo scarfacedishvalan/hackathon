@@ -86,11 +86,17 @@ export interface PortfolioSnapshot {
   ret: number;
   vol: number;
   sharpe: number;
+  var95: number;
 }
 
 export interface PortfolioStats {
   prior: PortfolioSnapshot;
   posterior: PortfolioSnapshot;
+}
+
+export interface CalculationStep {
+  title: string;
+  latex: string;
 }
 
 export interface PortfolioHolding {
@@ -112,6 +118,7 @@ export interface BLMainData {
   allocation: AllocationData[];
   topDownContribution: SectorContribution[];
   portfolioStats?: PortfolioStats;
+  calculationSteps?: CalculationStep[];
   portfolios?: Portfolio[];
 }
 

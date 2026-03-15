@@ -6,59 +6,44 @@ interface Props {
   data: PortfolioStatsType;
 }
 
-type MetricKey = 'ret' | 'vol' | 'sharpe';
+type MetricKey = 'ret' | 'vol' | 'sharpe' | 'var95';
 
-const METRICS: { key: MetricKey; label: string; pct: boolean; higherBetter: boolean }[] = [
-  { key: 'ret',    label: 'Expected Return', pct: true,  higherBetter: true  },
-  { key: 'vol',    label: 'Volatility',      pct: true,  higherBetter: false },
-  { key: 'sharpe', label: 'Sharpe Ratio',    pct: false, higherBetter: true  },
+const METRICS: { key: MetricKey; label: string; pct: boolean }[] = [
+  { key: 'ret',    label: 'Expected Return', pct: true  },
+  { key: 'vol',    label: 'Volatility',      pct: true  },
+  { key: 'sharpe', label: 'Sharpe Ratio',    pct: false },
+  { key: 'var95',  label: 'VaR 95%',         pct: true  },
 ];
 
 function fmtVal(v: number, pct: boolean): string {
   return pct ? `${(v * 100).toFixed(2)}%` : v.toFixed(3);
 }
 
-function fmtDelta(delta: number, pct: boolean): string {
-  const sign = delta >= 0 ? '+' : '';
-  return pct
-    ? `${sign}${(delta * 100).toFixed(2)}%`
-    : `${sign}${delta.toFixed(3)}`;
-}
-
 export const PortfolioStats: React.FC<Props> = ({ data }) => (
   <div className="pstats-card">
     <div className="pstats-title">Portfolio Statistics</div>
-    <div className="pstats-metrics">
-      {METRICS.map(({ key, label, pct, higherBetter }) => {
+    <div className="pstats-grid">
+      {METRICS.map(({ key, label, pct }) => {
         const prior = data.prior[key];
         const post  = data.posterior[key];
-        const delta = post - prior;
-        const improved = higherBetter ? delta > 0 : delta < 0;
-        const neutral  = Math.abs(delta) < 1e-6;
 
         return (
-          <div key={key} className="pstats-metric">
+          <div key={key} className="pstats-metric-box">
             <div className="pstats-metric-label">{label}</div>
-
-            <div className="pstats-row">
-              <span className="pstats-row-tag pstats-row-tag--prior">Prior</span>
-              <span className="pstats-row-value pstats-row-value--prior">
-                {fmtVal(prior, pct)}
-              </span>
-            </div>
-
-            <div className="pstats-row">
-              <span className="pstats-row-tag pstats-row-tag--bl">BL</span>
-              <span className="pstats-row-value pstats-row-value--bl">
-                {fmtVal(post, pct)}
-              </span>
-            </div>
-
-            {!neutral && (
-              <div className={`pstats-delta ${improved ? 'pstats-delta--good' : 'pstats-delta--bad'}`}>
-                {improved ? '▲' : '▼'} {fmtDelta(delta, pct)}
+            <div className="pstats-values">
+              <div className="pstats-value-row">
+                <span className="pstats-tag pstats-tag--prior">Prior</span>
+                <span className="pstats-value pstats-value--prior">
+                  {fmtVal(prior, pct)}
+                </span>
               </div>
-            )}
+              <div className="pstats-value-row">
+                <span className="pstats-tag pstats-tag--bl">BL</span>
+                <span className="pstats-value pstats-value--bl">
+                  {fmtVal(post, pct)}
+                </span>
+              </div>
+            </div>
           </div>
         );
       })}

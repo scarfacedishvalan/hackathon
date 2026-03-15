@@ -18,7 +18,7 @@ import json
 import sys
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import numpy as np
 import pandas as pd
@@ -184,6 +184,159 @@ def run_black_litterman(
 # ---------------------------------------------------------------------------
 
 
+def _capture_calculation_steps(
+    result: dict,
+    recipe: dict,
+    price_subset: pd.DataFrame,
+    market_caps: Dict[str, float],
+    Sigma: np.ndarray,
+    pi: pd.Series,
+    universe: List[str],
+    optimal_weights: np.ndarray
+) -> Dict[str, Any]:
+    """
+    Capture all intermediate BL calculation steps for LaTeX display.
+    
+    Returns dict with all matrices and intermediate calculations.
+    """
+    # Get P, Q, Omega from result (if available)
+    P = result.get("P")
+    Q = result.get("Q")
+    Omega = result.get("Omega")
+    
+    if P is None or Q is None or Omega is None:
+        return None  # No views, skip calculation steps
+    
+    params = recipe["model_parameters"]
+    tau = params["tau"]
+    
+    # Recreate the BL model to capture intermediate steps
+    tau_Sigma = tau * Sigma
+    tau_Sigma_inv = np.linalg.inv(tau_Sigma)
+    Omega_inv = np.linalg.inv(Omega)
+    
+    # Posterior precision matrix
+    posterior_precision = tau_Sigma_inv + P.T @ Omega_inv @ P
+    posterior_cov_inner = np.linalg.inv(posterior_precision)
+    
+    # Posterior returns calculation
+    pi_array = pi.values.reshape(-1, 1)
+    Q_array = Q.reshape(-1, 1) if Q.ndim == 1 else Q
+    posterior_returns_array = posterior_cov_inner @ (tau_Sigma_inv @ pi_array + P.T @ Omega_inv @ Q_array)
+    posterior_returns = pd.Series(posterior_returns_array.flatten(), index=universe)
+    
+    # Posterior covariance
+    posterior_cov = Sigma + posterior_cov_inner
+    
+    # Convert optimal weights to Series with asset names
+    weights_series = pd.Series(optimal_weights, index=universe, name="Optimal Weights")
+    
+    # Capture individual views for translation section
+    bottom_up_views = recipe.get('bottom_up_views', [])
+    top_down_views = recipe.get('top_down_views', {})
+    factor_shocks = top_down_views.get('factor_shocks', [])
+    
+    # Build asset to index mapping
+    asset_to_idx = {asset: idx for idx, asset in enumerate(universe)}
+    
+    # Process bottom-up views
+    bottom_up_view_details = []
+    n_bottom = result.get('n_bottom_up_views', 0)
+    for i, view in enumerate(bottom_up_views[:n_bottom]):  # Only processed views
+        view_type = view['type']
+        confidence = view['confidence']
+        label = view.get('label', f'View {i+1}')
+        
+        if view_type == 'absolute':
+            asset = view['asset']
+            if asset not in asset_to_idx:
+                continue
+            expected_return = view['expected_return']
+            asset_idx = asset_to_idx[asset]
+            P_row = np.zeros(len(universe))
+            P_row[asset_idx] = 1.0
+            Q_val = expected_return
+            description = f"{asset} expected return: {expected_return:.2%}"
+            
+        elif view_type == 'relative':
+            assets_in_view = view['assets']
+            if not all(a in asset_to_idx for a in assets_in_view):
+                continue
+            weights = view['weights']
+            expected_outperformance = view['expected_outperformance']
+            P_row = np.zeros(len(universe))
+            for asset, weight in zip(assets_in_view, weights):
+                P_row[asset_to_idx[asset]] = weight
+            Q_val = expected_outperformance
+            # Build description
+            if weights == [1, -1]:
+                description = f"{assets_in_view[0]} outperforms {assets_in_view[1]} by {expected_outperformance:+.2%}"
+            else:
+                description = label
+        else:
+            continue
+            
+        bottom_up_view_details.append({
+            'label': label,
+            'type': view_type,
+            'description': description,
+            'P_row': P_row,
+            'Q_val': Q_val,
+            'confidence': confidence,
+            'row_index': i
+        })
+    
+    # Process top-down views (factor shocks)
+    top_down_view_details = []
+    n_top = result.get('n_top_down_views', 0)
+    
+    # For top-down views, P rows are already in the combined P matrix
+    # Extract them from P matrix (they come after bottom-up views)
+    for i, shock_spec in enumerate(factor_shocks[:n_top]):
+        factor_name = shock_spec['factor']
+        shock = shock_spec['shock']
+        confidence = shock_spec['confidence']
+        label = shock_spec.get('label', factor_name)
+        
+        # Get P row from combined matrix (offset by number of bottom-up views)
+        P_row = P[n_bottom + i, :] if n_bottom + i < P.shape[0] else np.zeros(len(universe))
+        Q_val = Q[n_bottom + i] if n_bottom + i < len(Q) else shock
+        
+        description = f"{factor_name} factor shock: {shock:+.2%}"
+        
+        top_down_view_details.append({
+            'label': label,
+            'factor': factor_name,
+            'description': description,
+            'P_row': P_row,
+            'Q_val': Q_val,
+            'confidence': confidence,
+            'row_index': n_bottom + i
+        })
+    
+    return {
+        "tau": tau,
+        "Sigma": Sigma,
+        "pi": pi,
+        "P": P,
+        "Q": Q,
+        "Omega": Omega,
+        "assets": universe,
+        "tau_Sigma": tau_Sigma,
+        "tau_Sigma_inv": tau_Sigma_inv,
+        "Omega_inv": Omega_inv,
+        "posterior_precision": posterior_precision,
+        "posterior_cov_inner": posterior_cov_inner,
+        "posterior_returns": posterior_returns,
+        "posterior_cov": posterior_cov,
+        "optimal_weights": weights_series,
+        "bottom_up_view_details": bottom_up_view_details,
+        "top_down_view_details": top_down_view_details,
+        "n_bottom_up_views": n_bottom,
+        "n_top_down_views": n_top,
+    }
+
+
 def _compute_chart_data(
     result: dict,
     recipe: dict,
@@ -224,6 +377,11 @@ def _compute_chart_data(
     post_vol = float(np.sqrt(w_bl @ Sigma @ w_bl))
     prior_sharpe = (prior_ret - risk_free_rate) / prior_vol if prior_vol > 1e-9 else 0.0
     post_sharpe  = (post_ret  - risk_free_rate) / post_vol  if post_vol  > 1e-9 else 0.0
+    
+    # VaR at 95% confidence (parametric, assuming normal distribution)
+    # VaR_95 = expected return - 1.645 * volatility
+    prior_var_95 = float(prior_ret - 1.645 * prior_vol)
+    post_var_95 = float(post_ret - 1.645 * post_vol)
 
     # ── Efficient frontier curve ───────────────────────────────────────────────
 
@@ -297,6 +455,18 @@ def _compute_chart_data(
         if float(np.sum(w_bl[idxs])) > 1e-6  # omit zero-weight sectors
     ]
 
+    # ── Calculation Steps for LaTeX Display ───────────────────────────────────
+    
+    calculation_steps = _capture_calculation_steps(
+        result, recipe, price_subset, market_caps, Sigma, pi, universe, w_bl
+    )
+    
+    if calculation_steps:
+        from app.orchestrators.bl_latex_utils import build_calculation_latex
+        latex_sections = build_calculation_latex(calculation_steps)
+    else:
+        latex_sections = []
+
     return {
         "efficientFrontier": {
             "curve": curve,
@@ -310,11 +480,14 @@ def _compute_chart_data(
                 "ret":    round(prior_ret,    6),
                 "vol":    round(prior_vol,    6),
                 "sharpe": round(prior_sharpe, 4),
+                "var95":  round(prior_var_95, 6),
             },
             "posterior": {
                 "ret":    round(post_ret,    6),
                 "vol":    round(post_vol,    6),
                 "sharpe": round(post_sharpe, 4),
+                "var95":  round(post_var_95, 6),
             },
         },
+        "calculationSteps": latex_sections,
     }

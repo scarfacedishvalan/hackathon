@@ -36,9 +36,12 @@ async def run_bl():
             {"sector": str, "returnContribution": float, "riskContribution": float}, ...
           ],
           "portfolioStats": {
-            "prior":     {"ret": float, "vol": float, "sharpe": float},
-            "posterior": {"ret": float, "vol": float, "sharpe": float}
+            "prior":     {"ret": float, "vol": float, "sharpe": float, "var95": float},
+            "posterior": {"ret": float, "vol": float, "sharpe": float, "var95": float}
           },
+          "calculationSteps": [
+            {"title": str, "latex": str}, ...
+          ],
           "weights":           {ticker: float, ...},
           "posterior_returns": {ticker: float, ...},
           "prior_returns":     {ticker: float, ...},
@@ -79,6 +82,7 @@ async def run_bl():
         "allocation":          result.get("allocation"),
         "topDownContribution": result.get("topDownContribution"),
         "portfolioStats":      result.get("portfolioStats"),
+        "calculationSteps":    result.get("calculationSteps", []),
         "weights":             result.get("weights"),
         "posterior_returns":   result.get("posterior_returns"),
         "prior_returns":       result.get("prior_returns"),
