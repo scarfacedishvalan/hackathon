@@ -31,7 +31,7 @@ export const TopDownContribution: React.FC<TopDownContributionProps> = ({
 
   // Color scale
   const getColor = (index: number) => {
-    const colors = ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
+    const colors = ['#60a5fa', '#3b82f6', '#2563eb', '#1e40af'];
     return colors[index % colors.length];
   };
 
@@ -60,27 +60,31 @@ export const TopDownContribution: React.FC<TopDownContributionProps> = ({
           layout="vertical"
           margin={{ top: 20, right: 30, bottom: 20, left: 100 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
           <XAxis
             type="number"
             tickFormatter={(value) => `${value.toFixed(1)}%`}
+            tick={{ fill: '#94a3b8' }}
             label={{
               value: mode === 'return' ? 'Return Contribution (%)' : 'Risk Contribution (%)',
               position: 'insideBottom',
               offset: -10,
+              fill: '#e0e6ed',
             }}
           />
           <YAxis
             type="category"
             dataKey="sector"
             width={90}
+            tick={{ fill: '#94a3b8' }}
           />
           <Tooltip
             formatter={(value: number) => `${value.toFixed(2)}%`}
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
+              backgroundColor: '#1e2530',
+              border: '1px solid #334155',
               borderRadius: '6px',
+              color: '#e0e6ed',
             }}
           />
           <Bar dataKey="value" radius={[0, 4, 4, 0]}>

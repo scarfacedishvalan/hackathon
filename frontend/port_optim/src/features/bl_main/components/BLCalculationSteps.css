@@ -1,17 +1,17 @@
 .bl-calculation-steps {
   margin-top: 2rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #334155;
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: #242b33;
   overflow: hidden;
 }
 
 .bl-calc-main-toggle {
   width: 100%;
   padding: 1rem 1.25rem;
-  background-color: #f5f5f5;
+  background-color: #2d3540;
   border: none;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #334155;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -21,22 +21,22 @@
 }
 
 .bl-calc-main-toggle:hover {
-  background-color: #eeeeee;
+  background-color: #374455;
 }
 
 .bl-calc-main-toggle:focus {
-  outline: 2px solid #1976d2;
+  outline: 2px solid #60a5fa;
   outline-offset: -2px;
 }
 
 .bl-calc-main-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #333;
+  color: #e0e6ed;
 }
 
 .bl-calc-toggle-icon {
-  color: #666;
+  color: #94a3b8;
   font-size: 0.875rem;
   min-width: 16px;
   display: inline-block;
@@ -48,9 +48,9 @@
 
 .bl-calc-section {
   margin-bottom: 0.5rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #334155;
   border-radius: 6px;
-  background-color: #fff;
+  background-color: #1e2530;
   overflow: hidden;
 }
 
@@ -61,7 +61,7 @@
 .bl-calc-section-toggle {
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: #fff;
+  background-color: #1e2530;
   border: none;
   display: flex;
   align-items: center;
@@ -72,27 +72,28 @@
 }
 
 .bl-calc-section-toggle:hover {
-  background-color: #f9f9f9;
+  background-color: #2d3540;
 }
 
 .bl-calc-section-toggle:focus {
-  outline: 2px solid #1976d2;
+  outline: 2px solid #60a5fa;
   outline-offset: -2px;
 }
 
 .bl-calc-section-title {
   font-size: 1rem;
   font-weight: 500;
-  color: #444;
+  color: #cbd5e1;
 }
 
 .bl-calc-latex-content {
   padding: 1rem 1.25rem;
-  border-top: 1px solid #f0f0f0;
-  background-color: #fdfdfd;
+  border-top: 1px solid #334155;
+  background-color: #1a1f26;
   overflow-x: auto;
   font-size: 0.95rem;
   line-height: 1.6;
+  color: #e0e6ed;
 }
 
 /* MathJax styling */

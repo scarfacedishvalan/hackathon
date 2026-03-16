@@ -53,41 +53,6 @@ def _load_metadata() -> Dict[str, Any]:
     return _load_metadata._cache
 
 
-def _get_market_caps(assets: list[str]) -> Dict[str, float]:
-    """Return market-cap mapping for *assets* from the metadata registry."""
-    raw = _load_metadata()["market_caps"]
-    # Drop the internal _note key
-    caps = {k: v for k, v in raw.items() if not k.startswith("_")}
-    missing = [a for a in assets if a not in caps]
-    if missing:
-        raise KeyError(
-            f"Market caps not found for: {missing}. "
-            "Add them to data/market_data.json → market_caps."
-        )
-    return {a: caps[a] for a in assets}
-
-
-def _get_factor_matrix(assets: list[str]) -> tuple[np.ndarray, Dict[str, int]]:
-    """
-    Return the factor exposure matrix B (n_assets × n_factors) with rows
-    aligned to *assets*, plus a factor-name → column-index map.
-    """
-    md = _load_metadata()
-    factor_names: list[str] = md["factor_names"]
-    raw_exposures: Dict[str, list] = {
-        k: v for k, v in md["factor_exposures"].items() if not k.startswith("_")
-    }
-    missing = [a for a in assets if a not in raw_exposures]
-    if missing:
-        raise KeyError(
-            f"Factor exposures not found for: {missing}. "
-            "Add them to data/market_data.json → factor_exposures."
-        )
-    B = np.array([raw_exposures[a] for a in assets])
-    factor_index_map = {name: idx for idx, name in enumerate(factor_names)}
-    return B, factor_index_map
-
-
 def _apply_model_defaults(recipe: dict) -> dict:
     """
     Return a copy of *recipe* with ``model_parameters`` filled in from
@@ -159,9 +124,15 @@ def run_black_litterman(
         )
     price_subset = price_data[universe].dropna()
 
-    # Load market metadata aligned to universe order
-    market_caps = _get_market_caps(universe)
-    factor_matrix, factor_index_map = _get_factor_matrix(universe)
+    # Load market metadata from embedded market_context
+    market_context = recipe["market_context"]
+    market_caps = market_context["market_caps"]
+    factor_exposures_dict = market_context["factor_exposures"]
+    factor_names = market_context["factor_names"]
+    
+    # Build factor matrix aligned to universe order
+    factor_matrix = np.array([factor_exposures_dict[asset] for asset in universe])
+    factor_index_map = {name: idx for idx, name in enumerate(factor_names)}
 
     result = run_bl_recipe(
         recipe=recipe,
@@ -432,9 +403,8 @@ def _compute_chart_data(
 
     # ── Top-down / sector contributions ───────────────────────────────────────
 
-    md = _load_metadata()
     # sector_map format: { asset: sector_name }
-    asset_sector: Dict[str, str] = md.get("sector_map", {})
+    asset_sector: Dict[str, str] = recipe["market_context"]["sectors"]
 
     # Group universe assets by sector
     sectors: Dict[str, list[int]] = {}

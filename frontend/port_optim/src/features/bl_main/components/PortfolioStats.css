@@ -1,8 +1,8 @@
 .pstats-card {
-  background: white;
+  background: #242b33;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 20px 24px;
+  border: 1px solid #334155;
+  padding: 1.5rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -13,9 +13,9 @@
 .pstats-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #e0e6ed;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #334155;
 }
 
 /* 2x2 grid for metrics */
@@ -27,8 +27,8 @@
 }
 
 .pstats-metric-box {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #1e2530;
+  border: 1px solid #334155;
   border-radius: 8px;
   padding: 16px;
   display: flex;
@@ -41,7 +41,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: #6b7280;
+  color: #94a3b8;
   margin-bottom: 4px;
 }
 
@@ -69,13 +69,15 @@
 }
 
 .pstats-tag--prior {
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #1e2530;
+  color: #94a3b8;
+  border: 1px solid #334155;
 }
 
 .pstats-tag--bl {
-  background: #ede9fe;
-  color: #5b21b6;
+  background: #312e81;
+  color: #c7d2fe;
+  border: 1px solid #4c1d95;
 }
 
 .pstats-value {
@@ -86,11 +88,11 @@
 }
 
 .pstats-value--prior {
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .pstats-value--bl {
-  color: #1e1b4b;
+  color: #c7d2fe;
 }
 
 /* Responsive adjustments */

@@ -34,40 +34,42 @@
 
 /* Variants */
 .btn-primary {
-  background: #2563eb;
+  background: #312e81;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #1e1b4b;
 }
 
 .btn-primary:active:not(:disabled) {
-  background: #1e40af;
+  background: #1e3a8a;
 }
 
 .btn-secondary {
-  background: #e5e7eb;
-  color: #374151;
+  background: #2d3540;
+  color: #e0e6ed;
+  border: 1px solid #334155;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #d1d5db;
+  background: #374455;
+  border-color: #475569;
 }
 
 .btn-secondary:active:not(:disabled) {
-  background: #9ca3af;
+  background: #1e2530;
 }
 
 .btn-ghost {
   background: transparent;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
+  color: #94a3b8;
+  border: 1px solid #334155;
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: #2d3540;
+  border-color: #475569;
 }
 
 .btn-icon {

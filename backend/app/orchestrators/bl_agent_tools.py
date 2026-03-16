@@ -1,16 +1,23 @@
 """
 BL Agent Tools
 
-Defines the five tools available to the agentic BL orchestrator and
+Defines the tools available to the agentic BL orchestrator and
 the dispatch logic that executes them.
 
-Tools
------
+Core Tools
+----------
 get_recipe_summary   -- surface the loaded recipe's key facts
 run_bl_scenario      -- run BL with a dict of mutations applied
 run_stress_sweep     -- run a sweep of one numeric parameter across a grid
 compare_scenarios    -- diff two cached scenario results
 synthesise           -- produce the final narrative (terminates the loop)
+
+Diagnostic Tools
+----------------
+view_fragility_scan  -- analyze portfolio sensitivity to view magnitude changes
+factor_shock_scan    -- simulate macro factor shocks and observe portfolio response
+view_importance_test -- determine importance of each view by removal
+allocation_envelope  -- compute min/max weight ranges across scenarios
 
 Mutation keys supported by _apply_mutations()
 ---------------------------------------------
@@ -194,6 +201,110 @@ TOOLS: List[Dict[str, Any]] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "view_fragility_scan",
+            "description": (
+                "Analyze how portfolio weights change as a view's magnitude varies. "
+                "Useful for identifying fragile views that cause disproportionate allocation shifts."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "view_label": {
+                        "type": "string",
+                        "description": "Label of the view to test (must exist in bottom_up_views).",
+                    },
+                    "magnitude_values": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "List of magnitude values to test (max 5 points).",
+                    },
+                    "scenario_prefix": {
+                        "type": "string",
+                        "description": "Prefix for scenario labels (e.g., 'fragility').",
+                    },
+                },
+                "required": ["view_label", "magnitude_values", "scenario_prefix"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "factor_shock_scan",
+            "description": (
+                "Simulate macro factor shocks and observe portfolio response. "
+                "Tests sensitivity to factor exposures."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "factor": {
+                        "type": "string",
+                        "description": "Factor name (must exist in factor_shocks).",
+                    },
+                    "shock_values": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "description": "List of shock magnitudes to test (max 5 points).",
+                    },
+                    "scenario_prefix": {
+                        "type": "string",
+                        "description": "Prefix for scenario labels (e.g., 'factor').",
+                    },
+                },
+                "required": ["factor", "shock_values", "scenario_prefix"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "view_importance_test",
+            "description": (
+                "Determine how important each view is by running BL with each view "
+                "removed one at a time. Returns Sharpe change and allocation shift for each."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "views": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of view labels to test (optional; defaults to all bottom_up_views).",
+                    },
+                    "scenario_prefix": {
+                        "type": "string",
+                        "description": "Prefix for scenario labels (default: 'view_removed').",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "allocation_envelope",
+            "description": (
+                "Compute min/max weight ranges across previously executed scenarios. "
+                "Helps understand allocation stability and robustness."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "scenario_labels": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of scenario labels to analyze (optional; defaults to all in run_cache).",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
 ]
 
 
@@ -221,9 +332,8 @@ def _apply_mutations(recipe: dict, mutations: dict) -> dict:
         Set recipe["constraints"]["weight_bounds"].
     """
     recipe = copy.deepcopy(recipe)
-    views_section = recipe.get("views", {})
-    bottom_up: list = views_section.get("bottom_up", [])
-    top_down: dict = views_section.get("top_down", {})
+    bottom_up: list = recipe.get("bottom_up_views", [])
+    top_down: dict = recipe.get("top_down_views", {})
     factor_shocks: list = top_down.get("factor_shocks", [])
 
     # ---- drop_views --------------------------------------------------------
@@ -255,7 +365,7 @@ def _apply_mutations(recipe: dict, mutations: dict) -> dict:
     for shock in factor_shocks:
         lbl = shock.get("label")
         if lbl in shock_scales:
-            shock["magnitude"] = shock.get("magnitude", 0.0) * float(shock_scales[lbl])
+            shock["shock"] = shock.get("shock", 0.0) * float(shock_scales[lbl])
 
     # ---- weight_bounds -----------------------------------------------------
     wb = mutations.get("weight_bounds")
@@ -263,10 +373,9 @@ def _apply_mutations(recipe: dict, mutations: dict) -> dict:
         recipe.setdefault("constraints", {})["weight_bounds"] = list(wb)
 
     # Write mutation results back
-    views_section["bottom_up"] = bottom_up
-    if "top_down" in views_section:
-        views_section["top_down"]["factor_shocks"] = factor_shocks
-    recipe["views"] = views_section
+    recipe["bottom_up_views"] = bottom_up
+    if "top_down_views" in recipe:
+        recipe["top_down_views"]["factor_shocks"] = factor_shocks
     return recipe
 
 
@@ -323,6 +432,60 @@ def _weight_delta(base_weights: dict, other_weights: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Diagnostic tool helpers
+# ---------------------------------------------------------------------------
+
+def _apply_view_override(recipe: dict, view_label: str, magnitude: float) -> dict:
+    """
+    Override a view's expected_return or outperformance magnitude.
+    Returns a mutated copy of the recipe.
+    """
+    from copy import deepcopy
+    recipe = deepcopy(recipe)
+    bottom_up = recipe.get("bottom_up_views", [])
+    
+    for view in bottom_up:
+        if view.get("label") == view_label:
+            if view.get("type") == "absolute":
+                view["expected_return"] = magnitude
+            elif view.get("type") == "relative":
+                # For relative views, magnitude is the outperformance
+                view["expected_outperformance"] = magnitude
+            break
+    
+    recipe["bottom_up_views"] = bottom_up
+    return recipe
+
+
+def _apply_factor_shock_override(recipe: dict, factor: str, shock: float) -> dict:
+    """
+    Override a factor shock magnitude.
+    Returns a mutated copy of the recipe.
+    """
+    from copy import deepcopy
+    recipe = deepcopy(recipe)
+    top_down = recipe.get("top_down_views", {})
+    factor_shocks = top_down.get("factor_shocks", [])
+    
+    for fs in factor_shocks:
+        if fs.get("factor") == factor:
+            fs["shock"] = shock
+            break
+    
+    top_down["factor_shocks"] = factor_shocks
+    recipe["top_down_views"] = top_down
+    return recipe
+
+
+def _compute_weight_shift(base_weights: dict, scenario_weights: dict) -> float:
+    """
+    Compute the sum of absolute weight changes (allocation shift).
+    """
+    delta = _weight_delta(base_weights, scenario_weights)
+    return round(sum(abs(v) for v in delta.values()), 4)
+
+
+# ---------------------------------------------------------------------------
 # Tool dispatcher
 # ---------------------------------------------------------------------------
 
@@ -355,9 +518,9 @@ def dispatch_tool(
 
     # ------------------------------------------------------------------ #
     if tool_name == "get_recipe_summary":
-        views = base_recipe.get("views", {})
-        bottom_up = views.get("bottom_up", [])
-        factor_shocks = views.get("top_down", {}).get("factor_shocks", [])
+        bottom_up = base_recipe.get("bottom_up_views", [])
+        top_down = base_recipe.get("top_down_views", {})
+        factor_shocks = top_down.get("factor_shocks", [])
         meta = base_recipe.get("meta", {})
         mp = base_recipe.get("model_parameters", {})
         constraints = base_recipe.get("constraints", {})
@@ -527,6 +690,233 @@ def dispatch_tool(
             "narrative": tool_args.get("narrative", ""),
             "recommended_weights": tool_args.get("recommended_weights"),
             "risk_flags": tool_args.get("risk_flags", []),
+        }
+
+    # ------------------------------------------------------------------ #
+    elif tool_name == "view_fragility_scan":
+        view_label: str = tool_args["view_label"]
+        magnitude_values: list = tool_args["magnitude_values"]
+        scenario_prefix: str = tool_args.get("scenario_prefix", "fragility")
+        
+        # Performance safeguard
+        if len(magnitude_values) > 5:
+            return {"error": "Maximum 5 magnitude points allowed for fragility scan."}
+        
+        # Verify view exists
+        bottom_up = base_recipe.get("bottom_up_views", [])
+        view_found = any(v.get("label") == view_label for v in bottom_up)
+        if not view_found:
+            return {"error": f"View '{view_label}' not found in bottom_up_views."}
+        
+        fragility_scan = []
+        for mag in magnitude_values:
+            label = f"{scenario_prefix}_{view_label}_{mag}"
+            mutated_recipe = _apply_view_override(base_recipe, view_label, mag)
+            
+            # Apply goal mutations if present
+            if goal_mutations:
+                mutated_recipe = _apply_mutations(mutated_recipe, goal_mutations)
+            
+            try:
+                with _quiet_bl():
+                    result = run_black_litterman(mutated_recipe, price_df)
+                summary = _summarise_result(result, mutated_recipe, price_df)
+                
+                fragility_scan.append({
+                    "magnitude": mag,
+                    "weights": summary["weights"],
+                    "sharpe": summary["sharpe"],
+                    "volatility": summary["portfolio_vol"],
+                })
+                
+                # Cache the scenario
+                run_cache[label] = {
+                    **summary,
+                    "source": "fragility_scan",
+                    "view_label": view_label,
+                    "magnitude": mag,
+                }
+            except Exception as exc:
+                fragility_scan.append({
+                    "magnitude": mag,
+                    "error": str(exc),
+                })
+        
+        return {
+            "view_label": view_label,
+            "fragility_scan": fragility_scan,
+        }
+
+    # ------------------------------------------------------------------ #
+    elif tool_name == "factor_shock_scan":
+        factor: str = tool_args["factor"]
+        shock_values: list = tool_args["shock_values"]
+        scenario_prefix: str = tool_args.get("scenario_prefix", "factor")
+        
+        # Performance safeguard
+        if len(shock_values) > 5:
+            return {"error": "Maximum 5 shock points allowed for factor scan."}
+        
+        # Verify factor exists
+        top_down = base_recipe.get("top_down_views", {})
+        factor_shocks = top_down.get("factor_shocks", [])
+        factor_found = any(fs.get("factor") == factor for fs in factor_shocks)
+        if not factor_found:
+            return {"error": f"Factor '{factor}' not found in factor_shocks."}
+        
+        shock_results = []
+        for shock in shock_values:
+            label = f"{scenario_prefix}_{factor}_{shock}"
+            mutated_recipe = _apply_factor_shock_override(base_recipe, factor, shock)
+            
+            # Apply goal mutations if present
+            if goal_mutations:
+                mutated_recipe = _apply_mutations(mutated_recipe, goal_mutations)
+            
+            try:
+                with _quiet_bl():
+                    result = run_black_litterman(mutated_recipe, price_df)
+                summary = _summarise_result(result, mutated_recipe, price_df)
+                
+                shock_results.append({
+                    "shock": shock,
+                    "portfolio_return": summary["portfolio_return"],
+                    "volatility": summary["portfolio_vol"],
+                    "weights": summary["weights"],
+                    "sharpe": summary["sharpe"],
+                })
+                
+                # Cache the scenario
+                run_cache[label] = {
+                    **summary,
+                    "source": "factor_shock",
+                    "factor": factor,
+                    "shock_magnitude": shock,
+                }
+            except Exception as exc:
+                shock_results.append({
+                    "shock": shock,
+                    "error": str(exc),
+                })
+        
+        return {
+            "factor": factor,
+            "shock_results": shock_results,
+        }
+
+    # ------------------------------------------------------------------ #
+    elif tool_name == "view_importance_test":
+        views_to_test: list = tool_args.get("views")
+        scenario_prefix: str = tool_args.get("scenario_prefix", "view_removed")
+        
+        # Default to all bottom_up views
+        if not views_to_test:
+            all_views = base_recipe.get("bottom_up_views", [])
+            views_to_test = [v.get("label") for v in all_views if v.get("label")]
+        
+        if not views_to_test:
+            return {"error": "No views found to test."}
+        
+        # Get base scenario weights for comparison
+        base_weights = run_cache.get("base", {}).get("weights", {})
+        base_sharpe = run_cache.get("base", {}).get("sharpe", 0.0)
+        
+        view_importance = []
+        for view_label in views_to_test:
+            label = f"{scenario_prefix}_{view_label}"
+            mutations = {"drop_views": [view_label]}
+            
+            # Merge goal mutations
+            if goal_mutations:
+                merged = copy.deepcopy(goal_mutations)
+                merged.update(mutations)
+                mutations = merged
+            
+            mutated_recipe = _apply_mutations(base_recipe, mutations)
+            
+            try:
+                with _quiet_bl():
+                    result = run_black_litterman(mutated_recipe, price_df)
+                summary = _summarise_result(result, mutated_recipe, price_df)
+                
+                sharpe_change = round(summary["sharpe"] - base_sharpe, 4)
+                allocation_shift = _compute_weight_shift(base_weights, summary["weights"])
+                
+                view_importance.append({
+                    "view": view_label,
+                    "sharpe_change": sharpe_change,
+                    "allocation_shift": allocation_shift,
+                    "sharpe_without_view": summary["sharpe"],
+                })
+                
+                # Cache the scenario
+                run_cache[label] = {
+                    **summary,
+                    "source": "view_removed",
+                    "removed_view": view_label,
+                }
+            except Exception as exc:
+                view_importance.append({
+                    "view": view_label,
+                    "error": str(exc),
+                })
+        
+        # Sort by allocation shift (descending) to highlight most impactful views
+        view_importance_sorted = sorted(
+            [v for v in view_importance if "error" not in v],
+            key=lambda x: abs(x["allocation_shift"]),
+            reverse=True
+        )
+        errors = [v for v in view_importance if "error" in v]
+        
+        return {
+            "view_importance": view_importance_sorted + errors,
+        }
+
+    # ------------------------------------------------------------------ #
+    elif tool_name == "allocation_envelope":
+        scenario_labels: list = tool_args.get("scenario_labels")
+        
+        # Default to all scenarios in run_cache
+        if not scenario_labels:
+            scenario_labels = list(run_cache.keys())
+        
+        if not scenario_labels:
+            return {"error": "No scenarios available in run_cache."}
+        
+        # Collect all weights
+        all_weights = {}
+        for label in scenario_labels:
+            if label not in run_cache:
+                continue
+            scenario = run_cache[label]
+            if "weights" not in scenario:
+                continue
+            for asset, weight in scenario["weights"].items():
+                if asset not in all_weights:
+                    all_weights[asset] = []
+                all_weights[asset].append(weight)
+        
+        if not all_weights:
+            return {"error": "No valid weight data found in specified scenarios."}
+        
+        # Compute envelope
+        allocation_envelope = {}
+        for asset, weights_list in all_weights.items():
+            allocation_envelope[asset] = {
+                "min": round(min(weights_list), 4),
+                "max": round(max(weights_list), 4),
+                "range": round(max(weights_list) - min(weights_list), 4),
+            }
+        
+        # Sort by range (descending) to highlight most variable allocations
+        sorted_envelope = dict(
+            sorted(allocation_envelope.items(), key=lambda x: x[1]["range"], reverse=True)
+        )
+        
+        return {
+            "allocation_envelope": sorted_envelope,
+            "scenarios_analyzed": len([l for l in scenario_labels if l in run_cache]),
         }
 
     # ------------------------------------------------------------------ #

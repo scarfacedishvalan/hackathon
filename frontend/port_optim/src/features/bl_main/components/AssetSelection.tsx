@@ -52,9 +52,20 @@ export const AssetSelection: React.FC = () => {
   };
 
   const selected = FULL_UNIVERSE.filter(a => activeUniverse.has(a.ticker));
-  const summary = selected.length === 0
-    ? 'No assets selected'
-    : `${selected.map(a => a.ticker).join(', ')}\u2002(${selected.length})`;
+
+  const renderSummary = () => {
+    if (selected.length === 0) {
+      return <span className="asset-badge">No assets selected</span>;
+    }
+    return (
+      <>
+        {selected.map(a => (
+          <span key={a.ticker} className="asset-badge">{a.ticker}</span>
+        ))}
+        <span className="asset-count">({selected.length})</span>
+      </>
+    );
+  };
 
   const renderColumn = (items: typeof FULL_UNIVERSE) => (
     <div className="universe-column">
@@ -88,7 +99,7 @@ export const AssetSelection: React.FC = () => {
 
       {!isExpanded ? (
         <div className="universe-collapsed">
-          <span className="universe-summary">{summary}</span>
+          <div className="universe-summary">{renderSummary()}</div>
           <button
             className="change-btn"
             onClick={e => { e.stopPropagation(); setIsExpanded(true); }}

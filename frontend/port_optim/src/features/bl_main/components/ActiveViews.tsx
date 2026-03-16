@@ -193,8 +193,8 @@ export const ActiveViews: React.FC<ActiveViewsProps> = ({
           text-transform: uppercase;
           letter-spacing: 0.4px;
         }
-        .type-badge--absolute { background: #dbeafe; color: #1e40af; }
-        .type-badge--relative { background: #ede9fe; color: #5b21b6; }
+        .type-badge--absolute { background: #1e3a8a; color: #93c5fd; }
+        .type-badge--relative { background: #4c1d95; color: #c7d2fe; }
 
         .val-badge {
           display: inline-block;
@@ -204,16 +204,17 @@ export const ActiveViews: React.FC<ActiveViewsProps> = ({
           font-weight: 600;
           font-variant-numeric: tabular-nums;
         }
-        .val-badge--pos { background: #d1fae5; color: #065f46; }
-        .val-badge--neg { background: #fee2e2; color: #991b1b; }
+        .val-badge--pos { background: #14532d; color: #86efac; }
+        .val-badge--neg { background: #7f1d1d; color: #fca5a5; }
 
         .factor-name {
           font-weight: 500;
           font-size: 13px;
+          color: #cbd5e1;
         }
 
         .empty-hint {
-          color: #9ca3af;
+          color: #64748b;
           font-style: italic;
           margin: 0;
           padding: 4px 0;
@@ -223,7 +224,7 @@ export const ActiveViews: React.FC<ActiveViewsProps> = ({
         .remove-btn {
           background: none;
           border: none;
-          color: #9ca3af;
+          color: #64748b;
           font-size: 22px;
           cursor: pointer;
           padding: 0;

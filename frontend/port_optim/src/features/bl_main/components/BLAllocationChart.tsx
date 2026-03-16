@@ -33,30 +33,34 @@ export const BLAllocationChart: React.FC<BLAllocationChartProps> = ({
           data={chartData}
           margin={{ top: 20, right: 30, bottom: 20, left: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
           <XAxis
             dataKey="ticker"
-            tick={{ fontSize: 13 }}
+            tick={{ fontSize: 13, fill: '#94a3b8' }}
           />
           <YAxis
             tickFormatter={(value) => `${value.toFixed(0)}%`}
+            tick={{ fill: '#94a3b8' }}
             label={{
               value: 'Weight (%)',
               angle: -90,
               position: 'insideLeft',
+              fill: '#e0e6ed',
             }}
           />
           <Tooltip
             formatter={(value: number) => `${value.toFixed(2)}%`}
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
+              backgroundColor: '#1e2530',
+              border: '1px solid #334155',
               borderRadius: '6px',
+              color: '#e0e6ed',
             }}
           />
           <Legend
             verticalAlign="top"
             height={36}
+            wrapperStyle={{ color: '#94a3b8' }}
           />
           <Bar
             dataKey="Prior Weight"
@@ -65,7 +69,7 @@ export const BLAllocationChart: React.FC<BLAllocationChartProps> = ({
           />
           <Bar
             dataKey="BL Weight"
-            fill="#2563eb"
+            fill="#60a5fa"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>

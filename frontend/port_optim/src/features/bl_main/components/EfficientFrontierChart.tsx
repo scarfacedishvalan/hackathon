@@ -26,17 +26,19 @@ export const EfficientFrontierChart: React.FC<EfficientFrontierChartProps> = ({
         <ScatterChart
           margin={{ top: 20, right: 30, bottom: 20, left: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
           <XAxis
             type="number"
             dataKey="vol"
             name="Volatility"
             domain={[0, 'auto']}
             tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+            tick={{ fill: '#94a3b8' }}
             label={{
               value: 'Volatility (σ)',
               position: 'insideBottom',
               offset: -10,
+              fill: '#e0e6ed',
             }}
           />
           <YAxis
@@ -45,19 +47,22 @@ export const EfficientFrontierChart: React.FC<EfficientFrontierChartProps> = ({
             name="Return"
             domain={[0, 'auto']}
             tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+            tick={{ fill: '#94a3b8' }}
             label={{
               value: 'Expected Return',
               angle: -90,
               position: 'insideLeft',
+              fill: '#e0e6ed',
             }}
           />
           <Tooltip
             formatter={(value: number) => `${(value * 100).toFixed(2)}%`}
             labelFormatter={() => ''}
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
+              backgroundColor: '#1e2530',
+              border: '1px solid #334155',
               borderRadius: '6px',
+              color: '#e0e6ed',
             }}
           />
           <Legend
@@ -86,7 +91,7 @@ export const EfficientFrontierChart: React.FC<EfficientFrontierChartProps> = ({
             label={{
               value: 'Prior',
               position: 'top',
-              fill: '#78350f',
+              fill: '#fbbf24',
               fontSize: 12,
               fontWeight: 600,
             }}
@@ -97,13 +102,13 @@ export const EfficientFrontierChart: React.FC<EfficientFrontierChartProps> = ({
             x={data.posterior.vol}
             y={data.posterior.ret}
             r={8}
-            fill="#2563eb"
-            stroke="#1d4ed8"
+            fill="#60a5fa"
+            stroke="#3b82f6"
             strokeWidth={2}
             label={{
               value: 'BL Posterior',
               position: 'top',
-              fill: '#1e3a8a',
+              fill: '#93c5fd',
               fontSize: 12,
               fontWeight: 600,
             }}

@@ -13,16 +13,18 @@
 .form-label {
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: #e0e6ed;
 }
 
 .form-input,
 .form-textarea {
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #334155;
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
+  background: #1e2530;
+  color: #e0e6ed;
   transition: border-color 0.2s;
   resize: vertical;
 }
@@ -35,25 +37,25 @@
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
 }
 
 .create-btn {
   align-self: flex-start;
-  background: #4338ca !important;
+  background: #312e81 !important;
   color: white !important;
 }
 
 .create-btn:hover {
-  background: #3730a3 !important;
+  background: #1e1b4b !important;
 }
 
 /* Examples section */
 .examples-section {
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #334155;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -68,7 +70,7 @@
 .examples-title {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #e0e6ed;
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -79,13 +81,15 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background: #f9fafb;
+  background: #1e2530;
+  border: 1px solid #334155;
   border-radius: 6px;
   transition: all 0.2s;
 }
 
 .example-item:hover {
-  background: #f3f4f6;
+  background: #2d3540;
+  border-color: #475569;
 }
 
 .example-text {
@@ -93,7 +97,7 @@
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #1f2937;
+  color: #cbd5e1;
 }
 
 .copy-btn {

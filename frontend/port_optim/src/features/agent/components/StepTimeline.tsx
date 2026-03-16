@@ -3,21 +3,29 @@ import type { AgentStep } from '../types/agentTypes';
 import './StepTimeline.css';
 
 const TOOL_ICONS: Record<string, string> = {
-  get_recipe_summary: '📋',
-  run_bl_scenario:    '▶',
-  run_stress_sweep:   '⟳',
-  compare_scenarios:  '⇌',
-  synthesise:         '★',
-  text_termination:   '★',
+  get_recipe_summary:    '📋',
+  run_bl_scenario:       '▶',
+  run_stress_sweep:      '⟳',
+  compare_scenarios:     '⇌',
+  synthesise:            '★',
+  text_termination:      '★',
+  view_importance_test:  '🔍',
+  view_fragility_scan:   '📊',
+  factor_shock_scan:     '⚡',
+  allocation_envelope:   '📦',
 };
 
 const TOOL_LABELS: Record<string, string> = {
-  get_recipe_summary: 'Parse thesis',
-  run_bl_scenario:    'Run BL model',
-  run_stress_sweep:   'Stress sweep',
-  compare_scenarios:  'Compare scenarios',
-  synthesise:         'Synthesise findings',
-  text_termination:   'Finish analysis',
+  get_recipe_summary:    'Parse thesis',
+  run_bl_scenario:       'Run BL model',
+  run_stress_sweep:      'Stress sweep',
+  compare_scenarios:     'Compare scenarios',
+  synthesise:            'Synthesise findings',
+  text_termination:      'Finish analysis',
+  view_importance_test:  'View importance test',
+  view_fragility_scan:   'View fragility scan',
+  factor_shock_scan:     'Factor shock scan',
+  allocation_envelope:   'Allocation envelope',
 };
 
 function toolLabel(step: AgentStep): string {

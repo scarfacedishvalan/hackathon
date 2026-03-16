@@ -65,17 +65,24 @@ and universe constraints — and a stated goal.
 Your task is to reason carefully and use the available tools to:
   1. Understand the base recipe (call get_recipe_summary first).
   2. Run the base scenario to establish the benchmark allocation.
-  3. Stress-test critical assumptions (confidence levels, view magnitudes,
+  3. Diagnose which views and assumptions drive the allocation:
+     a. Use view_importance_test to identify the most impactful views.
+     b. Use view_fragility_scan to test sensitivity of important views.
+     c. Use factor_shock_scan to explore macro factor sensitivity (if factor_shocks exist).
+  4. Stress-test critical assumptions (confidence levels, view magnitudes,
      model parameters) by running targeted scenarios.
-  4. If the goal involves a risk profile, explore weight_bounds or
+  5. If the goal involves a risk profile, explore weight_bounds or
      risk_aversion adjustments to find a suitable allocation.
-  5. Compare scenarios to understand sensitivity.
-  6. When you have gathered enough evidence, call synthesise() with a
+  6. Use allocation_envelope to assess stability across scenarios.
+  7. Compare scenarios to understand sensitivity.
+  8. When you have gathered enough evidence, call synthesise() with a
      thorough narrative, risk flags, and (optionally) your recommended weights.
 
 Be systematic. Use tool results to decide the next tool to call — do not
-call synthesise too early. Aim for at least 3 scenario runs before
-synthesising unless the recipe is trivially simple.
+call synthesise too early. Prefer structured diagnostics (view_importance_test,
+view_fragility_scan, factor_shock_scan, allocation_envelope) over ad-hoc
+parameter sweeps. Aim for at least 3-5 diagnostic steps before synthesising
+unless the recipe is trivially simple.
 
 TOOL USAGE RULES:
   * run_stress_sweep sweep_parameter for confidence MUST use one of the exact
@@ -100,6 +107,12 @@ TOOL USAGE RULES:
     for a Sharpe goal pick highest Sharpe, for a vol goal pick lowest vol,
     for a diversification goal pick lowest concentration, etc.
     If no scenario improved on base by any measure, pass the base weights.
+  * view_fragility_scan and factor_shock_scan are limited to 5 points each.
+    Choose meaningful test values (e.g., ±20%, ±50% around base magnitude).
+  * Use view_importance_test early in your workflow to identify which views
+    matter most, then focus fragility testing on those important views.
+  * Use allocation_envelope toward the end to summarize stability across
+    all scenarios you've run.
 
 CRITICAL — GOAL CONSTRAINTS:
   * If the goal states a per-position cap (e.g. "max 20% per asset", "no single
@@ -109,6 +122,15 @@ CRITICAL — GOAL CONSTRAINTS:
     that violates the goal constraint is meaningless.
   * Any goal_mutations provided in the user message must be included in every
     mutation dict you pass to run_bl_scenario or run_stress_sweep.
+
+DIAGNOSTIC WORKFLOW (RECOMMENDED):
+  1. get_recipe_summary
+  2. view_importance_test (identify critical views)
+  3. view_fragility_scan (test top 1-2 important views)
+  4. factor_shock_scan (if factor exposures exist)
+  5. run_bl_scenario / run_stress_sweep (targeted stress tests)
+  6. allocation_envelope (summarize stability)
+  7. synthesise (with comprehensive narrative and recommended weights)
 
 Output only tool calls. Do not return free-form text outside of the
 synthesise narrative field."""
@@ -408,6 +430,41 @@ def run_agent(
         from app.orchestrators.bl_agent_tools import _weight_delta
         weight_delta_vs_base = _weight_delta(base_summary["weights"], final_weights)
 
+    # ---- Extract diagnostic results --------------------------------------
+    diagnostics: Dict[str, Any] = {}
+    
+    # Collect view fragility scans
+    fragility_scans = [
+        s["result"] for s in steps_log
+        if s.get("tool") == "view_fragility_scan" and "error" not in s.get("result", {})
+    ]
+    if fragility_scans:
+        diagnostics["view_fragility"] = fragility_scans
+    
+    # Collect factor shock scans
+    factor_scans = [
+        s["result"] for s in steps_log
+        if s.get("tool") == "factor_shock_scan" and "error" not in s.get("result", {})
+    ]
+    if factor_scans:
+        diagnostics["factor_transmission"] = factor_scans
+    
+    # Collect view importance tests
+    importance_tests = [
+        s["result"] for s in steps_log
+        if s.get("tool") == "view_importance_test" and "error" not in s.get("result", {})
+    ]
+    if importance_tests:
+        diagnostics["view_importance"] = importance_tests
+    
+    # Collect allocation envelopes
+    envelopes = [
+        s["result"] for s in steps_log
+        if s.get("tool") == "allocation_envelope" and "error" not in s.get("result", {})
+    ]
+    if envelopes:
+        diagnostics["allocation_envelope"] = envelopes
+
     # ---- Assemble audit record -------------------------------------------
     audit: Dict[str, Any] = {
         "audit_id": audit_id,
@@ -424,6 +481,7 @@ def run_agent(
             if s.get("tool") == "run_bl_scenario"
         ],
         "scenarios_run": {k: v for k, v in run_cache.items() if k != "base"},
+        "diagnostics": diagnostics,
         "synthesis": synthesis or {"narrative": "Max steps reached without synthesis."},
         "final_weights": final_weights,
         "weight_delta_vs_base": weight_delta_vs_base,

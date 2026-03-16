@@ -10,7 +10,7 @@ interface AppLayoutProps {
 }
 
 const NAV_TABS: { id: AppPage; label: string }[] = [
-  { id: 'bl_main',   label: 'Portfolio Optimizer' },
+  { id: 'bl_main',   label: 'Black Litterman' },
   { id: 'backtest',  label: 'Backtest' },
   { id: 'agent',     label: 'Agent Analysis' },
   { id: 'admin',     label: 'Admin Console' },
@@ -22,7 +22,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNa
       {/* Sticky Header */}
       <header className="app-header">
         <div className="header-content">
-          <h1 className="app-title">Portfolio Dashboard</h1>
+          <h1 className="app-title">View Matrix: The Black Litterman Dashboard</h1>
         </div>
 
         {/* Navigation Tabs */}

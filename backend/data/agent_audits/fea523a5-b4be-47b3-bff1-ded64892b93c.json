@@ -1,0 +1,295 @@
+{
+  "audit_id": "fea523a5-b4be-47b3-bff1-ded64892b93c",
+  "thesis_name": "alpha_tilt",
+  "goal": "Identify critical views using importance test, then run fragility scans on top views. Find robust allocation with max 40% per position.",
+  "run_timestamp": "2026-03-16T09:56:05.616944",
+  "model": "gpt-4o",
+  "base_recipe_snapshot": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "AMZN",
+        "TSLA",
+        "JPM"
+      ]
+    },
+    "market_context": {
+      "market_caps": {
+        "AAPL": 2800,
+        "MSFT": 2400,
+        "AMZN": 1600,
+        "TSLA": 800,
+        "JPM": 450
+      },
+      "factor_exposures": {
+        "AAPL": [
+          1.2,
+          0.0,
+          0.1,
+          1.1,
+          0.0
+        ],
+        "MSFT": [
+          1.1,
+          0.0,
+          0.2,
+          1.0,
+          0.0
+        ],
+        "AMZN": [
+          1.4,
+          0.0,
+          0.1,
+          1.3,
+          0.1
+        ],
+        "TSLA": [
+          1.6,
+          0.0,
+          0.0,
+          1.5,
+          0.4
+        ],
+        "JPM": [
+          0.2,
+          1.5,
+          0.2,
+          0.9,
+          0.2
+        ]
+      },
+      "factor_names": [
+        "Growth",
+        "Financial",
+        "Defensive",
+        "Market",
+        "Rates"
+      ],
+      "sectors": {
+        "AAPL": "Technology",
+        "MSFT": "Technology",
+        "AMZN": "Technology",
+        "TSLA": "Technology",
+        "JPM": "Financials"
+      }
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 2.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true,
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    "bottom_up_views": [
+      {
+        "type": "absolute",
+        "asset": "AMZN",
+        "expected_return": 0.055,
+        "confidence": 0.6,
+        "label": "Credit modest upside"
+      },
+      {
+        "type": "relative",
+        "assets": [
+          "TSLA",
+          "JPM"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": -0.05,
+        "confidence": 0.6,
+        "label": "TSLA underperform JPM"
+      },
+      {
+        "type": "absolute",
+        "asset": "MSFT",
+        "expected_return": 0.02,
+        "confidence": 0.6,
+        "label": "Strong earnings report for Microsoft"
+      }
+    ],
+    "top_down_views": {
+      "factor_model": {
+        "factors": [
+          "Rates",
+          "Growth"
+        ]
+      },
+      "factor_shocks": [
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Rising rates"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.04,
+          "confidence": 0.6,
+          "label": "Strongly benefit financials"
+        },
+        {
+          "factor": "Defensive",
+          "shock": -0.01,
+          "confidence": 0.6,
+          "label": "Slightly hurt defensives"
+        },
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        }
+      ]
+    }
+  },
+  "base_result_summary": {
+    "portfolio_return": 0.062,
+    "portfolio_vol": 0.2633,
+    "sharpe": 0.2354,
+    "top_weights": {
+      "AAPL": 0.4,
+      "JPM": 0.4,
+      "AMZN": 0.1479,
+      "TSLA": 0.0521,
+      "MSFT": 0.0
+    },
+    "weights": {
+      "AAPL": 0.4,
+      "MSFT": 0.0,
+      "AMZN": 0.1479,
+      "TSLA": 0.0521,
+      "JPM": 0.4
+    },
+    "return_delta_vs_prior": {
+      "AAPL": -0.0978,
+      "MSFT": -0.097,
+      "AMZN": -0.1061,
+      "TSLA": -0.1779,
+      "JPM": -0.0273
+    }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "tool": "get_recipe_summary",
+      "args": {},
+      "result": {
+        "name": "Q1_macro_alpha_blend",
+        "universe": [
+          "AAPL",
+          "MSFT",
+          "AMZN",
+          "TSLA",
+          "JPM"
+        ],
+        "model_parameters": {
+          "tau": 0.05,
+          "risk_aversion": 2.0,
+          "risk_free_rate": 0.02
+        },
+        "constraints": {
+          "long_only": true,
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        },
+        "bottom_up_views": [],
+        "factor_shocks": [],
+        "view_labels": [],
+        "sweepable_confidence_params": [],
+        "note": "To stress-test expected return assumptions use run_bl_scenario with override_expected_return: {asset: new_return} mutations, or run_stress_sweep with sweep_parameter='risk_aversion'. Use ONLY the exact labels listed in view_labels for confidence sweeps."
+      }
+    },
+    {
+      "step": 1,
+      "tool": "synthesise",
+      "args": {
+        "narrative": "The provided Black-Litterman recipe, named 'Q1_macro_alpha_blend', involves a universe of five assets: AAPL, MSFT, AMZN, TSLA, and JPM. The model parameters include a tau of 0.05, risk aversion of 2.0, and a risk-free rate of 0.02. The constraints are long-only with weight bounds of 0.0 to 0.4 per asset. However, there are no bottom-up views or factor shocks defined in this recipe, which limits the ability to perform view importance tests or fragility scans as initially intended.\n\nGiven the absence of views, the focus shifts to understanding the impact of model parameters and constraints on the allocation. The base scenario already respects the weight bounds, with AAPL and JPM at the maximum 40% allocation, indicating these constraints are binding.\n\nSince there are no views to test, the next logical step would be to explore the sensitivity of the allocation to changes in model parameters such as risk aversion or tau, but this would not directly address the goal of identifying critical views.\n\nIn conclusion, without defined views, the task of identifying critical views and running fragility scans is not applicable. The allocation is primarily driven by the constraints and model parameters. Further exploration could involve stress-testing these parameters or expected return assumptions to assess robustness, but this would deviate from the original goal focused on views.",
+        "risk_flags": [
+          "No bottom-up views defined; unable to perform view importance or fragility tests.",
+          "Allocation heavily constrained by weight bounds, limiting diversification."
+        ]
+      },
+      "result": {
+        "done": true,
+        "narrative": "The provided Black-Litterman recipe, named 'Q1_macro_alpha_blend', involves a universe of five assets: AAPL, MSFT, AMZN, TSLA, and JPM. The model parameters include a tau of 0.05, risk aversion of 2.0, and a risk-free rate of 0.02. The constraints are long-only with weight bounds of 0.0 to 0.4 per asset. However, there are no bottom-up views or factor shocks defined in this recipe, which limits the ability to perform view importance tests or fragility scans as initially intended.\n\nGiven the absence of views, the focus shifts to understanding the impact of model parameters and constraints on the allocation. The base scenario already respects the weight bounds, with AAPL and JPM at the maximum 40% allocation, indicating these constraints are binding.\n\nSince there are no views to test, the next logical step would be to explore the sensitivity of the allocation to changes in model parameters such as risk aversion or tau, but this would not directly address the goal of identifying critical views.\n\nIn conclusion, without defined views, the task of identifying critical views and running fragility scans is not applicable. The allocation is primarily driven by the constraints and model parameters. Further exploration could involve stress-testing these parameters or expected return assumptions to assess robustness, but this would deviate from the original goal focused on views.",
+        "recommended_weights": null,
+        "risk_flags": [
+          "No bottom-up views defined; unable to perform view importance or fragility tests.",
+          "Allocation heavily constrained by weight bounds, limiting diversification."
+        ]
+      }
+    }
+  ],
+  "mutations_applied": [],
+  "scenarios_run": {},
+  "diagnostics": {},
+  "synthesis": {
+    "done": true,
+    "narrative": "The provided Black-Litterman recipe, named 'Q1_macro_alpha_blend', involves a universe of five assets: AAPL, MSFT, AMZN, TSLA, and JPM. The model parameters include a tau of 0.05, risk aversion of 2.0, and a risk-free rate of 0.02. The constraints are long-only with weight bounds of 0.0 to 0.4 per asset. However, there are no bottom-up views or factor shocks defined in this recipe, which limits the ability to perform view importance tests or fragility scans as initially intended.\n\nGiven the absence of views, the focus shifts to understanding the impact of model parameters and constraints on the allocation. The base scenario already respects the weight bounds, with AAPL and JPM at the maximum 40% allocation, indicating these constraints are binding.\n\nSince there are no views to test, the next logical step would be to explore the sensitivity of the allocation to changes in model parameters such as risk aversion or tau, but this would not directly address the goal of identifying critical views.\n\nIn conclusion, without defined views, the task of identifying critical views and running fragility scans is not applicable. The allocation is primarily driven by the constraints and model parameters. Further exploration could involve stress-testing these parameters or expected return assumptions to assess robustness, but this would deviate from the original goal focused on views.",
+    "recommended_weights": null,
+    "risk_flags": [
+      "No bottom-up views defined; unable to perform view importance or fragility tests.",
+      "Allocation heavily constrained by weight bounds, limiting diversification."
+    ]
+  },
+  "final_weights": null,
+  "weight_delta_vs_base": null,
+  "cost_breakdown": {
+    "steps": 2,
+    "total_tokens": 4790,
+    "total_cost_usd": 0.014592500000000001,
+    "success_steps": 2
+  },
+  "step_costs": [
+    {
+      "audit_id": "fea523a5-b4be-47b3-bff1-ded64892b93c",
+      "timestamp": "2026-03-16T09:56:08.795963",
+      "thesis_name": "alpha_tilt",
+      "step": 0,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2124,
+      "completion_tokens": 11,
+      "total_tokens": 2135,
+      "cost_usd": 0.00542,
+      "latency_ms": 5553,
+      "success": 1
+    },
+    {
+      "audit_id": "fea523a5-b4be-47b3-bff1-ded64892b93c",
+      "timestamp": "2026-03-16T09:56:14.363532",
+      "thesis_name": "alpha_tilt",
+      "step": 1,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2317,
+      "completion_tokens": 338,
+      "total_tokens": 2655,
+      "cost_usd": 0.0091725,
+      "latency_ms": 4967,
+      "success": 1
+    }
+  ]
+}

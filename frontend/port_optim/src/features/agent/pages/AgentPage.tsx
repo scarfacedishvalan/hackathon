@@ -5,13 +5,16 @@ import AuditDisplay from '../components/AuditDisplay';
 import './AgentPage.css';
 
 const DEFAULT_GOAL =
-  'Stress-test all views by varying confidence and find an allocation ' +
-  'for a moderate-risk investor with max 25% per position.';
+  'Identify critical views using importance test, then run fragility scans on top views. ' +
+  'Find robust allocation with max 20% per position.';
 
 const GOAL_EXAMPLES = [
+  'Identify critical views using importance test, then run fragility scans on top views. Find robust allocation with max 20% per position.',
+  'Run view importance test to find which views drive the allocation. Test fragility of the most impactful view. Assess stability using allocation envelope. Max 15% per asset.',
+  'Test portfolio sensitivity to view magnitudes using fragility scan. Run factor shock analysis if macro exposures exist. Maximize Sharpe with no single asset above 25%.',
+  'Identify fragile views and macro sensitivities. Use allocation envelope to assess robustness across scenarios. Conservative risk profile with max 30% position caps.',
+  'Run comprehensive diagnostics: view importance test, fragility scans on top 2 views, factor shock transmission if available. Find allocation with lowest volatility.',
   'Stress-test all views by varying confidence and find an allocation for a moderate-risk investor with max 25% per position.',
-  'Maximise Sharpe ratio with sector diversification. No single asset above 20%. Run stress sweep on expected return assumptions.',
-  'Find a conservative allocation by sweeping risk aversion. Cap each position at 35%. Identify the parameter setting with the lowest volatility and recommend those weights.',
 ];
 
 export const AgentPage: React.FC = () => {
