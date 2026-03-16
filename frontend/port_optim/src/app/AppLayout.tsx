@@ -23,7 +23,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNa
       {/* Sticky Header */}
       <header className="app-header">
         <div className="header-content">
-          <img src={logoImage} alt="View Matrix Dashboard" className="app-logo" />
+          <div className="header-branding">
+            <img src={logoImage} alt="View Matrix Dashboard" className="app-logo" />
+            <h1 className="app-title">ViewMatrix: Express, Build, Optimize!</h1>
+          </div>
         </div>
 
         {/* Navigation Tabs */}

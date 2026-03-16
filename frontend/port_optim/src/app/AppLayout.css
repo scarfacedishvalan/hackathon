@@ -20,22 +20,32 @@
   align-items: center;
 }
 
+.header-branding {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
 .app-title {
   font-size: 22px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: #e0e6ed;
-  margin: 0 0 8px 0;
+  margin: 0;
+  margin-left: -40px;
+  white-space: nowrap;
 }
 
 .app-logo {
   height: 64px !important;
   width: auto !important;
-  max-width: 400px !important;
-  min-width: 200px !important;
+  max-width: 200px !important;
+  min-width: 100px !important;
   display: block !important;
   object-fit: contain !important;
   object-position: left center !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .app-main {
