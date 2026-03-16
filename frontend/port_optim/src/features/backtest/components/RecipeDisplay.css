@@ -5,8 +5,8 @@
 }
 
 .recipe-section {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #1e2530;
+  border: 1px solid #334155;
   border-radius: 10px;
   padding: 14px 16px;
 }
@@ -16,7 +16,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #6b7280;
+  color: #94a3b8;
   margin: 0 0 10px 0;
 }
 
@@ -36,21 +36,21 @@
 }
 
 .recipe-key {
-  color: #374151;
+  color: #94a3b8;
   font-weight: 500;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .recipe-value {
-  color: #1f2937;
+  color: #e0e6ed;
   font-weight: 600;
   text-align: right;
   word-break: break-all;
 }
 
 .recipe-value--null {
-  color: #d1d5db;
+  color: #475569;
   font-weight: 400;
   font-style: italic;
 }
@@ -58,15 +58,15 @@
 .recipe-value--tag {
   display: inline-block;
   padding: 2px 8px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: #0f1e35;
+  color: #60a5fa;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
 }
 
 .recipe-value--rule {
-  color: #374151;
+  color: #cbd5e1;
   font-weight: 400;
   font-style: italic;
   text-align: right;

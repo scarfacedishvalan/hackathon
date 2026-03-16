@@ -88,8 +88,8 @@ interface TPEntry { name: string; value: number; color: string; }
 const ChartTooltip: React.FC<{ active?: boolean; label?: string; payload?: TPEntry[] }> = ({ active, label, payload }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 14px', fontSize: 13 }}>
-      <p style={{ margin: '0 0 4px', fontWeight: 700, color: '#374151' }}>{label}</p>
+    <div style={{ background: '#242b33', border: '1px solid #334155', borderRadius: 8, padding: '10px 14px', fontSize: 13 }}>
+      <p style={{ margin: '0 0 4px', fontWeight: 700, color: '#e0e6ed' }}>{label}</p>
       {payload.map(e => (
         <p key={e.name} style={{ margin: '2px 0', color: e.color }}>
           Equity: <strong>${e.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong>
@@ -202,7 +202,7 @@ const BacktestTabPanel: React.FC = () => {
             <div className="bt-card" style={{ marginBottom: 16 }}>
               <h2>Parsed Input</h2>
               <p className="bt-card-subtitle">Your original description</p>
-              <p style={{ fontSize: 14, color: '#374151', fontStyle: 'italic', margin: 0 }}>"{nlInput}"</p>
+              <p style={{ fontSize: 14, color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>"{ nlInput}"</p>
             </div>
             <div className="bt-action-row" style={{ justifyContent: 'flex-start', gap: 10 }}>
               <button className="bt-btn bt-btn--secondary" onClick={goBack}>Back</button>
@@ -228,7 +228,7 @@ const BacktestTabPanel: React.FC = () => {
           <div className="bt-card" style={{ padding: '16px 24px' }}>
             <div className="results-header-row">
               <div className="results-strategy-badge">
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#1f2937' }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#e0e6ed' }}>
                   {runResult.recipe.strategy_name}
                 </span>
                 <span className="badge">{runResult.recipe.data?.symbol ?? 'sample'}</span>
