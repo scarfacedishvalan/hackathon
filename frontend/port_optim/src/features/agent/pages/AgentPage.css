@@ -11,8 +11,8 @@
   flex-direction: column;
   gap: 0;
   padding: 16px;
-  border-right: 1px solid #e5e7eb;
-  background: #fff;
+  border-right: 1px solid #334155;
+  background: #242b33;
   overflow-y: auto;
 }
 
@@ -21,7 +21,7 @@
 }
 
 .sidebar-section--audits {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #334155;
   padding-top: 14px;
   margin-top: 4px;
 }
@@ -31,7 +31,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: #94a3b8;
   margin: 0 0 8px;
 }
 
@@ -44,7 +44,7 @@
 
 .sidebar-empty {
   font-size: 12px;
-  color: #9ca3af;
+  color: #64748b;
 }
 
 .thesis-item {
@@ -57,19 +57,19 @@
   border-radius: 5px;
   cursor: pointer;
   font-size: 13px;
-  color: #374151;
+  color: #cbd5e1;
   text-align: left;
   transition: background 0.1s, border-color 0.1s;
 }
 
 .thesis-item:hover {
-  background: #f9fafb;
+  background: #2d3540;
 }
 
 .thesis-item--active {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
+  background: #1e2530;
+  border-color: #475569;
+  color: #60a5fa;
 }
 
 .thesis-dot {
@@ -83,9 +83,9 @@
   padding: 8px 10px;
   font-size: 12px;
   line-height: 1.55;
-  color: #374151;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  color: #e0e6ed;
+  background: #1e2530;
+  border: 1px solid #334155;
   border-radius: 5px;
   resize: vertical;
   font-family: inherit;
@@ -94,8 +94,8 @@
 
 .goal-input:focus {
   outline: none;
-  border-color: #93c5fd;
-  background: #fff;
+  border-color: #60a5fa;
+  background: #242b33;
 }
 
 .goal-input:disabled {
@@ -106,7 +106,7 @@
 .run-btn {
   width: 100%;
   padding: 9px 0;
-  background: #2563eb;
+  background: #312e81;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -118,7 +118,7 @@
 }
 
 .run-btn:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #3730a3;
 }
 
 .run-btn:disabled {
@@ -127,12 +127,12 @@
 }
 
 .run-btn--running {
-  background: #6b7280;
+  background: #475569;
 }
 
 .run-error {
   font-size: 11px;
-  color: #dc2626;
+  color: #f87171;
   margin: 0;
   word-break: break-word;
 }
@@ -150,32 +150,32 @@
   align-items: flex-start;
   gap: 8px;
   padding: 8px 10px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #1e2530;
+  border: 1px solid #334155;
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
   font-size: 12px;
-  color: #374151;
+  color: #cbd5e1;
   line-height: 1.4;
   transition: background 0.1s, border-color 0.1s;
 }
 
 .goal-example-btn:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
+  background: #1e3a8a;
+  border-color: #475569;
+  color: #93c5fd;
 }
 
 .goal-example-icon {
   font-size: 12px;
   flex-shrink: 0;
   margin-top: 1px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .goal-example-btn:hover .goal-example-icon {
-  color: #2563eb;
+  color: #60a5fa;
 }
 
 /* Past runs collapsible header */
@@ -192,21 +192,21 @@
 }
 
 .past-runs-toggle:hover .sidebar-label {
-  color: #374151;
+  color: #cbd5e1;
 }
 
 .past-runs-chevron {
   font-size: 9px;
-  color: #9ca3af;
+  color: #64748b;
   margin-left: auto;
 }
 
 .past-runs-count {
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background: #1e2530;
+  border: 1px solid #334155;
   border-radius: 999px;
   font-size: 10px;
-  color: #6b7280;
+  color: #94a3b8;
   padding: 1px 7px;
   font-weight: 600;
 }
@@ -232,29 +232,29 @@
 }
 
 .audit-list-item:hover {
-  background: #f9fafb;
+  background: #2d3540;
 }
 
 .audit-list-item--active {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: #1e2530;
+  border-color: #475569;
 }
 
 .audit-list-thesis {
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: #e0e6ed;
 }
 
 .audit-list-meta {
   font-size: 10px;
-  color: #9ca3af;
+  color: #64748b;
   font-variant-numeric: tabular-nums;
 }
 
 .audit-list-id {
   font-size: 10px;
-  color: #d1d5db;
+  color: #475569;
   font-family: 'SF Mono', monospace;
 }
 
@@ -262,7 +262,7 @@
 .agent-main {
   padding: 20px;
   overflow-y: auto;
-  background: #f3f4f6;
+  background: #1a1f26;
 }
 
 /* Empty / loading states */
@@ -273,7 +273,7 @@
   justify-content: center;
   height: 100%;
   gap: 8px;
-  color: #6b7280;
+  color: #94a3b8;
   font-size: 13px;
   text-align: center;
 }
@@ -283,15 +283,15 @@
 .agent-spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #2563eb;
+  border: 3px solid #334155;
+  border-top-color: #60a5fa;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 .agent-spinner-label {
   font-size: 12px;
-  color: #6b7280;
+  color: #94a3b8;
   margin: 0;
 }
 

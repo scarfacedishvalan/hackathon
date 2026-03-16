@@ -1,5 +1,6 @@
 import React from 'react';
 import './AppLayout.css';
+import logoImage from '../assets/bl_logo.png';
 
 export type AppPage = 'bl_main' | 'backtest' | 'agent' | 'admin';
 
@@ -22,7 +23,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNa
       {/* Sticky Header */}
       <header className="app-header">
         <div className="header-content">
-          <h1 className="app-title">View Matrix: The Black Litterman Dashboard</h1>
+          <img src={logoImage} alt="View Matrix Dashboard" className="app-logo" />
         </div>
 
         {/* Navigation Tabs */}
