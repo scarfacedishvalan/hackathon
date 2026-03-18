@@ -1,15 +1,16 @@
 """Run Backtesting.py strategies from a semantic JSON recipe.
 
-This script is meant to be the execution layer for JSON produced by the
+This script is the execution layer for JSON produced by the
 recipe-interpreter prompts (Backtesting.py target).
 
+Price data is always read from the SQLite database via
+``app.services.price_data.load_data.load_market_data``.
+
 Usage:
-  python backtesting_from_json.py prompts/backtesting_example_expected_output.json
-  python backtesting_from_json.py recipe.json --plot
+  python backtesting_from_json.py recipe.json
 
 Notes:
 - Requires: backtesting, pandas
-- Optional: yfinance (only needed if recipe specifies a symbol without a path)
 """
 
 from __future__ import annotations
@@ -28,7 +29,6 @@ import pandas as pd
 try:
     from backtesting import Backtest, Strategy
     from backtesting.lib import crossover
-    from backtesting.test import GOOG  # sample data
 except Exception as exc:  # pragma: no cover
     raise SystemExit(
         "Missing dependency: backtesting. Install with `pip install backtesting`."
@@ -136,108 +136,34 @@ def _coerce_ohlc(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _load_csv(path: Path) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    # Try common date columns
-    for date_col in ("Date", "date", "Datetime", "datetime", "Time", "time"):
-        if date_col in df.columns:
-            df[date_col] = pd.to_datetime(df[date_col])
-            df = df.rename(columns={date_col: "Date"})
-            break
-    return df
-
-
 def _load_data(recipe: Mapping[str, Any]) -> pd.DataFrame:
+    """Load price data for the symbol(s) in the recipe from the SQLite database."""
+    from app.services.price_data.load_data import load_market_data
+
     data = recipe.get("data") or {}
-
-    path = data.get("path")
     symbol = data.get("symbol")
-    source = data.get("source")
-
     start = _parse_date(data.get("start"))
     end = _parse_date(data.get("end"))
 
-    if isinstance(source, str) and source.strip().lower() in {"sample", "backtesting.sample", "backtesting.test"}:
-        # Use built-in sample OHLCV data from backtesting.py.
-        # Note: GOOG already has a DatetimeIndex and OHLCV columns.
-        df = GOOG.copy()
-        df = _coerce_ohlc(df)
-    elif path:
-        p = Path(path)
-        if not p.exists():
-            raise FileNotFoundError(f"Data path does not exist: {p}")
-        if p.suffix.lower() in (".csv",):
-            df = _load_csv(p)
-        elif p.suffix.lower() in (".parquet", ".pq"):
-            df = pd.read_parquet(p)
-        else:
-            raise ValueError(f"Unsupported data file type: {p.suffix}")
-        df = _coerce_ohlc(df)
-    else:
-        if not symbol:
-            raise ValueError("Recipe must provide data.path, data.source='sample', or data.symbol")
+    price_df, *_ = load_market_data()
 
-        # If the recipe doesn't explicitly state a source, we attempt yfinance.
-        if source not in (None, "yfinance"):
+    if symbol:
+        if symbol not in price_df.columns:
             raise ValueError(
-                f"Unsupported data.source {source!r} without a path. "
-                "Provide data.path or set data.source to 'yfinance'."
+                f"Symbol {symbol!r} not found in the database. "
+                f"Available: {sorted(price_df.columns.tolist())}"
             )
-
-        try:
-            import yfinance as yf  # type: ignore
-        except Exception as exc:
-            raise SystemExit(
-                "Recipe specifies a symbol but no data.path; install yfinance (pip install yfinance) "
-                "or provide a CSV/Parquet path in recipe.data.path."
-            ) from exc
-
-        interval = _map_timeframe_to_yf_interval(recipe.get("timeframe"))
-        df = yf.download(
-            symbol,
-            start=None if start is None else start.to_pydatetime(),
-            end=None if end is None else end.to_pydatetime(),
-            interval=interval,
-            auto_adjust=False,
-            progress=False,
-        )
-        # yfinance uses capitalized OHLC already.
-        if isinstance(df.columns, pd.MultiIndex):
-            # Sometimes yfinance returns multi-index for multiple tickers.
-            df = df.xs(symbol, axis=1, level=-1, drop_level=True)
-        df = _coerce_ohlc(df)
+        df = price_df[[symbol]].rename(columns={symbol: "Close"})
+    else:
+        raise ValueError("recipe.data.symbol is required to identify which asset to backtest")
 
     if start is not None:
         df = df.loc[df.index >= start]
     if end is not None:
         df = df.loc[df.index <= end]
 
+    df = _coerce_ohlc(df)
     return df
-
-
-def _map_timeframe_to_yf_interval(timeframe: Any) -> str:
-    if timeframe is None:
-        return "1d"
-    if not isinstance(timeframe, str):
-        return "1d"
-
-    tf = timeframe.strip().lower()
-    mapping = {
-        "daily": "1d",
-        "day": "1d",
-        "1d": "1d",
-        "weekly": "1wk",
-        "1w": "1wk",
-        "monthly": "1mo",
-        "1mo": "1mo",
-        "hourly": "1h",
-        "1h": "1h",
-        "30m": "30m",
-        "15m": "15m",
-        "5m": "5m",
-        "1m": "1m",
-    }
-    return mapping.get(tf, "1d")
 
 
 def SMA(series: pd.Series, n: int) -> pd.Series:

@@ -325,15 +325,20 @@ def _compute_chart_data(
     risk_aversion: float = params["risk_aversion"]
     risk_free_rate: float = params["risk_free_rate"]
 
+    # Filter market_caps to universe assets only — the full market_context may
+    # contain more assets than the current universe, and market_implied_prior_returns
+    # requires market_caps and cov_matrix to have matching asset counts.
+    universe_market_caps = {a: market_caps[a] for a in universe if a in market_caps}
+
     # Re-compute covariance + equilibrium returns (cheap — needed for Σ)
     cov_matrix = sample_cov(price_subset)
-    pi = market_implied_prior_returns(market_caps, cov_matrix, risk_aversion)
+    pi = market_implied_prior_returns(universe_market_caps, cov_matrix, risk_aversion)
     Sigma = cov_matrix.values  # numpy array
 
     # ── Weights ────────────────────────────────────────────────────────────────
 
-    total_cap = sum(market_caps[a] for a in universe)
-    prior_weights = {a: market_caps[a] / total_cap for a in universe}
+    total_cap = sum(universe_market_caps[a] for a in universe)
+    prior_weights = {a: universe_market_caps[a] / total_cap for a in universe}
     w_mkt = np.array([prior_weights[a] for a in universe])
 
     w_bl = np.array([result["weights"].get(a, 0.0) for a in universe])
@@ -388,7 +393,7 @@ def _compute_chart_data(
             except Exception:
                 pass  # infeasible target — skip quietly
     except Exception:
-        pass  # fallback: empty curve
+        raise
 
     # ── Allocation ─────────────────────────────────────────────────────────────
 

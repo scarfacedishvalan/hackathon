@@ -15,6 +15,9 @@ class DataConfig(BaseModel):
     path: str | None
     start: str | None
     end: str | None
+    # Portfolio path: name of a saved BL thesis in data/bl_recipes/.
+    # When set, symbol/source/path are ignored and the thesis universe is used.
+    thesis_name: str | None = None
 
 
 class BacktestConfig(BaseModel):

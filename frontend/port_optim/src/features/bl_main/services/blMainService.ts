@@ -61,6 +61,16 @@ export const blMainService = {
     await apiClient.put('/views/model_parameters', params);
   },
 
+  /** GET /views/constraints — reads long_only and weight_bounds from current.json */
+  getConstraints: async (): Promise<{ long_only: boolean; weight_bounds: [number, number] }> => {
+    return apiClient.get('/views/constraints');
+  },
+
+  /** PUT /views/constraints — persists updated constraints to current.json */
+  updateConstraints: async (constraints: { long_only: boolean; weight_bounds: [number, number] }): Promise<void> => {
+    await apiClient.put('/views/constraints', constraints);
+  },
+
   /** DELETE /views/bottom_up/{index} — splices the row from current.json */
   deleteBottomUpView: async (index: number): Promise<void> => {
     await apiClient.delete(`/views/bottom_up/${index}`);

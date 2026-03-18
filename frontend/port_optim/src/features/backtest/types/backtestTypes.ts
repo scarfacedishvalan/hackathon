@@ -95,3 +95,35 @@ export interface BacktestRunResult {
   trades:     BacktestTrade[];
 }
 
+// ── Portfolio types ────────────────────────────────────────────────────────
+export interface PortfolioRecipeMeta {
+  thesis_name:     string;
+  strategy_name:   string;
+  strategy_params: Record<string, number> | null;
+  assets:          string[];
+  weights:         Record<string, number>;
+  start:           string | null;
+  end:             string | null;
+  cash:            number;
+  commission:      string | number | null;
+}
+
+export interface PortfolioRunResult {
+  recipe:      PortfolioRecipeMeta;
+  metrics:     BacktestMetrics;
+  equityCurve: EquityCurvePoint[];
+  assetCurves: Record<string, EquityCurvePoint[]>;
+  weights:     Record<string, number>;
+  trades:      Record<string, BacktestTrade[]>;
+}
+
+export interface PortfolioRunRequest {
+  thesis_name:     string;
+  strategy_name:   string;
+  strategy_params: Record<string, number> | null;
+  start:           string | null;
+  end:             string | null;
+  cash:            number;
+  commission:      string | number | null;
+}
+

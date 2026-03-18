@@ -329,6 +329,45 @@ def update_model_parameters(params: Dict[str, float]) -> None:
     save_recipe(recipe, "current")
 
 
+def get_constraints() -> Dict[str, object]:
+    """Return the ``constraints`` block from ``current.json``."""
+    defaults: Dict[str, object] = {"long_only": True, "weight_bounds": [0.0, 1.0]}
+    try:
+        recipe = load_recipe("current")
+        constraints = recipe.get("constraints")
+        if constraints:
+            bounds = constraints.get("weight_bounds", [0.0, 1.0])
+            return {
+                "long_only": bool(constraints.get("long_only", True)),
+                "weight_bounds": [float(bounds[0]), float(bounds[1])],
+            }
+    except FileNotFoundError:
+        pass
+    return defaults
+
+
+def update_constraints(long_only: bool, weight_bounds: list) -> Dict[str, object]:
+    """
+    Persist ``constraints`` to ``current.json``.
+
+    ``weight_bounds`` must be a two-element list ``[lower, upper]`` with
+    ``0 <= lower < upper <= 1``.  ``long_only`` must be ``True`` when
+    ``lower >= 0`` (short-selling is not supported).
+    """
+    lower, upper = float(weight_bounds[0]), float(weight_bounds[1])
+    if not (0.0 <= lower < upper <= 1.0):
+        raise ValueError(f"Invalid weight_bounds [{lower}, {upper}]: need 0 ≤ lower < upper ≤ 1")
+    try:
+        recipe = load_recipe("current")
+    except FileNotFoundError:
+        recipe = {}
+    recipe.setdefault("constraints", {})
+    recipe["constraints"]["long_only"] = bool(long_only)
+    recipe["constraints"]["weight_bounds"] = [lower, upper]
+    save_recipe(recipe, "current")
+    return get_constraints()
+
+
 def delete_bottom_up_view(index: int) -> None:
     """
     Remove the bottom-up view at array position *index* from ``current.json``.

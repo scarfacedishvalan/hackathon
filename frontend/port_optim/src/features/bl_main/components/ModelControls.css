@@ -103,6 +103,72 @@
   cursor: pointer;
 }
 
+/* ── Constraints section ─────────────────────────────────────────────────── */
+
+.controls-divider {
+  height: 1px;
+  background: #334155;
+  margin: 4px 0;
+}
+
+.bounds-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.bound-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bound-label {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.long-only-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #1e2530;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.long-only-toggle.active {
+  background: #1e3a5f;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.toggle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #334155;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.long-only-toggle.active .toggle-dot {
+  background: #3b82f6;
+}
+
+.constraint-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+
 .radio-text {
   font-size: 14px;
   color: #1f2937;

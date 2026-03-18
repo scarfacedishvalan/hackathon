@@ -1,4 +1,4 @@
-import type { BacktestRecipe, BacktestRunResult } from '../types/backtestTypes';
+import type { BacktestRecipe, BacktestRunResult, PortfolioRunResult, PortfolioRunRequest } from '../types/backtestTypes';
 import { apiClient } from '../../../services/apiClient';
 import mockData from '../mock/mockBacktestData.json';
 
@@ -40,5 +40,19 @@ export const backtestService = {
       await delay(900);
       return MOCK_RESULT;
     }
+  },
+
+  /** List saved BL thesis names available for portfolio backtest. */
+  listTheses: async (): Promise<string[]> => {
+    try {
+      return await apiClient.get<string[]>('/backtest/theses');
+    } catch {
+      return [];
+    }
+  },
+
+  /** Run a multi-asset portfolio backtest driven by a saved thesis. */
+  runPortfolio: async (req: PortfolioRunRequest): Promise<PortfolioRunResult> => {
+    return apiClient.post<PortfolioRunResult>('/backtest/run-portfolio', req);
   },
 };

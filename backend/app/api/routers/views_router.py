@@ -123,6 +123,30 @@ async def update_model_parameters(body: dict):
     return view_orchestrator.get_model_parameters()
 
 
+@router.get("/constraints")
+async def get_constraints():
+    """Return the constraints block (long_only, weight_bounds) from current.json."""
+    return view_orchestrator.get_constraints()
+
+
+@router.put("/constraints")
+async def update_constraints(body: dict):
+    """
+    Update constraints in current.json.
+
+    Body: ``{ "long_only": bool, "weight_bounds": [lower, upper] }``
+    Returns the saved constraints.
+    """
+    try:
+        return view_orchestrator.update_constraints(
+            long_only=body.get("long_only", True),
+            weight_bounds=body.get("weight_bounds", [0.0, 1.0]),
+        )
+    except ValueError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
 @router.post("/thesis", status_code=201)
 async def save_thesis(body: dict):
     """

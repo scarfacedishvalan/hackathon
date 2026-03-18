@@ -318,13 +318,17 @@
 
 /* chart */
 .equity-chart-card {
-  background: #242b33;
-  border: 1px solid #334155;
-  background: #242b33;
-  border: 1px solid #334155;
+  background: #2d3748;
+  border: 1px solid #3b5a8a;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,.45);
+}
+
+.equity-chart-inner {
+  background: #1a2233;
+  border-radius: 8px;
+  padding: 12px 4px 4px;
 }
 
 .equity-chart-card h2 { font-size: 16px; font-weight: 700; color: #e0e6ed; margin: 0 0 4px 0; }
@@ -763,4 +767,159 @@
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ── Mode Toggle ─────────────────────────────────────────────────────────── */
+.bt-mode-toggle {
+  display: inline-flex;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.bt-mode-btn {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #1e2530;
+  color: #64748b;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bt-mode-btn:not(:last-child) {
+  border-right: 1px solid #334155;
+}
+
+.bt-mode-btn.active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.bt-mode-btn:not(.active):hover {
+  background: #242b33;
+  color: #94a3b8;
+}
+
+/* ── Portfolio Form ──────────────────────────────────────────────────────── */
+.pf-form {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-top: 12px;
+  display: block;
+}
+
+.pf-select,
+.pf-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #e0e6ed;
+  background: #1e2530;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.pf-select:focus,
+.pf-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, .18);
+  background: #1a2333;
+}
+
+.pf-select option {
+  background: #1e2530;
+}
+
+.pf-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* ── Portfolio Weight Bar ────────────────────────────────────────────────── */
+.pf-weight-bar {
+  display: flex;
+  height: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+.pf-weight-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+  opacity: 0.9;
+  transition: opacity 0.15s;
+}
+
+.pf-weight-segment:hover {
+  opacity: 1;
+}
+
+/* ── Portfolio Asset Pills ───────────────────────────────────────────────── */
+.pf-asset-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pf-pill {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid #334155;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.pf-pill.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.pf-pill:not(.active):hover {
+  background: #1e2530;
+}
+
+/* ── Ticker Badge (in trades table) ─────────────────────────────────────── */
+.pf-ticker-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }

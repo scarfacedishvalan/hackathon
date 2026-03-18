@@ -267,7 +267,41 @@ class PriceData:
     #     asset_dict = {}
     #     for asset in self._dfraw.columns:
             
-    
+
+def update_price_data():
+    market_json = r"C:\Python\hackathon\backend\data\market_data.json"
+    import json
+    with open(market_json, "r") as f:
+        market_data = json.load(f)
+    all_assets = market_data.get("all_assets", [])
+    print(f"Updating price data for assets: {all_assets}")
+    import yfinance as yf
+    dflist = []
+    for asset in all_assets:
+        print(f"Fetching data for missing asset: {asset}")
+        try:
+            ticker = yf.Ticker(asset)
+            hist = ticker.history(period="max")
+            # Keep only Close price and rename column to asset name
+            hist = hist[["Close"]].rename(columns={"Close": asset})
+            dflist.append(hist)
+        except Exception as e:
+            raise RuntimeError(f"Error fetching data for {asset}: {e}")
+    # Combine all dataframes on Date index
+    if dflist:
+        new_data = pd.concat(dflist, axis=1)
+        new_data = new_data.sort_index()
+        # lambda func to convert Timestamp('1962-01-02 00:00:00-0500', tz='America/New_York') to YYYY-MM-DD string
+        func = lambda x: x.strftime('%Y-%m-%d') if isinstance(x, pd.Timestamp) else x        
+        #  Keep only last 5 years of data
+        new_data = new_data[new_data.index >= (datetime.now() - timedelta(days=5*365)).strftime('%Y-%m-%d')]
+        new_data.index = new_data.index.map(func)
+        new_data = new_data.reset_index().rename(columns={"index": "Date"})
+    # Overwrite existing database with new data (for simplicity)
+    conn = sqlite3.connect("price_data.db")
+    new_data.to_sql(TABLE_NAME, conn, if_exists="replace", index=False)
+    conn.close()
+
 if __name__ == "__main__":
     # Example usage
     # asset_list = ["AAPL", "MSFT", "GOOGL"]
@@ -276,5 +310,7 @@ if __name__ == "__main__":
     # print("Time period (years):", price_data.get_time_period())
     # print("\nSummary Returns:")
     # print(price_data.get_summary_returns())
+    update_price_data()
     df = read_from_sqlite()
+    print(df.columns)
     print(df.head())

@@ -1,12 +1,12 @@
 ﻿import React from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
+  Tooltip, ResponsiveContainer, LineChart, Line, Legend,
 } from 'recharts';
-import { useState, useCallback } from 'react';
-import { useBacktest, BacktestProvider } from '../context/BacktestContext';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { RecipeDisplay } from '../components/RecipeDisplay';
-import type { BacktestMetrics, BacktestTrade } from '../types/backtestTypes';
+import type { BacktestMetrics, BacktestTrade, BacktestRecipe, PortfolioRunResult, PortfolioRunRequest } from '../types/backtestTypes';
+import { backtestService } from '../services/backtestService';
 import './BacktestPage.css';
 
 // -- Stepper ------------------------------------------------------------------
@@ -99,63 +99,220 @@ const ChartTooltip: React.FC<{ active?: boolean; label?: string; payload?: TPEnt
   );
 };
 
-// -- TradesTable --------------------------------------------------------------
+// -- Example inputs -----------------------------------------------------------
 
-const TradesTable: React.FC<{ trades: BacktestTrade[] }> = ({ trades }) => {
-  if (!trades.length) return null;
+const EXAMPLES = [
+  'Run SmaCross with fast=10 and slow=30 from 2021-01-01 to 2023-12-31 with $50,000 cash.',
+  'BuyAndHold from 2020-01-01 to 2024-01-01 with $25,000 cash.',
+  'Test RsiReversion with period 14, lower 30, upper 70, from 2022-01-01 to 2024-01-01 with $15,000 cash.',
+  'EmaCross fast=12 slow=26 from 2021-01-01 to 2023-12-31 with $30,000 and 0.1% commission.',
+];
+
+// -- Portfolio constants ------------------------------------------------------
+
+const ASSET_COLOURS = ['#60a5fa','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#4ade80'];
+
+const PortfolioResultsPanel: React.FC<{ result: PortfolioRunResult; onReset: () => void }> = ({ result, onReset }) => {
+  const assets = Object.keys(result.weights);
+  const [assetFilter, setAssetFilter] = useState<string | null>(null);
+  const [chartMode, setChartMode] = useState<'portfolio' | 'assets'>('portfolio');
+
+  const colourMap = useMemo<Record<string, string>>(() => {
+    const m: Record<string, string> = {};
+    assets.forEach((a, i) => { m[a] = ASSET_COLOURS[i % ASSET_COLOURS.length]; });
+    return m;
+  }, [assets]);
+
+  const allTrades = useMemo(() => {
+    const rows: Array<BacktestTrade & { asset: string }> = [];
+    for (const [asset, trades] of Object.entries(result.trades)) {
+      trades.forEach(t => rows.push({ ...t, asset }));
+    }
+    return rows.sort((a, b) => a.entryTime.localeCompare(b.entryTime));
+  }, [result.trades]);
+
+  const filteredTrades = assetFilter ? allTrades.filter(t => t.asset === assetFilter) : allTrades;
+
   return (
-    <div className="trades-table-card">
-      <h2>Trade Log</h2>
-      <table className="trades-table">
-        <thead>
-          <tr>
-            <th>Entry</th><th>Exit</th>
-            <th>Entry $</th><th>Exit $</th>
-            <th>PnL</th><th>Return %</th><th>Size</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trades.map((t, i) => (
-            <tr key={i}>
-              <td>{t.entryTime.slice(0, 10)}</td>
-              <td>{t.exitTime.slice(0, 10)}</td>
-              <td>{t.entryPrice != null ? `$${t.entryPrice.toFixed(2)}` : 'N/A'}</td>
-              <td>{t.exitPrice  != null ? `$${t.exitPrice.toFixed(2)}`  : 'N/A'}</td>
-              <td className={t.pnl != null && t.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}>
-                {t.pnl != null ? `$${t.pnl.toFixed(2)}` : 'N/A'}
-              </td>
-              <td className={t.returnPct != null && t.returnPct >= 0 ? 'pnl-positive' : 'pnl-negative'}>
-                {t.returnPct != null ? `${t.returnPct.toFixed(2)}%` : 'N/A'}
-              </td>
-              <td>{t.size ?? 'N/A'}</td>
-            </tr>
+    <div className="backtest-results-step">
+      {/* Header */}
+      <div className="bt-card" style={{ padding: '16px 24px' }}>
+        <div className="results-header-row">
+          <div className="results-strategy-badge">
+            <span style={{ fontSize: 16, fontWeight: 700, color: '#e0e6ed' }}>{result.recipe.strategy_name}</span>
+            <span className="badge">{result.recipe.thesis_name}</span>
+            <span className="results-period">{assets.length} assets · equal weight</span>
+          </div>
+          <button className="bt-btn bt-btn--secondary" style={{ padding: '8px 16px', fontSize: 13 }} onClick={onReset}>New Run</button>
+        </div>
+      </div>
+
+      {/* Weight bar */}
+      <div className="pf-weight-bar">
+        {assets.map(a => (
+          <div key={a} className="pf-weight-segment" style={{ flex: result.weights[a], background: colourMap[a] }} title={`${a}: ${(result.weights[a] * 100).toFixed(1)}%`}>
+            {assets.length <= 8 ? a : ''}
+          </div>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <div className="equity-chart-card">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <h2>Equity Curve</h2>
+          <div className="bt-mode-toggle" style={{ marginBottom: 0 }}>
+            <button className={`bt-mode-btn${chartMode === 'portfolio' ? ' active' : ''}`} onClick={() => setChartMode('portfolio')}>Portfolio</button>
+            <button className={`bt-mode-btn${chartMode === 'assets' ? ' active' : ''}`} onClick={() => setChartMode('assets')}>Per Asset</button>
+          </div>
+        </div>
+        <p className="chart-subtitle">Initial cash ${result.recipe.cash.toLocaleString()}</p>
+        <div className="equity-chart-inner">
+          {chartMode === 'portfolio' ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={result.equityCurve} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="pfGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#60a5fa" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#60a5fa" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={d => d.slice(0, 7)} />
+                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area type="monotone" dataKey="equity" stroke="#60a5fa" strokeWidth={2} fill="url(#pfGrad)" dot={false} name="Portfolio" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2d3748" />
+                <XAxis dataKey="date" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={d => d.slice(0, 7)} />
+                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
+                <Tooltip contentStyle={{ background: '#242b33', border: '1px solid #334155', borderRadius: 8, fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                {assets.map(a => (
+                  <Line key={a} data={result.assetCurves[a] ?? []} type="monotone" dataKey="equity" name={a} stroke={colourMap[a]} strokeWidth={1.5} dot={false} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Metrics */}
+      <div className="bt-card">
+        <h2>Performance Metrics</h2>
+        <div className="metrics-grid" style={{ marginTop: 16 }}>
+          {buildMetrics(result.metrics).map(m => (
+            <MetricCard key={m.label} label={m.label} value={m.value} cls={m.cls} />
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
+
+      {/* Trades */}
+      {allTrades.length > 0 && (
+        <div className="trades-table-card">
+          <h2>Trade Log</h2>
+          <div className="pf-asset-pills">
+            <button className={`pf-pill${assetFilter === null ? ' active' : ''}`} onClick={() => setAssetFilter(null)}>All</button>
+            {assets.map(a => (
+              <button
+                key={a}
+                className={`pf-pill${assetFilter === a ? ' active' : ''}`}
+                style={{ borderColor: colourMap[a], ...(assetFilter === a ? { background: colourMap[a], color: '#fff' } : { color: colourMap[a] }) }}
+                onClick={() => setAssetFilter(assetFilter === a ? null : a)}
+              >{a}</button>
+            ))}
+          </div>
+          <table className="trades-table">
+            <thead>
+              <tr>
+                <th>Asset</th><th>Entry</th><th>Exit</th>
+                <th>Entry $</th><th>Exit $</th><th>PnL</th><th>Return %</th><th>Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTrades.map((t, i) => (
+                <tr key={i}>
+                  <td><span className="pf-ticker-badge" style={{ background: colourMap[t.asset] + '33', color: colourMap[t.asset] }}>{t.asset}</span></td>
+                  <td>{t.entryTime.slice(0, 10)}</td>
+                  <td>{t.exitTime.slice(0, 10)}</td>
+                  <td>{t.entryPrice != null ? `$${t.entryPrice.toFixed(2)}` : 'N/A'}</td>
+                  <td>{t.exitPrice  != null ? `$${t.exitPrice.toFixed(2)}`  : 'N/A'}</td>
+                  <td className={t.pnl != null && t.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}>{t.pnl != null ? `$${t.pnl.toFixed(2)}` : 'N/A'}</td>
+                  <td className={t.returnPct != null && t.returnPct >= 0 ? 'pnl-positive' : 'pnl-negative'}>{t.returnPct != null ? `${t.returnPct.toFixed(2)}%` : 'N/A'}</td>
+                  <td>{t.size ?? 'N/A'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
 
-// -- Example inputs -----------------------------------------------------------
-
-const EXAMPLES = [
-  'Backtest SmaCross on AAPL daily from 2021-01-01 to 2022-12-31 with $10,000 cash.',
-  'Run BuyAndHold on SPY daily from 2020-01-01 to 2023-12-31 with $25,000 cash.',
-  'Test RsiReversion on MSFT with period 14, lower 30, upper 70, cash $15,000 from 2022-01-01 to 2024-01-01.',
-  'SmaCross on GOOG 2019-2023 with $25,000, commission 0.1%, optimize fast=[5,10,15] slow=[20,30,50], maximize Sharpe ratio.',
-];
-
 // -- Main Page ----------------------------------------------------------------
 
 const BacktestTabPanel: React.FC = () => {
-  const {
-    step, nlInput, setNlInput,
-    parseLoading, parseError, parseStrategy,
-    parsedRecipe,
-    runLoading, runError, runRecipe,
-    runResult,
-    goBack, reset,
-  } = useBacktest();
+  const [step, setStep]                 = useState<'input' | 'review' | 'results'>('input');
+  const [theses, setTheses]             = useState<string[]>([]);
+  const [pfThesis, setPfThesis]         = useState('');
+  const [nlInput, setNlInput]           = useState('');
+  const [parsedRecipe, setParsedRecipe] = useState<BacktestRecipe | null>(null);
+  const [parseLoading, setParseLoading] = useState(false);
+  const [parseError, setParseError]     = useState<string | null>(null);
+  const [pfResult, setPfResult]         = useState<PortfolioRunResult | null>(null);
+  const [pfLoading, setPfLoading]       = useState(false);
+  const [pfError, setPfError]           = useState<string | null>(null);
+
+  useEffect(() => {
+    backtestService.listTheses().then(setTheses).catch(() => {});
+  }, []);
+
+  const parseStrategy = useCallback(async () => {
+    setParseLoading(true); setParseError(null);
+    try {
+      const recipe = await backtestService.parseStrategy(nlInput);
+      setParsedRecipe(recipe);
+      setStep('review');
+    } catch (e: unknown) {
+      setParseError(e instanceof Error ? e.message : 'Parse failed');
+    } finally {
+      setParseLoading(false);
+    }
+  }, [nlInput]);
+
+  const runPortfolio = useCallback(async () => {
+    if (!parsedRecipe) return;
+    setPfLoading(true); setPfError(null);
+    try {
+      const data = parsedRecipe.data ?? ({} as BacktestRecipe['data']);
+      const bt   = parsedRecipe.backtest ?? ({} as BacktestRecipe['backtest']);
+      const req: PortfolioRunRequest = {
+        thesis_name:     pfThesis,
+        strategy_name:   parsedRecipe.strategy_name ?? 'SmaCross',
+        strategy_params: parsedRecipe.strategy_params ?? null,
+        start:           data.start    ?? null,
+        end:             data.end      ?? null,
+        cash:            bt.cash       ?? 10_000,
+        commission:      bt.commission ?? null,
+      };
+      const result = await backtestService.runPortfolio(req);
+      setPfResult(result);
+      setStep('results');
+    } catch (e: unknown) {
+      setPfError(e instanceof Error ? e.message : 'Run failed');
+    } finally {
+      setPfLoading(false);
+    }
+  }, [parsedRecipe, pfThesis]);
+
+  const reset = useCallback(() => {
+    setStep('input'); setParsedRecipe(null); setPfResult(null);
+    setParseError(null); setPfError(null);
+  }, []);
 
   return (
     <div className="backtest-page">
@@ -165,30 +322,48 @@ const BacktestTabPanel: React.FC = () => {
       {step === 'input' && (
         <div className="backtest-input-step">
           <div className="bt-card">
-            <h2>Describe Your Strategy</h2>
+            <h2>Portfolio Strategy</h2>
             <p className="bt-card-subtitle">
-              Enter a natural-language description. The AI will parse it into a backtesting recipe.
+              Select a saved thesis and describe the strategy in natural language.
+              The AI will parse it into a recipe, then run across all assets in
+              the thesis universe with equal weights.
             </p>
+
+            <label className="pf-label">Thesis</label>
+            <select
+              className="pf-select"
+              value={pfThesis}
+              onChange={e => setPfThesis(e.target.value)}
+              style={{ marginBottom: 16 }}
+            >
+              <option value="">— select thesis —</option>
+              {theses.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+
+            <label className="pf-label" style={{ marginTop: 8 }}>Strategy Description</label>
             <textarea
               className="bt-textarea"
-              placeholder="e.g. Backtest SmaCross on AAPL daily from 2021-01-01 to 2022-12-31 with $10,000 cash and 0.1% commission."
+              placeholder="e.g. Run SmaCross with fast=10 and slow=30 from 2021-01-01 to 2023-12-31 with $50,000 cash."
               value={nlInput}
               onChange={e => setNlInput(e.target.value)}
               rows={5}
+              style={{ marginTop: 6 }}
             />
             <div className="example-chips-label" style={{ marginTop: 12 }}>Quick examples:</div>
             <div className="example-chips">
               {EXAMPLES.map(ex => (
-                <button key={ex} className="example-chip" onClick={() => setNlInput(ex)}>
-                  {ex}
-                </button>
+                <button key={ex} className="example-chip" onClick={() => setNlInput(ex)}>{ex}</button>
               ))}
             </div>
           </div>
 
           <div className="bt-action-row">
             {parseError && <span className="bt-error">{parseError}</span>}
-            <button className="bt-btn bt-btn--primary" onClick={parseStrategy} disabled={parseLoading}>
+            <button
+              className="bt-btn bt-btn--primary"
+              onClick={parseStrategy}
+              disabled={parseLoading || !pfThesis || !nlInput.trim()}
+            >
               {parseLoading ? <><span className="btn-spinner" /> Parsing...</> : 'Parse Strategy'}
             </button>
           </div>
@@ -200,84 +375,31 @@ const BacktestTabPanel: React.FC = () => {
         <div className="backtest-review-step">
           <div>
             <div className="bt-card" style={{ marginBottom: 16 }}>
-              <h2>Parsed Input</h2>
-              <p className="bt-card-subtitle">Your original description</p>
-              <p style={{ fontSize: 14, color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>"{ nlInput}"</p>
+              <h2>Ready to Run</h2>
+              <p className="bt-card-subtitle">
+                Thesis: <strong style={{ color: '#60a5fa' }}>{pfThesis}</strong>
+              </p>
+              <p style={{ fontSize: 14, color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>"{nlInput}"</p>
             </div>
             <div className="bt-action-row" style={{ justifyContent: 'flex-start', gap: 10 }}>
-              <button className="bt-btn bt-btn--secondary" onClick={goBack}>Back</button>
-              <button className="bt-btn bt-btn--run" onClick={runRecipe} disabled={runLoading}>
-                {runLoading ? <><span className="btn-spinner" /> Running...</> : 'Run Backtest'}
+              <button className="bt-btn bt-btn--secondary" onClick={() => setStep('input')}>Back</button>
+              <button className="bt-btn bt-btn--run" onClick={runPortfolio} disabled={pfLoading}>
+                {pfLoading ? <><span className="btn-spinner" /> Running...</> : 'Run Portfolio'}
               </button>
             </div>
-            {runError && <p className="bt-error" style={{ marginTop: 10 }}>{runError}</p>}
+            {pfError && <p className="bt-error" style={{ marginTop: 10 }}>{pfError}</p>}
           </div>
-
           <div className="bt-card">
-            <h2>Recipe</h2>
-            <p className="bt-card-subtitle">Review the parsed settings before running</p>
+            <h2>Parsed Recipe</h2>
+            <p className="bt-card-subtitle">Review the parsed strategy settings before running</p>
             <RecipeDisplay recipe={parsedRecipe} />
           </div>
         </div>
       )}
 
       {/* Step 3: Results */}
-      {step === 'results' && runResult && (
-        <div className="backtest-results-step">
-          {/* header row */}
-          <div className="bt-card" style={{ padding: '16px 24px' }}>
-            <div className="results-header-row">
-              <div className="results-strategy-badge">
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#e0e6ed' }}>
-                  {runResult.recipe.strategy_name}
-                </span>
-                <span className="badge">{runResult.recipe.data?.symbol ?? 'sample'}</span>
-                <span className="results-period">
-                  {runResult.metrics.start} to {runResult.metrics.end}
-                  {runResult.metrics.duration ? ` (${runResult.metrics.duration})` : ''}
-                </span>
-              </div>
-              <button className="bt-btn bt-btn--secondary" style={{ padding: '8px 16px', fontSize: 13 }} onClick={reset}>
-                Run Again
-              </button>
-            </div>
-          </div>
-
-          {/* equity curve */}
-          <div className="equity-chart-card">
-            <h2>Equity Curve</h2>
-            <p className="chart-subtitle">Portfolio value over time - initial cash ${runResult.recipe.backtest?.cash?.toLocaleString() ?? 'N/A'}</p>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={runResult.equityCurve} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="btGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#2563eb" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={d => d.slice(0, 7)} />
-                <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
-                <Tooltip content={<ChartTooltip />} />
-                <Area type="monotone" dataKey="equity" stroke="#2563eb" strokeWidth={2}
-                  fill="url(#btGrad)" dot={false} name="Equity" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* metrics grid */}
-          <div className="bt-card">
-            <h2>Performance Metrics</h2>
-            <div className="metrics-grid" style={{ marginTop: 16 }}>
-              {buildMetrics(runResult.metrics).map(m => (
-                <MetricCard key={m.label} label={m.label} value={m.value} cls={m.cls} />
-              ))}
-            </div>
-          </div>
-
-          {/* trades */}
-          {runResult.trades.length > 0 && <TradesTable trades={runResult.trades} />}
-        </div>
+      {step === 'results' && pfResult && (
+        <PortfolioResultsPanel result={pfResult} onReset={reset} />
       )}
     </div>
   );
@@ -347,12 +469,9 @@ export const BacktestPage: React.FC = () => {
         </button>
       </div>
 
-      {/* one provider+panel per tab; key ensures isolated state */}
       {tabs.map(tab => (
         <div key={tab.id} style={{ display: tab.id === activeId ? 'block' : 'none' }}>
-          <BacktestProvider>
-            <BacktestTabPanel />
-          </BacktestProvider>
+          <BacktestTabPanel />
         </div>
       ))}
     </div>

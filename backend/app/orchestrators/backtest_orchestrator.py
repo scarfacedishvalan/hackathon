@@ -2,8 +2,9 @@
 Backtest Orchestrator
 
 Orchestration layer for the two-step backtest pipeline:
-  1. parse_strategy(text)  — LLM text → validated recipe dict
-  2. run_recipe(recipe)    — recipe dict → serialised stats + equity curve
+  1. parse_strategy(text)       — LLM text → validated recipe dict
+  2. run_recipe(recipe)         — recipe dict → serialised stats + equity curve
+  3. run_portfolio_recipe(...)  — thesis-driven equal-weight portfolio backtest
 """
 
 from __future__ import annotations
@@ -148,4 +149,242 @@ def run_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     return {
         "recipe": recipe,
         **serialised,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Step 3: Portfolio recipe — thesis-driven, equal-weight
+# ---------------------------------------------------------------------------
+
+def _extract_equity_series(stats: Any) -> pd.Series | None:
+    """Pull the raw equity curve Series from a backtesting.py Stats object."""
+    try:
+        ec: pd.DataFrame = stats["_equity_curve"]
+        if ec is not None and not ec.empty:
+            return ec["Equity"] if "Equity" in ec.columns else ec.iloc[:, 0]
+    except (KeyError, TypeError, AttributeError):
+        pass
+    return None
+
+
+def _downsample_equity(eq: pd.Series, max_points: int = 500) -> list[dict[str, Any]]:
+    """Convert a pd.Series to [{date, equity}] capped at max_points."""
+    step = max(1, len(eq) // max_points)
+    result = []
+    for ts, val in eq.iloc[::step].items():
+        fval = _safe_float(val)
+        if fval is not None:
+            result.append({
+                "date": ts.strftime("%Y-%m-%d") if hasattr(ts, "strftime") else str(ts),
+                "equity": round(fval, 2),
+            })
+    return result
+
+
+def _portfolio_metrics(
+    portfolio_eq: pd.Series,
+    cash: float,
+    risk_free_rate: float = 0.0,
+) -> dict[str, Any]:
+    """
+    Compute key performance metrics from a combined portfolio equity series.
+
+    Returns the same metric keys as ``_serialize_stats`` so the frontend
+    receives a uniform shape. Fields that require per-trade data are None.
+    """
+    if portfolio_eq.empty:
+        return {}
+
+    total_return = (portfolio_eq.iloc[-1] / portfolio_eq.iloc[0] - 1) * 100
+    n_days = max((portfolio_eq.index[-1] - portfolio_eq.index[0]).days, 1)
+    years = n_days / 365.25
+
+    daily_returns = portfolio_eq.pct_change().dropna()
+    ann_return = ((1 + total_return / 100) ** (1 / years) - 1) * 100 if years > 0 else 0.0
+    ann_vol = float(daily_returns.std() * (252 ** 0.5) * 100) if len(daily_returns) > 1 else 0.0
+    sharpe = (ann_return / 100 - risk_free_rate) / (ann_vol / 100) if ann_vol > 1e-9 else 0.0
+
+    rolling_max = portfolio_eq.cummax()
+    drawdown_pct = (portfolio_eq - rolling_max) / rolling_max * 100
+    max_dd = float(drawdown_pct.min())
+
+    return {
+        "start":               str(portfolio_eq.index[0]),
+        "end":                 str(portfolio_eq.index[-1]),
+        "duration":            str(portfolio_eq.index[-1] - portfolio_eq.index[0]),
+        "equityFinal":         round(float(portfolio_eq.iloc[-1]), 2),
+        "equityPeak":          round(float(portfolio_eq.max()), 2),
+        "returnPct":           round(total_return, 4),
+        "annualReturnPct":     round(ann_return, 4),
+        "annualVolatilityPct": round(ann_vol, 4),
+        "sharpeRatio":         round(sharpe, 4),
+        "maxDrawdownPct":      round(max_dd, 4),
+        # Not computable at portfolio level without merged trade log
+        "buyHoldReturnPct":    None,
+        "sortinoRatio":        None,
+        "calmarRatio":         None,
+        "avgDrawdownPct":      None,
+        "numTrades":           None,
+        "winRatePct":          None,
+        "bestTradePct":        None,
+        "worstTradePct":       None,
+        "avgTradePct":         None,
+        "profitFactor":        None,
+        "sqn":                 None,
+    }
+
+
+def run_portfolio_recipe(
+    thesis_name: str,
+    strategy_name: str,
+    *,
+    strategy_params: dict[str, Any] | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    cash: float = 10_000.0,
+    commission: float | str | None = None,
+) -> dict[str, Any]:
+    """
+    Run an equal-weight portfolio backtest for all assets in a saved BL thesis.
+
+    Each asset is backtested independently using the same strategy and an
+    equal share of ``cash``.  The portfolio equity curve is the weighted sum
+    of normalised per-asset curves rescaled to total cash.
+
+    Parameters
+    ----------
+    thesis_name : str
+        Stem of a saved BL recipe in ``data/bl_recipes/``
+        (e.g. ``"current"`` or ``"alpha_tilt"``).
+    strategy_name : str
+        One of ``BuyAndHold``, ``SmaCross``, ``EmaCross``, ``RsiReversion``.
+    strategy_params : dict, optional
+        Strategy class-variable overrides (e.g. ``{"fast": 10, "slow": 30}``).
+    start, end : str, optional
+        ISO date strings to filter the backtest window.
+    cash : float
+        Total portfolio cash, split equally across all assets.
+    commission : float or str, optional
+        Per-trade commission, e.g. ``0.002`` or ``"0.2%"``.
+
+    Returns
+    -------
+    dict with keys:
+        ``recipe``, ``metrics``, ``equityCurve``,
+        ``assetCurves``, ``weights``, ``trades``
+    """
+    from backtesting import Backtest
+
+    from app.orchestrators.view_orchestrator import load_recipe
+    from app.services.price_data.load_data import load_market_data
+    from app.services.recipe_interpreter.backtesting_from_json import (
+        _STRATEGY_MAP,
+        _apply_strategy_params,
+        _coerce_ohlc,
+        _parse_date,
+        _parse_percent_or_number,
+    )
+
+    # 1. Load thesis → universe
+    thesis = load_recipe(thesis_name)
+    if "universe" not in thesis or "assets" not in thesis["universe"]:
+        raise ValueError(
+            f"Thesis '{thesis_name}' does not contain universe.assets. "
+            "Re-save the thesis from the BL tab."
+        )
+    assets: list[str] = thesis["universe"]["assets"]
+    if not assets:
+        raise ValueError(f"Thesis '{thesis_name}' has an empty asset universe.")
+
+    n = len(assets)
+    weight = 1.0 / n
+    weights: dict[str, float] = {a: weight for a in assets}
+
+    # 2. Validate strategy before loading price data
+    if strategy_name not in _STRATEGY_MAP:
+        raise NotImplementedError(
+            f"Strategy {strategy_name!r} is not implemented. "
+            f"Available: {sorted(_STRATEGY_MAP)}"
+        )
+
+    # 3. Load all price data from DB once
+    price_df, *_ = load_market_data()
+    missing = [a for a in assets if a not in price_df.columns]
+    if missing:
+        raise ValueError(
+            f"Assets from thesis '{thesis_name}' not found in the database: {missing}. "
+            f"Available: {sorted(price_df.columns.tolist())}"
+        )
+
+    # 4. Prepare shared backtest kwargs
+    per_asset_cash = cash * weight
+    bt_kwargs: dict[str, Any] = {"cash": per_asset_cash}
+    parsed_commission = _parse_percent_or_number(commission)
+    if parsed_commission is not None:
+        bt_kwargs["commission"] = parsed_commission
+
+    start_ts = _parse_date(start)
+    end_ts = _parse_date(end)
+
+    # Apply strategy params once (mutates class vars — same as single-asset path)
+    strategy_cls = _apply_strategy_params(_STRATEGY_MAP[strategy_name], strategy_params)
+
+    # 5. Per-asset backtest loop
+    raw_stats: dict[str, Any] = {}
+    for asset in assets:
+        col = price_df[[asset]].rename(columns={asset: "Close"})
+        if start_ts is not None:
+            col = col.loc[col.index >= start_ts]
+        if end_ts is not None:
+            col = col.loc[col.index <= end_ts]
+        df = _coerce_ohlc(col)
+        bt = Backtest(df, strategy_cls, finalize_trades=True, **bt_kwargs)
+        raw_stats[asset] = bt.run()
+        print(f"  [{asset}] done — {raw_stats[asset]['# Trades']} trades")
+
+    # 6. Serialise per-asset results
+    asset_curves: dict[str, list[dict[str, Any]]] = {}
+    asset_trades: dict[str, list[dict[str, Any]]] = {}
+    equity_series: dict[str, pd.Series] = {}
+
+    for asset, stats in raw_stats.items():
+        serialised = _serialize_stats(stats)
+        asset_curves[asset] = serialised["equityCurve"]
+        asset_trades[asset] = serialised["trades"]
+        eq = _extract_equity_series(stats)
+        if eq is not None:
+            equity_series[asset] = eq
+
+    # 7. Combine into portfolio equity curve
+    portfolio_equity: pd.Series | None = None
+    if equity_series:
+        # Align on a common DatetimeIndex; forward/back fill small edge gaps
+        combined = pd.DataFrame(equity_series).sort_index()
+        combined = combined.ffill().bfill()
+        # Rebase each asset to 1.0 at start, apply equal weight, scale to cash
+        normalised = combined.div(combined.iloc[0])
+        portfolio_norm = normalised.mul(weight).sum(axis=1)
+        portfolio_equity = portfolio_norm * cash
+
+    # 8. Portfolio-level metrics
+    metrics = _portfolio_metrics(portfolio_equity, cash) if portfolio_equity is not None else {}
+    equity_curve = _downsample_equity(portfolio_equity) if portfolio_equity is not None else []
+
+    return {
+        "recipe": {
+            "thesis_name":    thesis_name,
+            "strategy_name":  strategy_name,
+            "strategy_params": strategy_params,
+            "assets":         assets,
+            "weights":        weights,
+            "start":          start,
+            "end":            end,
+            "cash":           cash,
+            "commission":     commission,
+        },
+        "metrics":     metrics,
+        "equityCurve": equity_curve,
+        "assetCurves": asset_curves,
+        "weights":     weights,
+        "trades":      asset_trades,
     }
