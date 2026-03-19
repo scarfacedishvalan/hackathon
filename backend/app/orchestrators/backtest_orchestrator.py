@@ -9,10 +9,13 @@ Orchestration layer for the two-step backtest pipeline:
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -27,7 +30,15 @@ def parse_strategy(text: str) -> dict[str, Any]:
     Raises ParserError subclasses on LLM or schema failures.
     """
     from app.services.recipe_interpreter.llm_parser import parse_text_to_json
-    return parse_text_to_json(text)
+    
+    logger.info(f"Parsing strategy from text: {text[:100]}...")
+    try:
+        recipe = parse_text_to_json(text)
+        logger.info(f"Successfully parsed strategy: {recipe.get('strategy_name')}")
+        return recipe
+    except Exception as exc:
+        logger.error(f"Failed to parse strategy: {exc}", exc_info=True)
+        raise
 
 
 # ---------------------------------------------------------------------------
@@ -144,12 +155,19 @@ def run_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     """
     from app.services.recipe_interpreter.backtesting_from_json import run_from_recipe
 
-    stats = run_from_recipe(recipe, plot_path=None, open_plot=False)
-    serialised = _serialize_stats(stats)
-    return {
-        "recipe": recipe,
-        **serialised,
-    }
+    logger.info(f"Running single-asset backtest: {recipe.get('strategy_name')} on {recipe.get('data', {}).get('symbol')}")
+    try:
+        stats = run_from_recipe(recipe, plot_path=None, open_plot=False)
+        serialised = _serialize_stats(stats)
+        logger.info(f"Backtest completed: {serialised['metrics'].get('returnPct')}% return")
+        return {
+            "recipe": recipe,
+            **serialised,
+        }
+    except Exception as exc:
+        logger.error(f"Backtest failed for recipe: {exc}", exc_info=True)
+        raise
+        raise
 
 
 # ---------------------------------------------------------------------------
@@ -286,15 +304,27 @@ def run_portfolio_recipe(
     )
 
     # 1. Load thesis → universe
-    thesis = load_recipe(thesis_name)
+    logger.info(f"Starting portfolio backtest: thesis={thesis_name}, strategy={strategy_name}, cash={cash}")
+    
+    try:
+        thesis = load_recipe(thesis_name)
+        logger.info(f"Loaded thesis '{thesis_name}'")
+    except Exception as exc:
+        logger.error(f"Failed to load thesis '{thesis_name}': {exc}", exc_info=True)
+        raise ValueError(f"Thesis '{thesis_name}' not found: {exc}")
+    
     if "universe" not in thesis or "assets" not in thesis["universe"]:
+        logger.error(f"Thesis '{thesis_name}' missing universe.assets field")
         raise ValueError(
             f"Thesis '{thesis_name}' does not contain universe.assets. "
             "Re-save the thesis from the BL tab."
         )
     assets: list[str] = thesis["universe"]["assets"]
     if not assets:
+        logger.error(f"Thesis '{thesis_name}' has empty asset list")
         raise ValueError(f"Thesis '{thesis_name}' has an empty asset universe.")
+    
+    logger.info(f"Asset universe: {assets}")
 
     n = len(assets)
     weight = 1.0 / n
@@ -308,9 +338,17 @@ def run_portfolio_recipe(
         )
 
     # 3. Load all price data from DB once
-    price_df, *_ = load_market_data()
+    logger.info("Loading market data from database...")
+    try:
+        price_df, *_ = load_market_data()
+        logger.info(f"Loaded price data: {len(price_df)} rows, {len(price_df.columns)} columns")
+    except Exception as exc:
+        logger.error(f"Failed to load market data: {exc}", exc_info=True)
+        raise ValueError(f"Market data loading failed: {exc}")
+    
     missing = [a for a in assets if a not in price_df.columns]
     if missing:
+        logger.error(f"Missing assets in database: {missing}. Available: {sorted(price_df.columns.tolist())}")
         raise ValueError(
             f"Assets from thesis '{thesis_name}' not found in the database: {missing}. "
             f"Available: {sorted(price_df.columns.tolist())}"
@@ -330,17 +368,25 @@ def run_portfolio_recipe(
     strategy_cls = _apply_strategy_params(_STRATEGY_MAP[strategy_name], strategy_params)
 
     # 5. Per-asset backtest loop
+    logger.info(f"Starting backtests for {n} assets with {strategy_name}")
     raw_stats: dict[str, Any] = {}
-    for asset in assets:
-        col = price_df[[asset]].rename(columns={asset: "Close"})
-        if start_ts is not None:
-            col = col.loc[col.index >= start_ts]
-        if end_ts is not None:
-            col = col.loc[col.index <= end_ts]
-        df = _coerce_ohlc(col)
-        bt = Backtest(df, strategy_cls, finalize_trades=True, **bt_kwargs)
-        raw_stats[asset] = bt.run()
-        print(f"  [{asset}] done — {raw_stats[asset]['# Trades']} trades")
+    for idx, asset in enumerate(assets, 1):
+        try:
+            logger.info(f"  [{idx}/{n}] Running {asset}...")
+            col = price_df[[asset]].rename(columns={asset: "Close"})
+            if start_ts is not None:
+                col = col.loc[col.index >= start_ts]
+            if end_ts is not None:
+                col = col.loc[col.index <= end_ts]
+            df = _coerce_ohlc(col)
+            logger.debug(f"  [{asset}] Data shape: {df.shape}, date range: {df.index[0]} to {df.index[-1]}")
+            bt = Backtest(df, strategy_cls, finalize_trades=True, **bt_kwargs)
+            raw_stats[asset] = bt.run()
+            logger.info(f"  [{asset}] Completed — {raw_stats[asset]['# Trades']} trades, "
+                       f"{raw_stats[asset].get('Return [%]', 0):.2f}% return")
+        except Exception as exc:
+            logger.error(f"  [{asset}] Backtest failed: {exc}", exc_info=True)
+            raise ValueError(f"Backtest failed for {asset}: {exc}")
 
     # 6. Serialise per-asset results
     asset_curves: dict[str, list[dict[str, Any]]] = {}
@@ -356,19 +402,30 @@ def run_portfolio_recipe(
             equity_series[asset] = eq
 
     # 7. Combine into portfolio equity curve
+    logger.info("Combining asset backtests into portfolio equity curve...")
     portfolio_equity: pd.Series | None = None
     if equity_series:
-        # Align on a common DatetimeIndex; forward/back fill small edge gaps
-        combined = pd.DataFrame(equity_series).sort_index()
-        combined = combined.ffill().bfill()
-        # Rebase each asset to 1.0 at start, apply equal weight, scale to cash
-        normalised = combined.div(combined.iloc[0])
-        portfolio_norm = normalised.mul(weight).sum(axis=1)
-        portfolio_equity = portfolio_norm * cash
+        try:
+            # Align on a common DatetimeIndex; forward/back fill small edge gaps
+            combined = pd.DataFrame(equity_series).sort_index()
+            combined = combined.ffill().bfill()
+            logger.debug(f"Combined equity series shape: {combined.shape}")
+            # Rebase each asset to 1.0 at start, apply equal weight, scale to cash
+            normalised = combined.div(combined.iloc[0])
+            portfolio_norm = normalised.mul(weight).sum(axis=1)
+            portfolio_equity = portfolio_norm * cash
+            logger.info(f"Portfolio equity curve created: {len(portfolio_equity)} points")
+        except Exception as exc:
+            logger.error(f"Failed to combine equity curves: {exc}", exc_info=True)
+            raise ValueError(f"Portfolio aggregation failed: {exc}")
 
     # 8. Portfolio-level metrics
+    logger.info("Computing portfolio-level metrics...")
     metrics = _portfolio_metrics(portfolio_equity, cash) if portfolio_equity is not None else {}
     equity_curve = _downsample_equity(portfolio_equity) if portfolio_equity is not None else []
+    
+    logger.info(f"Portfolio backtest complete: {metrics.get('returnPct', 0):.2f}% return, "
+               f"{metrics.get('sharpeRatio', 0):.2f} Sharpe, {metrics.get('maxDrawdownPct', 0):.2f}% max DD")
 
     return {
         "recipe": {
