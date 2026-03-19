@@ -156,6 +156,7 @@ async def run_portfolio_backtest(body: PortfolioRunRequest) -> dict[str, Any]:
           "trades":      { "AAPL": [...], "MSFT": [...], ... }
         }
     """
+    logger.info(f"Portfolio backtest request: thesis={body.thesis_name}, strategy={body.strategy_name}")
     try:
         from app.orchestrators.backtest_orchestrator import run_portfolio_recipe
         result = run_portfolio_recipe(
@@ -167,9 +168,12 @@ async def run_portfolio_backtest(body: PortfolioRunRequest) -> dict[str, Any]:
             cash=body.cash,
             commission=body.commission,
         )
+        logger.info(f"Portfolio backtest completed successfully for {body.thesis_name}")
     except (ValueError, NotImplementedError) as exc:
+        logger.warning(f"Portfolio backtest validation error: {exc}")
         raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:
+        logger.error(f"Portfolio backtest failed: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Portfolio backtest failed: {exc}",

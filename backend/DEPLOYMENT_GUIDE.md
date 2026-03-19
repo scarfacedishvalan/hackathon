@@ -30,6 +30,9 @@ sudo apt install git -y
 sudo apt install build-essential libssl-dev libffi-dev python3-dev -y
 ```
 
+<!--  Checkout branch deploy -->
+git bran
+
 ### 2. Clone the Repository
 
 ```bash
@@ -42,6 +45,8 @@ git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git hackathon
 # Navigate into the project
 cd hackathon/backend
 ```
+
+ssh scarfacedishvalan@167.172.198.36
 
 ### 3. Set Up Python Virtual Environment
 
@@ -78,7 +83,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 Or export directly:
 ```bash
-export OPENAI_API_KEY=your_openai_api_key_here
+export OPENAI_API_KEY="YOUR_KEY"
 
 # To make it permanent, add to ~/.bashrc
 echo 'export OPENAI_API_KEY=your_openai_api_key_here' >> ~/.bashrc
