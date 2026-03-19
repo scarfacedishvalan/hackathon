@@ -380,7 +380,7 @@ def run_portfolio_recipe(
                 col = col.loc[col.index <= end_ts]
             df = _coerce_ohlc(col)
             logger.debug(f"  [{asset}] Data shape: {df.shape}, date range: {df.index[0]} to {df.index[-1]}")
-            bt = Backtest(df, strategy_cls, finalize_trades=True, **bt_kwargs)
+            bt = Backtest(df, strategy_cls, **bt_kwargs)
             raw_stats[asset] = bt.run()
             logger.info(f"  [{asset}] Completed — {raw_stats[asset]['# Trades']} trades, "
                        f"{raw_stats[asset].get('Return [%]', 0):.2f}% return")

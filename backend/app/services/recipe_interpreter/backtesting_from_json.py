@@ -399,7 +399,7 @@ def run_from_recipe(
         kwargs["exclusive_orders"] = bool(bt_config.exclusive_orders)
 
     logger.info(f"Creating Backtest with strategy={strategy_name}, kwargs={kwargs}")
-    bt = Backtest(df, strategy_cls, finalize_trades=True, **kwargs)
+    bt = Backtest(df, strategy_cls, **kwargs)
 
     optimize = recipe.get("optimize") or {}
     opt_params = optimize.get("params")
