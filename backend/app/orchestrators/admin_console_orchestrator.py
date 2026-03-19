@@ -28,11 +28,14 @@ Public API
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -197,6 +200,11 @@ def get_llm_usage_data(
     db     = LLM_USAGE_DB
     where  = "WHERE timestamp >= ?" if since else "WHERE 1=1"
     params: tuple = (since,) if since else ()
+    
+    if since:
+        logger.info(f"Filtering LLM usage data with tare timestamp: {since}")
+    else:
+        logger.debug("Loading all LLM usage data (no tare filter)")
 
     summary_rows = _rows(db, f"""
         SELECT
@@ -283,7 +291,12 @@ def get_agent_usage_data(
     ----------
     since : ISO-8601 timestamp string (inclusive lower bound).
 
-    Keys: summary, by_run, by_thesis, by_tool, by_model, recent_steps
+    Keys: summary, by_run, by_thesis, by_tool
+    
+    if since:
+        logger.info(f"Filtering agent usage data with tare timestamp: {since}")
+    else:
+        logger.debug("Loading all agent usage data (no tare filter)"), by_model, recent_steps
     """
     db          = AGENT_COSTS_DB
     audit_index = _load_agent_audit_index()

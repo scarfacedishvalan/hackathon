@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import math
 import re
 from dataclasses import dataclass
@@ -25,6 +26,8 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 try:
     from backtesting import Backtest, Strategy
@@ -193,9 +196,23 @@ def RSI(series: pd.Series, n: int) -> pd.Series:
 
 
 class BuyAndHold(Strategy):
+    """Simple buy-and-hold strategy that buys on the first bar and holds until the end."""
+    
+    def init(self) -> None:
+        """Initialize the strategy - no indicators needed for buy-and-hold."""
+        pass
+    
     def next(self) -> None:
+        """Buy on the first bar and hold."""
+        # Only buy if we don't have a position yet
         if not self.position:
-            self.buy()
+            # Buy with all available cash
+            # Using size argument explicitly to avoid potential issues
+            try:
+                self.buy()
+                logger.info(f"BuyAndHold: Bought at {self.data.Close[-1]} on {self.data.index[-1]}")
+            except Exception as e:
+                logger.error(f"BuyAndHold: Failed to buy - {e}")
 
 
 class SmaCross(Strategy):
@@ -347,7 +364,9 @@ def run_from_recipe(
     plot_path: Path | None = None,
     open_plot: bool = False,
 ) -> Any:
+    logger.info(f"Loading data for recipe: {recipe.get('data')}")
     df = _load_data(recipe)
+    logger.info(f"Data loaded successfully. Shape: {df.shape}, Index range: {df.index.min()} to {df.index.max()}")
 
     strategy_name = recipe.get("strategy_name")
     if strategy_name is None:
@@ -363,6 +382,7 @@ def run_from_recipe(
     strategy_cls = _apply_strategy_params(strategy_cls, recipe.get("strategy_params"))
 
     bt_config = _parse_backtest_config(recipe)
+    logger.info(f"Backtest config: {bt_config}")
 
     kwargs: dict[str, Any] = {}
     if bt_config.cash is not None:
@@ -378,12 +398,14 @@ def run_from_recipe(
     if bt_config.exclusive_orders is not None:
         kwargs["exclusive_orders"] = bool(bt_config.exclusive_orders)
 
+    logger.info(f"Creating Backtest with strategy={strategy_name}, kwargs={kwargs}")
     bt = Backtest(df, strategy_cls, finalize_trades=True, **kwargs)
 
     optimize = recipe.get("optimize") or {}
     opt_params = optimize.get("params")
 
     if opt_params:
+        logger.info(f"Running optimization with params: {opt_params}")
         maximize_name = _maximize_metric_name(optimize.get("metric"))
         constraint_expr = optimize.get("constraint")
         constraint_fn = None
@@ -397,7 +419,9 @@ def run_from_recipe(
             **opt_params,
         )
     else:
+        logger.info("Running backtest...")
         stats = bt.run()
+        logger.info(f"Backtest completed. # Trades: {stats.get('# Trades', 'N/A')}")
 
     print(stats)
 

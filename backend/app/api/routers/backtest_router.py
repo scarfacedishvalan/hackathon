@@ -9,10 +9,14 @@ POST /backtest/run-portfolio  — thesis-driven equal-weight portfolio backtest
 
 from __future__ import annotations
 
+import logging
+import traceback
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/backtest", tags=["backtest"])
 
@@ -70,6 +74,7 @@ async def parse_strategy(body: ParseRequest) -> dict[str, Any]:
         from app.orchestrators.backtest_orchestrator import parse_strategy as _parse
         recipe = _parse(body.text)
     except Exception as exc:
+        logger.error(f"Failed to parse strategy: {exc}", exc_info=True)
         raise HTTPException(
             status_code=422,
             detail=f"Failed to parse strategy: {exc}",
@@ -99,13 +104,18 @@ async def run_backtest(body: RunRequest) -> dict[str, Any]:
 
     try:
         from app.orchestrators.backtest_orchestrator import run_recipe
+        logger.info(f"Running backtest with recipe: {body.recipe}")
         result = run_recipe(body.recipe)
+        logger.info("Backtest completed successfully")
     except (ValueError, NotImplementedError) as exc:
+        logger.error(f"Backtest validation error: {exc}", exc_info=True)
         raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:
+        logger.error(f"Backtest execution failed: {exc}", exc_info=True)
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
-            detail=f"Backtest execution failed: {exc}",
+            detail=f"Backtest execution failed: {type(exc).__name__}: {exc}",
         )
 
     return result

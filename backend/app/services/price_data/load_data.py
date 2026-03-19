@@ -4,6 +4,8 @@ Load market data from SQLite and configuration files.
 This module provides functions to load actual price data and market configuration
 for Black-Litterman portfolio optimization.
 """
+from __future__ import annotations
+
 import json
 from pathlib import Path
 from datetime import datetime, timedelta

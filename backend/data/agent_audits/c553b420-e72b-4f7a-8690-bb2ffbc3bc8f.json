@@ -1,0 +1,1194 @@
+{
+  "audit_id": "c553b420-e72b-4f7a-8690-bb2ffbc3bc8f",
+  "thesis_name": "alpha_tilt",
+  "goal": "Identify critical views using importance test, then run fragility scans on top views. Find robust allocation with max 20% per position.",
+  "run_timestamp": "2026-03-19T11:06:06.866132",
+  "model": "gpt-4o",
+  "base_recipe_snapshot": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "AMZN",
+        "TSLA",
+        "JPM"
+      ]
+    },
+    "market_context": {
+      "market_caps": {
+        "AAPL": 2800,
+        "AMZN": 1600,
+        "BAC": 280,
+        "BND": 80,
+        "GLD": 60,
+        "GOOGL": 1800,
+        "JNJ": 420,
+        "JPM": 450,
+        "MSFT": 2400,
+        "PG": 360,
+        "TSLA": 800,
+        "VNQ": 40,
+        "WMT": 400
+      },
+      "factor_exposures": {
+        "AAPL": [
+          1.2,
+          0.0,
+          0.1,
+          1.1,
+          0.0
+        ],
+        "AMZN": [
+          1.4,
+          0.0,
+          0.1,
+          1.3,
+          0.1
+        ],
+        "BAC": [
+          0.1,
+          1.3,
+          0.2,
+          0.8,
+          0.2
+        ],
+        "BND": [
+          0.0,
+          0.0,
+          0.2,
+          0.1,
+          1.5
+        ],
+        "GLD": [
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          0.3
+        ],
+        "GOOGL": [
+          1.3,
+          0.0,
+          0.1,
+          1.2,
+          0.1
+        ],
+        "JNJ": [
+          0.2,
+          0.0,
+          1.4,
+          0.6,
+          0.3
+        ],
+        "JPM": [
+          0.2,
+          1.5,
+          0.2,
+          0.9,
+          0.2
+        ],
+        "MSFT": [
+          1.1,
+          0.0,
+          0.2,
+          1.0,
+          0.0
+        ],
+        "PG": [
+          0.2,
+          0.0,
+          1.3,
+          0.6,
+          0.3
+        ],
+        "TSLA": [
+          1.6,
+          0.0,
+          0.0,
+          1.5,
+          0.4
+        ],
+        "VNQ": [
+          0.1,
+          0.2,
+          0.4,
+          0.7,
+          0.8
+        ],
+        "WMT": [
+          0.3,
+          0.1,
+          1.1,
+          0.7,
+          0.2
+        ]
+      },
+      "factor_names": [
+        "Growth",
+        "Financial",
+        "Defensive",
+        "Market",
+        "Rates"
+      ],
+      "sectors": {
+        "AAPL": "Technology",
+        "AMZN": "Technology",
+        "BAC": "Financials",
+        "BND": "Fixed Income",
+        "GLD": "Commodities",
+        "GOOGL": "Technology",
+        "JNJ": "Healthcare",
+        "JPM": "Financials",
+        "MSFT": "Technology",
+        "PG": "Consumer Staples",
+        "TSLA": "Technology",
+        "VNQ": "Real Estate",
+        "WMT": "Consumer Staples"
+      }
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 2.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true,
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    "bottom_up_views": [
+      {
+        "type": "absolute",
+        "asset": "AMZN",
+        "expected_return": 0.055,
+        "confidence": 0.6,
+        "label": "Credit modest upside"
+      },
+      {
+        "type": "relative",
+        "assets": [
+          "TSLA",
+          "JPM"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": -0.05,
+        "confidence": 0.6,
+        "label": "TSLA underperform JPM"
+      },
+      {
+        "type": "absolute",
+        "asset": "MSFT",
+        "expected_return": 0.02,
+        "confidence": 0.6,
+        "label": "Strong earnings report for Microsoft"
+      }
+    ],
+    "top_down_views": {
+      "factor_model": {
+        "factors": [
+          "Rates",
+          "Growth"
+        ]
+      },
+      "factor_shocks": [
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Rising rates"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.04,
+          "confidence": 0.6,
+          "label": "Strongly benefit financials"
+        },
+        {
+          "factor": "Defensive",
+          "shock": -0.01,
+          "confidence": 0.6,
+          "label": "Slightly hurt defensives"
+        },
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        }
+      ]
+    }
+  },
+  "base_result_summary": {
+    "portfolio_return": 0.0527,
+    "portfolio_vol": 0.2604,
+    "sharpe": 0.2024,
+    "top_weights": {
+      "AAPL": 0.2,
+      "MSFT": 0.2,
+      "AMZN": 0.2,
+      "TSLA": 0.2,
+      "JPM": 0.2
+    },
+    "weights": {
+      "AAPL": 0.2,
+      "MSFT": 0.2,
+      "AMZN": 0.2,
+      "TSLA": 0.2,
+      "JPM": 0.2
+    },
+    "return_delta_vs_prior": {
+      "AAPL": -0.0688,
+      "MSFT": -0.0701,
+      "AMZN": -0.0863,
+      "TSLA": -0.1359,
+      "JPM": -0.005
+    }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "tool": "get_recipe_summary",
+      "args": {},
+      "result": {
+        "name": "Q1_macro_alpha_blend",
+        "universe": [
+          "AAPL",
+          "MSFT",
+          "AMZN",
+          "TSLA",
+          "JPM"
+        ],
+        "model_parameters": {
+          "tau": 0.05,
+          "risk_aversion": 2.0,
+          "risk_free_rate": 0.02
+        },
+        "constraints": {
+          "long_only": true,
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        },
+        "bottom_up_views": [
+          {
+            "label": "Credit modest upside",
+            "asset": "AMZN",
+            "direction": null,
+            "expected_return": 0.055,
+            "confidence": 0.6
+          },
+          {
+            "label": "TSLA underperform JPM",
+            "asset": null,
+            "direction": null,
+            "expected_return": null,
+            "confidence": 0.6
+          },
+          {
+            "label": "Strong earnings report for Microsoft",
+            "asset": "MSFT",
+            "direction": null,
+            "expected_return": 0.02,
+            "confidence": 0.6
+          }
+        ],
+        "factor_shocks": [
+          {
+            "label": "Rising rates",
+            "factor": "Rates",
+            "magnitude": null
+          },
+          {
+            "label": "Strongly benefit financials",
+            "factor": "Financial",
+            "magnitude": null
+          },
+          {
+            "label": "Slightly hurt defensives",
+            "factor": "Defensive",
+            "magnitude": null
+          },
+          {
+            "label": "Interest rates boost financials",
+            "factor": "Rates",
+            "magnitude": null
+          },
+          {
+            "label": "Interest rates boost financials",
+            "factor": "Financial",
+            "magnitude": null
+          }
+        ],
+        "view_labels": [
+          "Credit modest upside",
+          "TSLA underperform JPM",
+          "Strong earnings report for Microsoft",
+          "Rising rates",
+          "Strongly benefit financials",
+          "Slightly hurt defensives",
+          "Interest rates boost financials",
+          "Interest rates boost financials"
+        ],
+        "sweepable_confidence_params": [
+          "confidence/Credit modest upside",
+          "confidence/TSLA underperform JPM",
+          "confidence/Strong earnings report for Microsoft",
+          "confidence/Rising rates",
+          "confidence/Strongly benefit financials",
+          "confidence/Slightly hurt defensives",
+          "confidence/Interest rates boost financials",
+          "confidence/Interest rates boost financials"
+        ],
+        "note": "To stress-test expected return assumptions use run_bl_scenario with override_expected_return: {asset: new_return} mutations, or run_stress_sweep with sweep_parameter='risk_aversion'. Use ONLY the exact labels listed in view_labels for confidence sweeps."
+      }
+    },
+    {
+      "step": 1,
+      "tool": "view_importance_test",
+      "args": {
+        "scenario_prefix": "view_removed"
+      },
+      "result": {
+        "view_importance": [
+          {
+            "view": "Credit modest upside",
+            "sharpe_change": 0.0006,
+            "allocation_shift": 0.0,
+            "sharpe_without_view": 0.203
+          },
+          {
+            "view": "TSLA underperform JPM",
+            "sharpe_change": 0.0179,
+            "allocation_shift": 0.0,
+            "sharpe_without_view": 0.2203
+          },
+          {
+            "view": "Strong earnings report for Microsoft",
+            "sharpe_change": 0.0097,
+            "allocation_shift": 0.0,
+            "sharpe_without_view": 0.2121
+          }
+        ]
+      }
+    },
+    {
+      "step": 2,
+      "tool": "view_fragility_scan",
+      "args": {
+        "view_label": "TSLA underperform JPM",
+        "magnitude_values": [
+          0.3,
+          0.5,
+          0.6,
+          0.7,
+          0.9
+        ],
+        "scenario_prefix": "fragility_TSLA_JPM"
+      },
+      "result": {
+        "view_label": "TSLA underperform JPM",
+        "fragility_scan": [
+          {
+            "magnitude": 0.3,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.2725,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.5,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3125,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.6,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3325,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.7,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3525,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.9,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3926,
+            "volatility": 0.2604
+          }
+        ]
+      }
+    },
+    {
+      "step": 2,
+      "tool": "view_fragility_scan",
+      "args": {
+        "view_label": "Strong earnings report for Microsoft",
+        "magnitude_values": [
+          0.3,
+          0.5,
+          0.6,
+          0.7,
+          0.9
+        ],
+        "scenario_prefix": "fragility_MSFT"
+      },
+      "result": {
+        "view_label": "Strong earnings report for Microsoft",
+        "fragility_scan": [
+          {
+            "magnitude": 0.3,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3135,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.5,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3929,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.6,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.4325,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.7,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.4722,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.9,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.5516,
+            "volatility": 0.2604
+          }
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "tool": "synthesise",
+      "args": {
+        "narrative": "The analysis began with identifying the critical views impacting the portfolio allocation. The view importance test revealed that the 'TSLA underperform JPM' view had the most significant impact on the Sharpe ratio, followed by the 'Strong earnings report for Microsoft' view. These views were then subjected to fragility scans to assess their sensitivity.\n\nThe fragility scan for 'TSLA underperform JPM' showed that varying the magnitude of this view did not alter the allocation, which remained equally distributed across all assets due to the weight cap constraint. However, the Sharpe ratio increased with higher magnitudes, indicating that the view's confidence level could be a lever for improving performance.\n\nSimilarly, the 'Strong earnings report for Microsoft' view also maintained the equal allocation across assets, but the Sharpe ratio showed a more pronounced increase with higher magnitudes, suggesting this view's potential to enhance portfolio performance if confidence is adjusted.\n\nThe base scenario's equal-weight result indicates that the 20% cap is fully constraining the allocation, preventing any meaningful differentiation based on the views. This suggests that the current model parameters and constraints are not allowing the views to express their full potential impact on the allocation.\n\nGiven these findings, the portfolio's robustness is primarily driven by the weight constraints rather than the views themselves. The equal-weight allocation is stable across different view magnitudes, but the potential for performance improvement exists if the constraints were relaxed or if confidence levels were adjusted.\n\nIn conclusion, the current allocation is robust under the given constraints, but exploring adjustments to confidence levels or relaxing constraints could unlock further performance improvements.",
+        "risk_flags": [
+          "Equal-weight allocation due to 20% cap constraint.",
+          "Potential performance improvement by adjusting view confidence levels."
+        ]
+      },
+      "result": {
+        "done": true,
+        "narrative": "The analysis began with identifying the critical views impacting the portfolio allocation. The view importance test revealed that the 'TSLA underperform JPM' view had the most significant impact on the Sharpe ratio, followed by the 'Strong earnings report for Microsoft' view. These views were then subjected to fragility scans to assess their sensitivity.\n\nThe fragility scan for 'TSLA underperform JPM' showed that varying the magnitude of this view did not alter the allocation, which remained equally distributed across all assets due to the weight cap constraint. However, the Sharpe ratio increased with higher magnitudes, indicating that the view's confidence level could be a lever for improving performance.\n\nSimilarly, the 'Strong earnings report for Microsoft' view also maintained the equal allocation across assets, but the Sharpe ratio showed a more pronounced increase with higher magnitudes, suggesting this view's potential to enhance portfolio performance if confidence is adjusted.\n\nThe base scenario's equal-weight result indicates that the 20% cap is fully constraining the allocation, preventing any meaningful differentiation based on the views. This suggests that the current model parameters and constraints are not allowing the views to express their full potential impact on the allocation.\n\nGiven these findings, the portfolio's robustness is primarily driven by the weight constraints rather than the views themselves. The equal-weight allocation is stable across different view magnitudes, but the potential for performance improvement exists if the constraints were relaxed or if confidence levels were adjusted.\n\nIn conclusion, the current allocation is robust under the given constraints, but exploring adjustments to confidence levels or relaxing constraints could unlock further performance improvements.",
+        "recommended_weights": null,
+        "risk_flags": [
+          "Equal-weight allocation due to 20% cap constraint.",
+          "Potential performance improvement by adjusting view confidence levels."
+        ]
+      }
+    }
+  ],
+  "mutations_applied": [],
+  "scenarios_run": {
+    "view_removed_Credit modest upside": {
+      "portfolio_return": 0.0529,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.203,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0688,
+        "MSFT": -0.07,
+        "AMZN": -0.0859,
+        "TSLA": -0.1358,
+        "JPM": -0.0049
+      },
+      "source": "view_removed",
+      "removed_view": "Credit modest upside"
+    },
+    "view_removed_TSLA underperform JPM": {
+      "portfolio_return": 0.0574,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.2203,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0671,
+        "MSFT": -0.0692,
+        "AMZN": -0.0848,
+        "TSLA": -0.1139,
+        "JPM": -0.0077
+      },
+      "source": "view_removed",
+      "removed_view": "TSLA underperform JPM"
+    },
+    "view_removed_Strong earnings report for Microsoft": {
+      "portfolio_return": 0.0552,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.2121,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0668,
+        "MSFT": -0.0646,
+        "AMZN": -0.0839,
+        "TSLA": -0.134,
+        "JPM": -0.0042
+      },
+      "source": "view_removed",
+      "removed_view": "Strong earnings report for Microsoft"
+    },
+    "fragility_TSLA_JPM_TSLA underperform JPM_0.3": {
+      "portfolio_return": 0.071,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.2725,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0619,
+        "MSFT": -0.0665,
+        "AMZN": -0.0806,
+        "TSLA": -0.05,
+        "JPM": -0.0158
+      },
+      "source": "fragility_scan",
+      "view_label": "TSLA underperform JPM",
+      "magnitude": 0.3
+    },
+    "fragility_TSLA_JPM_TSLA underperform JPM_0.5": {
+      "portfolio_return": 0.0814,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.3125,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0579,
+        "MSFT": -0.0644,
+        "AMZN": -0.0773,
+        "TSLA": -0.001,
+        "JPM": -0.0221
+      },
+      "source": "fragility_scan",
+      "view_label": "TSLA underperform JPM",
+      "magnitude": 0.5
+    },
+    "fragility_TSLA_JPM_TSLA underperform JPM_0.6": {
+      "portfolio_return": 0.0866,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.3325,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0559,
+        "MSFT": -0.0634,
+        "AMZN": -0.0757,
+        "TSLA": 0.0236,
+        "JPM": -0.0252
+      },
+      "source": "fragility_scan",
+      "view_label": "TSLA underperform JPM",
+      "magnitude": 0.6
+    },
+    "fragility_TSLA_JPM_TSLA underperform JPM_0.7": {
+      "portfolio_return": 0.0918,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.3525,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0539,
+        "MSFT": -0.0624,
+        "AMZN": -0.074,
+        "TSLA": 0.0481,
+        "JPM": -0.0283
+      },
+      "source": "fragility_scan",
+      "view_label": "TSLA underperform JPM",
+      "magnitude": 0.7
+    },
+    "fragility_TSLA_JPM_TSLA underperform JPM_0.9": {
+      "portfolio_return": 0.1022,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.3926,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.05,
+        "MSFT": -0.0603,
+        "AMZN": -0.0708,
+        "TSLA": 0.0972,
+        "JPM": -0.0345
+      },
+      "source": "fragility_scan",
+      "view_label": "TSLA underperform JPM",
+      "magnitude": 0.9
+    },
+    "fragility_MSFT_Strong earnings report for Microsoft_0.3": {
+      "portfolio_return": 0.0817,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.3135,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0453,
+        "MSFT": -0.0069,
+        "AMZN": -0.0584,
+        "TSLA": -0.1142,
+        "JPM": 0.0034
+      },
+      "source": "fragility_scan",
+      "view_label": "Strong earnings report for Microsoft",
+      "magnitude": 0.3
+    },
+    "fragility_MSFT_Strong earnings report for Microsoft_0.5": {
+      "portfolio_return": 0.1023,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.3929,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0285,
+        "MSFT": 0.0382,
+        "AMZN": -0.0384,
+        "TSLA": -0.0987,
+        "JPM": 0.0094
+      },
+      "source": "fragility_scan",
+      "view_label": "Strong earnings report for Microsoft",
+      "magnitude": 0.5
+    },
+    "fragility_MSFT_Strong earnings report for Microsoft_0.6": {
+      "portfolio_return": 0.1126,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.4325,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0201,
+        "MSFT": 0.0608,
+        "AMZN": -0.0285,
+        "TSLA": -0.091,
+        "JPM": 0.0124
+      },
+      "source": "fragility_scan",
+      "view_label": "Strong earnings report for Microsoft",
+      "magnitude": 0.6
+    },
+    "fragility_MSFT_Strong earnings report for Microsoft_0.7": {
+      "portfolio_return": 0.123,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.4722,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": -0.0117,
+        "MSFT": 0.0833,
+        "AMZN": -0.0185,
+        "TSLA": -0.0832,
+        "JPM": 0.0154
+      },
+      "source": "fragility_scan",
+      "view_label": "Strong earnings report for Microsoft",
+      "magnitude": 0.7
+    },
+    "fragility_MSFT_Strong earnings report for Microsoft_0.9": {
+      "portfolio_return": 0.1436,
+      "portfolio_vol": 0.2604,
+      "sharpe": 0.5516,
+      "top_weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "weights": {
+        "AAPL": 0.2,
+        "MSFT": 0.2,
+        "AMZN": 0.2,
+        "TSLA": 0.2,
+        "JPM": 0.2
+      },
+      "return_delta_vs_prior": {
+        "AAPL": 0.005,
+        "MSFT": 0.1284,
+        "AMZN": 0.0014,
+        "TSLA": -0.0677,
+        "JPM": 0.0214
+      },
+      "source": "fragility_scan",
+      "view_label": "Strong earnings report for Microsoft",
+      "magnitude": 0.9
+    }
+  },
+  "diagnostics": {
+    "view_fragility": [
+      {
+        "view_label": "TSLA underperform JPM",
+        "fragility_scan": [
+          {
+            "magnitude": 0.3,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.2725,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.5,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3125,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.6,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3325,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.7,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3525,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.9,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3926,
+            "volatility": 0.2604
+          }
+        ]
+      },
+      {
+        "view_label": "Strong earnings report for Microsoft",
+        "fragility_scan": [
+          {
+            "magnitude": 0.3,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3135,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.5,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.3929,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.6,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.4325,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.7,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.4722,
+            "volatility": 0.2604
+          },
+          {
+            "magnitude": 0.9,
+            "weights": {
+              "AAPL": 0.2,
+              "MSFT": 0.2,
+              "AMZN": 0.2,
+              "TSLA": 0.2,
+              "JPM": 0.2
+            },
+            "sharpe": 0.5516,
+            "volatility": 0.2604
+          }
+        ]
+      }
+    ],
+    "view_importance": [
+      {
+        "view_importance": [
+          {
+            "view": "Credit modest upside",
+            "sharpe_change": 0.0006,
+            "allocation_shift": 0.0,
+            "sharpe_without_view": 0.203
+          },
+          {
+            "view": "TSLA underperform JPM",
+            "sharpe_change": 0.0179,
+            "allocation_shift": 0.0,
+            "sharpe_without_view": 0.2203
+          },
+          {
+            "view": "Strong earnings report for Microsoft",
+            "sharpe_change": 0.0097,
+            "allocation_shift": 0.0,
+            "sharpe_without_view": 0.2121
+          }
+        ]
+      }
+    ]
+  },
+  "synthesis": {
+    "done": true,
+    "narrative": "The analysis began with identifying the critical views impacting the portfolio allocation. The view importance test revealed that the 'TSLA underperform JPM' view had the most significant impact on the Sharpe ratio, followed by the 'Strong earnings report for Microsoft' view. These views were then subjected to fragility scans to assess their sensitivity.\n\nThe fragility scan for 'TSLA underperform JPM' showed that varying the magnitude of this view did not alter the allocation, which remained equally distributed across all assets due to the weight cap constraint. However, the Sharpe ratio increased with higher magnitudes, indicating that the view's confidence level could be a lever for improving performance.\n\nSimilarly, the 'Strong earnings report for Microsoft' view also maintained the equal allocation across assets, but the Sharpe ratio showed a more pronounced increase with higher magnitudes, suggesting this view's potential to enhance portfolio performance if confidence is adjusted.\n\nThe base scenario's equal-weight result indicates that the 20% cap is fully constraining the allocation, preventing any meaningful differentiation based on the views. This suggests that the current model parameters and constraints are not allowing the views to express their full potential impact on the allocation.\n\nGiven these findings, the portfolio's robustness is primarily driven by the weight constraints rather than the views themselves. The equal-weight allocation is stable across different view magnitudes, but the potential for performance improvement exists if the constraints were relaxed or if confidence levels were adjusted.\n\nIn conclusion, the current allocation is robust under the given constraints, but exploring adjustments to confidence levels or relaxing constraints could unlock further performance improvements.",
+    "recommended_weights": null,
+    "risk_flags": [
+      "Equal-weight allocation due to 20% cap constraint.",
+      "Potential performance improvement by adjusting view confidence levels."
+    ]
+  },
+  "final_weights": {
+    "AAPL": 0.2,
+    "MSFT": 0.2,
+    "AMZN": 0.2,
+    "TSLA": 0.2,
+    "JPM": 0.2
+  },
+  "weight_delta_vs_base": {
+    "AAPL": 0.0,
+    "AMZN": 0.0,
+    "JPM": 0.0,
+    "MSFT": 0.0,
+    "TSLA": 0.0
+  },
+  "cost_breakdown": {
+    "steps": 4,
+    "total_tokens": 11865,
+    "total_cost_usd": 0.0335475,
+    "success_steps": 4
+  },
+  "step_costs": [
+    {
+      "audit_id": "c553b420-e72b-4f7a-8690-bb2ffbc3bc8f",
+      "timestamp": "2026-03-19T11:06:08.258749",
+      "thesis_name": "alpha_tilt",
+      "step": 0,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2121,
+      "completion_tokens": 11,
+      "total_tokens": 2132,
+      "cost_usd": 0.0054125,
+      "latency_ms": 1419,
+      "success": 1
+    },
+    {
+      "audit_id": "c553b420-e72b-4f7a-8690-bb2ffbc3bc8f",
+      "timestamp": "2026-03-19T11:06:09.694848",
+      "thesis_name": "alpha_tilt",
+      "step": 1,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2650,
+      "completion_tokens": 18,
+      "total_tokens": 2668,
+      "cost_usd": 0.006804999999999999,
+      "latency_ms": 1255,
+      "success": 1
+    },
+    {
+      "audit_id": "c553b420-e72b-4f7a-8690-bb2ffbc3bc8f",
+      "timestamp": "2026-03-19T11:06:11.727841",
+      "thesis_name": "alpha_tilt",
+      "step": 2,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2813,
+      "completion_tokens": 124,
+      "total_tokens": 2937,
+      "cost_usd": 0.0082725,
+      "latency_ms": 2025,
+      "success": 1
+    },
+    {
+      "audit_id": "c553b420-e72b-4f7a-8690-bb2ffbc3bc8f",
+      "timestamp": "2026-03-19T11:06:16.466146",
+      "thesis_name": "alpha_tilt",
+      "step": 3,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 3763,
+      "completion_tokens": 365,
+      "total_tokens": 4128,
+      "cost_usd": 0.0130575,
+      "latency_ms": 6499,
+      "success": 1
+    }
+  ]
+}

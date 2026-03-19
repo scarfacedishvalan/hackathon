@@ -1,0 +1,648 @@
+{
+  "audit_id": "c817eefd-b2a9-43d0-902f-9ed4c82bd77e",
+  "thesis_name": "alpha_tilt",
+  "goal": "Run view importance test to find which views drive the allocation. Test fragility of the most impactful view. Assess stability using allocation envelope. Max 15% per asset.",
+  "run_timestamp": "2026-03-19T11:01:03.366418",
+  "model": "gpt-4o",
+  "base_recipe_snapshot": {
+    "meta": {
+      "name": "Q1_macro_alpha_blend",
+      "description": "Bottom-up tech alpha with rate shock overlay",
+      "version": "1.0"
+    },
+    "universe": {
+      "assets": [
+        "AAPL",
+        "MSFT",
+        "AMZN",
+        "TSLA",
+        "JPM"
+      ]
+    },
+    "market_context": {
+      "market_caps": {
+        "AAPL": 2800,
+        "AMZN": 1600,
+        "BAC": 280,
+        "BND": 80,
+        "GLD": 60,
+        "GOOGL": 1800,
+        "JNJ": 420,
+        "JPM": 450,
+        "MSFT": 2400,
+        "PG": 360,
+        "TSLA": 800,
+        "VNQ": 40,
+        "WMT": 400
+      },
+      "factor_exposures": {
+        "AAPL": [
+          1.2,
+          0.0,
+          0.1,
+          1.1,
+          0.0
+        ],
+        "AMZN": [
+          1.4,
+          0.0,
+          0.1,
+          1.3,
+          0.1
+        ],
+        "BAC": [
+          0.1,
+          1.3,
+          0.2,
+          0.8,
+          0.2
+        ],
+        "BND": [
+          0.0,
+          0.0,
+          0.2,
+          0.1,
+          1.5
+        ],
+        "GLD": [
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          0.3
+        ],
+        "GOOGL": [
+          1.3,
+          0.0,
+          0.1,
+          1.2,
+          0.1
+        ],
+        "JNJ": [
+          0.2,
+          0.0,
+          1.4,
+          0.6,
+          0.3
+        ],
+        "JPM": [
+          0.2,
+          1.5,
+          0.2,
+          0.9,
+          0.2
+        ],
+        "MSFT": [
+          1.1,
+          0.0,
+          0.2,
+          1.0,
+          0.0
+        ],
+        "PG": [
+          0.2,
+          0.0,
+          1.3,
+          0.6,
+          0.3
+        ],
+        "TSLA": [
+          1.6,
+          0.0,
+          0.0,
+          1.5,
+          0.4
+        ],
+        "VNQ": [
+          0.1,
+          0.2,
+          0.4,
+          0.7,
+          0.8
+        ],
+        "WMT": [
+          0.3,
+          0.1,
+          1.1,
+          0.7,
+          0.2
+        ]
+      },
+      "factor_names": [
+        "Growth",
+        "Financial",
+        "Defensive",
+        "Market",
+        "Rates"
+      ],
+      "sectors": {
+        "AAPL": "Technology",
+        "AMZN": "Technology",
+        "BAC": "Financials",
+        "BND": "Fixed Income",
+        "GLD": "Commodities",
+        "GOOGL": "Technology",
+        "JNJ": "Healthcare",
+        "JPM": "Financials",
+        "MSFT": "Technology",
+        "PG": "Consumer Staples",
+        "TSLA": "Technology",
+        "VNQ": "Real Estate",
+        "WMT": "Consumer Staples"
+      }
+    },
+    "model_parameters": {
+      "tau": 0.05,
+      "risk_aversion": 2.0,
+      "risk_free_rate": 0.02
+    },
+    "constraints": {
+      "long_only": true,
+      "weight_bounds": [
+        0.0,
+        0.4
+      ]
+    },
+    "bottom_up_views": [
+      {
+        "type": "absolute",
+        "asset": "AMZN",
+        "expected_return": 0.055,
+        "confidence": 0.6,
+        "label": "Credit modest upside"
+      },
+      {
+        "type": "relative",
+        "assets": [
+          "TSLA",
+          "JPM"
+        ],
+        "weights": [
+          1,
+          -1
+        ],
+        "expected_outperformance": -0.05,
+        "confidence": 0.6,
+        "label": "TSLA underperform JPM"
+      },
+      {
+        "type": "absolute",
+        "asset": "MSFT",
+        "expected_return": 0.02,
+        "confidence": 0.6,
+        "label": "Strong earnings report for Microsoft"
+      }
+    ],
+    "top_down_views": {
+      "factor_model": {
+        "factors": [
+          "Rates",
+          "Growth"
+        ]
+      },
+      "factor_shocks": [
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Rising rates"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.04,
+          "confidence": 0.6,
+          "label": "Strongly benefit financials"
+        },
+        {
+          "factor": "Defensive",
+          "shock": -0.01,
+          "confidence": 0.6,
+          "label": "Slightly hurt defensives"
+        },
+        {
+          "factor": "Rates",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        },
+        {
+          "factor": "Financial",
+          "shock": 0.02,
+          "confidence": 0.6,
+          "label": "Interest rates boost financials"
+        }
+      ]
+    }
+  },
+  "base_result_summary": {
+    "error": "Optimization failed: Positive directional derivative for linesearch"
+  },
+  "steps": [
+    {
+      "step": 0,
+      "tool": "get_recipe_summary",
+      "args": {},
+      "result": {
+        "name": "Q1_macro_alpha_blend",
+        "universe": [
+          "AAPL",
+          "MSFT",
+          "AMZN",
+          "TSLA",
+          "JPM"
+        ],
+        "model_parameters": {
+          "tau": 0.05,
+          "risk_aversion": 2.0,
+          "risk_free_rate": 0.02
+        },
+        "constraints": {
+          "long_only": true,
+          "weight_bounds": [
+            0.0,
+            0.4
+          ]
+        },
+        "bottom_up_views": [
+          {
+            "label": "Credit modest upside",
+            "asset": "AMZN",
+            "direction": null,
+            "expected_return": 0.055,
+            "confidence": 0.6
+          },
+          {
+            "label": "TSLA underperform JPM",
+            "asset": null,
+            "direction": null,
+            "expected_return": null,
+            "confidence": 0.6
+          },
+          {
+            "label": "Strong earnings report for Microsoft",
+            "asset": "MSFT",
+            "direction": null,
+            "expected_return": 0.02,
+            "confidence": 0.6
+          }
+        ],
+        "factor_shocks": [
+          {
+            "label": "Rising rates",
+            "factor": "Rates",
+            "magnitude": null
+          },
+          {
+            "label": "Strongly benefit financials",
+            "factor": "Financial",
+            "magnitude": null
+          },
+          {
+            "label": "Slightly hurt defensives",
+            "factor": "Defensive",
+            "magnitude": null
+          },
+          {
+            "label": "Interest rates boost financials",
+            "factor": "Rates",
+            "magnitude": null
+          },
+          {
+            "label": "Interest rates boost financials",
+            "factor": "Financial",
+            "magnitude": null
+          }
+        ],
+        "view_labels": [
+          "Credit modest upside",
+          "TSLA underperform JPM",
+          "Strong earnings report for Microsoft",
+          "Rising rates",
+          "Strongly benefit financials",
+          "Slightly hurt defensives",
+          "Interest rates boost financials",
+          "Interest rates boost financials"
+        ],
+        "sweepable_confidence_params": [
+          "confidence/Credit modest upside",
+          "confidence/TSLA underperform JPM",
+          "confidence/Strong earnings report for Microsoft",
+          "confidence/Rising rates",
+          "confidence/Strongly benefit financials",
+          "confidence/Slightly hurt defensives",
+          "confidence/Interest rates boost financials",
+          "confidence/Interest rates boost financials"
+        ],
+        "note": "To stress-test expected return assumptions use run_bl_scenario with override_expected_return: {asset: new_return} mutations, or run_stress_sweep with sweep_parameter='risk_aversion'. Use ONLY the exact labels listed in view_labels for confidence sweeps."
+      }
+    },
+    {
+      "step": 1,
+      "tool": "view_importance_test",
+      "args": {
+        "scenario_prefix": "view_removed"
+      },
+      "result": {
+        "view_importance": [
+          {
+            "view": "Credit modest upside",
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "view": "TSLA underperform JPM",
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "view": "Strong earnings report for Microsoft",
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          }
+        ]
+      }
+    },
+    {
+      "step": 1,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "base_scenario",
+        "mutations": {
+          "weight_bounds": [
+            0.0,
+            0.15
+          ]
+        }
+      },
+      "result": {
+        "label": "base_scenario",
+        "status": "error",
+        "error": "Optimization failed: Positive directional derivative for linesearch"
+      }
+    },
+    {
+      "step": 2,
+      "tool": "run_stress_sweep",
+      "args": {
+        "sweep_parameter": "risk_aversion",
+        "grid": [
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0
+        ]
+      },
+      "result": {
+        "sweep_parameter": "risk_aversion",
+        "grid_results": [
+          {
+            "value": 1.0,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 1.5,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 2.0,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 2.5,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 3.0,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          }
+        ]
+      }
+    },
+    {
+      "step": 3,
+      "tool": "run_stress_sweep",
+      "args": {
+        "sweep_parameter": "tau",
+        "grid": [
+          0.01,
+          0.03,
+          0.05,
+          0.07,
+          0.1
+        ]
+      },
+      "result": {
+        "sweep_parameter": "tau",
+        "grid_results": [
+          {
+            "value": 0.01,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 0.03,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 0.05,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 0.07,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "value": 0.1,
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          }
+        ]
+      }
+    },
+    {
+      "step": 4,
+      "tool": "run_bl_scenario",
+      "args": {
+        "label": "adjusted_risk_aversion",
+        "mutations": {
+          "set_model_parameters": {
+            "risk_aversion": 1.0
+          },
+          "weight_bounds": [
+            0.0,
+            0.15
+          ]
+        }
+      },
+      "result": {
+        "label": "adjusted_risk_aversion",
+        "status": "error",
+        "error": "Optimization failed: Positive directional derivative for linesearch"
+      }
+    },
+    {
+      "step": 5,
+      "tool": "synthesise",
+      "args": {
+        "narrative": "The Black-Litterman optimization process encountered persistent issues with optimization failures, specifically due to a 'Positive directional derivative for linesearch' error. This error occurred across multiple attempts to adjust model parameters such as risk aversion and tau, as well as during the base scenario and view importance tests.\n\nGiven these consistent optimization failures, it is likely that the current configuration of the model, including the constraints and the views, is not conducive to finding a feasible solution. This could be due to overly restrictive constraints, conflicting views, or inappropriate model parameter settings.\n\nWithout a successful optimization run, it is not possible to provide a recommended allocation or assess the stability and fragility of the views. It is recommended to revisit the model setup, possibly relaxing some constraints or re-evaluating the views and their confidence levels to ensure they are realistic and not contradictory.\n\nFurther investigation into the underlying data and assumptions may be necessary to resolve these optimization issues.",
+        "risk_flags": [
+          "Persistent optimization failures across scenarios.",
+          "Constraints or views may be overly restrictive or conflicting."
+        ]
+      },
+      "result": {
+        "done": true,
+        "narrative": "The Black-Litterman optimization process encountered persistent issues with optimization failures, specifically due to a 'Positive directional derivative for linesearch' error. This error occurred across multiple attempts to adjust model parameters such as risk aversion and tau, as well as during the base scenario and view importance tests.\n\nGiven these consistent optimization failures, it is likely that the current configuration of the model, including the constraints and the views, is not conducive to finding a feasible solution. This could be due to overly restrictive constraints, conflicting views, or inappropriate model parameter settings.\n\nWithout a successful optimization run, it is not possible to provide a recommended allocation or assess the stability and fragility of the views. It is recommended to revisit the model setup, possibly relaxing some constraints or re-evaluating the views and their confidence levels to ensure they are realistic and not contradictory.\n\nFurther investigation into the underlying data and assumptions may be necessary to resolve these optimization issues.",
+        "recommended_weights": null,
+        "risk_flags": [
+          "Persistent optimization failures across scenarios.",
+          "Constraints or views may be overly restrictive or conflicting."
+        ]
+      }
+    }
+  ],
+  "mutations_applied": [
+    {
+      "weight_bounds": [
+        0.0,
+        0.15
+      ]
+    },
+    {
+      "set_model_parameters": {
+        "risk_aversion": 1.0
+      },
+      "weight_bounds": [
+        0.0,
+        0.15
+      ]
+    }
+  ],
+  "scenarios_run": {
+    "base_scenario": {
+      "error": "Optimization failed: Positive directional derivative for linesearch"
+    },
+    "adjusted_risk_aversion": {
+      "error": "Optimization failed: Positive directional derivative for linesearch"
+    }
+  },
+  "diagnostics": {
+    "view_importance": [
+      {
+        "view_importance": [
+          {
+            "view": "Credit modest upside",
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "view": "TSLA underperform JPM",
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          },
+          {
+            "view": "Strong earnings report for Microsoft",
+            "error": "Optimization failed: Positive directional derivative for linesearch"
+          }
+        ]
+      }
+    ]
+  },
+  "synthesis": {
+    "done": true,
+    "narrative": "The Black-Litterman optimization process encountered persistent issues with optimization failures, specifically due to a 'Positive directional derivative for linesearch' error. This error occurred across multiple attempts to adjust model parameters such as risk aversion and tau, as well as during the base scenario and view importance tests.\n\nGiven these consistent optimization failures, it is likely that the current configuration of the model, including the constraints and the views, is not conducive to finding a feasible solution. This could be due to overly restrictive constraints, conflicting views, or inappropriate model parameter settings.\n\nWithout a successful optimization run, it is not possible to provide a recommended allocation or assess the stability and fragility of the views. It is recommended to revisit the model setup, possibly relaxing some constraints or re-evaluating the views and their confidence levels to ensure they are realistic and not contradictory.\n\nFurther investigation into the underlying data and assumptions may be necessary to resolve these optimization issues.",
+    "recommended_weights": null,
+    "risk_flags": [
+      "Persistent optimization failures across scenarios.",
+      "Constraints or views may be overly restrictive or conflicting."
+    ]
+  },
+  "final_weights": null,
+  "weight_delta_vs_base": null,
+  "cost_breakdown": {
+    "steps": 6,
+    "total_tokens": 16376,
+    "total_cost_usd": 0.0442325,
+    "success_steps": 6
+  },
+  "step_costs": [
+    {
+      "audit_id": "c817eefd-b2a9-43d0-902f-9ed4c82bd77e",
+      "timestamp": "2026-03-19T11:01:05.506779",
+      "thesis_name": "alpha_tilt",
+      "step": 0,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 1930,
+      "completion_tokens": 11,
+      "total_tokens": 1941,
+      "cost_usd": 0.004935,
+      "latency_ms": 1773,
+      "success": 1
+    },
+    {
+      "audit_id": "c817eefd-b2a9-43d0-902f-9ed4c82bd77e",
+      "timestamp": "2026-03-19T11:01:07.303298",
+      "thesis_name": "alpha_tilt",
+      "step": 1,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2459,
+      "completion_tokens": 68,
+      "total_tokens": 2527,
+      "cost_usd": 0.006827499999999999,
+      "latency_ms": 2458,
+      "success": 1
+    },
+    {
+      "audit_id": "c817eefd-b2a9-43d0-902f-9ed4c82bd77e",
+      "timestamp": "2026-03-19T11:01:09.889356",
+      "thesis_name": "alpha_tilt",
+      "step": 2,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2643,
+      "completion_tokens": 43,
+      "total_tokens": 2686,
+      "cost_usd": 0.0070374999999999995,
+      "latency_ms": 1731,
+      "success": 1
+    },
+    {
+      "audit_id": "c817eefd-b2a9-43d0-902f-9ed4c82bd77e",
+      "timestamp": "2026-03-19T11:01:11.688890",
+      "thesis_name": "alpha_tilt",
+      "step": 3,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2822,
+      "completion_tokens": 41,
+      "total_tokens": 2863,
+      "cost_usd": 0.007464999999999999,
+      "latency_ms": 1846,
+      "success": 1
+    },
+    {
+      "audit_id": "c817eefd-b2a9-43d0-902f-9ed4c82bd77e",
+      "timestamp": "2026-03-19T11:01:13.591215",
+      "thesis_name": "alpha_tilt",
+      "step": 4,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 2997,
+      "completion_tokens": 48,
+      "total_tokens": 3045,
+      "cost_usd": 0.0079725,
+      "latency_ms": 1652,
+      "success": 1
+    },
+    {
+      "audit_id": "c817eefd-b2a9-43d0-902f-9ed4c82bd77e",
+      "timestamp": "2026-03-19T11:01:15.276640",
+      "thesis_name": "alpha_tilt",
+      "step": 5,
+      "tool_called": null,
+      "model": "gpt-4o",
+      "prompt_tokens": 3086,
+      "completion_tokens": 228,
+      "total_tokens": 3314,
+      "cost_usd": 0.009995,
+      "latency_ms": 4909,
+      "success": 1
+    }
+  ]
+}

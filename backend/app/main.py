@@ -1,11 +1,19 @@
 from __future__ import annotations
 
 import json
+import logging
 import pathlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 from app.api.routers.views_router import router as views_router
 from app.api.routers.portfolios_router import router as portfolios_router
