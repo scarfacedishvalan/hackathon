@@ -77,7 +77,7 @@ async def run_bl():
         )
 
     # ── Return only what the frontend needs ───────────────────────────────────
-    return {
+    return {  # noqa: RET504
         "efficientFrontier":   result.get("efficientFrontier"),
         "allocation":          result.get("allocation"),
         "topDownContribution": result.get("topDownContribution"),
@@ -89,3 +89,36 @@ async def run_bl():
         "n_bottom_up_views":   result.get("n_bottom_up_views"),
         "n_top_down_views":    result.get("n_top_down_views"),
     }
+
+
+@router.get("/price-history")
+async def get_price_history():
+    """
+    Return full historical daily close prices for all assets in the universe.
+
+    Response shape::
+
+        {
+          "dates":  ["2020-01-02", ...],
+          "prices": {
+            "AAPL": [300.0, 301.5, ...],
+            "MSFT": [170.0, 171.2, ...],
+            ...
+          }
+        }
+    """
+    try:
+        price_df, _market_caps, _B, _factor_names, _all_assets = load_market_data()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to load price data: {exc}")
+
+    # Ensure index is datetime and format as ISO date strings
+    price_df.index = price_df.index.astype("datetime64[ns]")
+    dates = [d.strftime("%Y-%m-%d") for d in price_df.index]
+
+    prices: dict[str, list[float]] = {
+        ticker: [round(v, 4) for v in price_df[ticker].tolist()]
+        for ticker in price_df.columns
+    }
+
+    return {"dates": dates, "prices": prices}

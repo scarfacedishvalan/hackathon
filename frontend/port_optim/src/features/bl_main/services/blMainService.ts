@@ -120,6 +120,18 @@ export const portfolioService = {
   },
 };
 
+export interface PriceHistory {
+  dates: string[];
+  prices: Record<string, number[]>;
+}
+
+export const priceHistoryService = {
+  /** GET /bl/price-history — full historical close prices for all assets */
+  get: async (): Promise<PriceHistory> => {
+    return apiClient.get<PriceHistory>('/bl/price-history');
+  },
+};
+
 export const universeService = {
   /** GET /views/universe — active asset tickers in current.json */
   getUniverse: async (): Promise<string[]> => {

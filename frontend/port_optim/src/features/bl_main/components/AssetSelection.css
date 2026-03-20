@@ -108,7 +108,21 @@
   border-color: #475569;
 }
 
-/* Expanded 2-column grid */
+/* Expanded split layout: checkboxes left, chart right */
+.universe-expanded-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  min-height: 320px;
+}
+
+.universe-checkboxes {
+  border-right: 1px solid #334155;
+  overflow-y: auto;
+  max-height: 380px;
+}
+
+/* Expanded 2-column grid (inside the narrow left panel) */
 .universe-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -123,8 +137,8 @@
 .universe-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 20px;
+  gap: 8px;
+  padding: 7px 12px;
   cursor: pointer;
   transition: background-color 0.15s;
 }
@@ -134,23 +148,80 @@
 }
 
 .universe-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   accent-color: #60a5fa;
   cursor: pointer;
   flex-shrink: 0;
 }
 
+/* Colored dot matching the chart line */
+.universe-ticker-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .universe-ticker {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #e0e6ed;
-  width: 60px;
+  width: 48px;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .universe-name {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Chart panel (right side) ────────────────────────────────────── */
+.universe-chart-panel {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.universe-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.universe-chart-title {
   font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.normalize-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
   color: #94a3b8;
+  user-select: none;
+}
+
+.normalize-toggle input[type="checkbox"] {
+  accent-color: #60a5fa;
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+
+.universe-chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 260px;
+  color: #64748b;
+  font-size: 13px;
 }
