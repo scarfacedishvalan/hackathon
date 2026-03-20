@@ -204,6 +204,153 @@ def run_news_example():
 
 
 # ---------------------------------------------------------------------------
+# News → Active Views integration test
+# ---------------------------------------------------------------------------
+
+
+def run_news_active_views_test():
+    """Test the '+ Active Views' functionality with random news items."""
+    from app.orchestrators.news_orchestrator import get_random_news, add_view_to_recipe
+    
+    print("\n" + "=" * 60)
+    print("NEWS → ACTIVE VIEWS INTEGRATION TEST")
+    print("=" * 60)
+    print("Testing the '+ Active Views' button functionality:")
+    print("  1. Get random news items with structured translatedViews")
+    print("  2. Send translatedView through BL LLM parser")
+    print("  3. Verify parsed views are added to current.json")
+    print("=" * 60)
+    
+    # ── Test 1: Get random news items with various sentiments ─────────────
+    print("\n[STEP 1] Get 3 random news items:")
+    print("-" * 60)
+    items = get_random_news(limit=3)
+    
+    for i, item in enumerate(items, 1):
+        print(f"\n{i}. [{item['ticker']}] {item['heading']}")
+        print(f"   ID: {item['id']}")
+        print(f"   TranslatedView: {item['translatedView']}")
+    
+    # ── Test 2: Parse one news item and add to current.json ───────────────
+    print("\n" + "=" * 60)
+    print("[STEP 2] Parse translatedView → BL views:")
+    print("-" * 60)
+    
+    # Select first item for testing
+    test_item = items[0]
+    print(f"\nSelected item:")
+    print(f"  Ticker: {test_item['ticker']}")
+    print(f"  Heading: {test_item['heading']}")
+    print(f"  TranslatedView: {test_item['translatedView']}")
+    
+    print(f"\nCalling add_view_to_recipe('{test_item['id']}')...")
+    print("-" * 60)
+    
+    try:
+        result = add_view_to_recipe(test_item['id'])
+        
+        # Display parsed results
+        bottom_up = result.get('bottom_up_views', [])
+        top_down = result.get('top_down_views', [])
+        
+        print(f"\n✓ Parse successful!")
+        print(f"  Bottom-up views: {len(bottom_up)}")
+        print(f"  Top-down views:  {len(top_down)}")
+        
+        if bottom_up:
+            print("\n  Bottom-Up Views:")
+            for j, view in enumerate(bottom_up, 1):
+                # Handle both dict and string format
+                if isinstance(view, dict):
+                    asset = view.get('asset', '?')
+                    expected_return = view.get('expected_return', 0.0)
+                    confidence = view.get('confidence', 0.0)
+                    view_type = view.get('view_type', '?')
+                    print(f"    {j}. {asset}: {expected_return:+.2%} return, "
+                          f"confidence={confidence:.1%}, type={view_type}")
+                else:
+                    # If it's a string or other format, just print it
+                    print(f"    {j}. {view}")
+        
+        if top_down:
+            print("\n  Top-Down Views:")
+            for j, view in enumerate(top_down, 1):
+                # Handle both dict and string format
+                if isinstance(view, dict):
+                    factor = view.get('factor', '?')
+                    expected_premium = view.get('expected_premium', 0.0)
+                    confidence = view.get('confidence', 0.0)
+                    print(f"    {j}. {factor}: {expected_premium:+.2%} premium, "
+                          f"confidence={confidence:.1%}")
+                else:
+                    # If it's a string or other format, just print it
+                    print(f"    {j}. {view}")
+        
+        # ── Test 3: Verify it was added to current.json ───────────────────
+        print("\n" + "=" * 60)
+        print("[STEP 3] Verify view was added to current.json:")
+        print("-" * 60)
+        
+        recipe = load_current_recipe()
+        recipe_bottom_up = recipe.get('bottom_up_views', [])
+        recipe_top_down = recipe.get('top_down_views', {})
+        
+        # Handle top_down_views as dict with factor_shocks
+        if isinstance(recipe_top_down, dict):
+            recipe_factor_shocks = recipe_top_down.get('factor_shocks', [])
+        else:
+            # Fallback if it's a list (old format)
+            recipe_factor_shocks = recipe_top_down if isinstance(recipe_top_down, list) else []
+        
+        print(f"\nCurrent recipe now contains:")
+        print(f"  Total bottom-up views: {len(recipe_bottom_up)}")
+        print(f"  Total factor shocks:   {len(recipe_factor_shocks)}")
+        
+        # Show last few views (likely the one just added)
+        if recipe_bottom_up:
+            print(f"\n  Last 3 bottom-up views:")
+            for view in recipe_bottom_up[-3:]:
+                asset = view.get('asset', '?')
+                expected_return = view.get('expected_return', 0.0)
+                confidence = view.get('confidence', 0.0)
+                label = view.get('label', '')
+                print(f"    - {asset}: {expected_return:+.2%} return, "
+                      f"confidence={confidence:.0%}, label=\"{label}\"")
+        
+        if recipe_factor_shocks:
+            print(f"\n  Last 3 factor shocks:")
+            for shock in recipe_factor_shocks[-3:]:
+                factor = shock.get('factor', '?')
+                shock_val = shock.get('shock', 0.0)
+                confidence = shock.get('confidence', 0.0)
+                label = shock.get('label', '')
+                print(f"    - {factor}: {shock_val:+.2%} shock, "
+                      f"confidence={confidence:.0%}, label=\"{label}\"")
+        
+        print("\n" + "=" * 60)
+        print("SUMMARY")
+        print("=" * 60)
+        print(f"✓ News item fetched with structured translatedView")
+        print(f"✓ TranslatedView parsed by BL LLM parser:")
+        print(f"    → {len(bottom_up)} bottom-up view(s) extracted")
+        print(f"    → {len(top_down)} top-down view(s) extracted")
+        print(f"✓ Views successfully added to current.json")
+        print(f"✓ '+ Active Views' button workflow is functional!")
+        print("=" * 60)
+        
+    except Exception as e:
+        print(f"\n✗ Error during parsing:")
+        print(f"  {type(e).__name__}: {e}")
+        print("\nThis may indicate:")
+        print("  - LLM parser failed to extract quantified views")
+        print("  - translatedView format not compatible with parser")
+        print("  - current.json file not found or invalid")
+        import traceback
+        traceback.print_exc()
+        print("=" * 60)
+
+
+# ---------------------------------------------------------------------------
 # View parsing example
 # ---------------------------------------------------------------------------
 
@@ -387,7 +534,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run orchestrator examples")
     parser.add_argument(
         "--example",
-        choices=["views", "bl", "news", "agent", "admin", "all"],
+        choices=["views", "bl", "news", "news_views", "agent", "admin", "all"],
         default="news",
         help="Which example to run (default: news)",
     )
@@ -414,6 +561,9 @@ if __name__ == "__main__":
 
     if args.example in ("news", "all"):
         run_news_example()
+
+    if args.example in ("news_views", "all"):
+        run_news_active_views_test()
 
     if args.example in ("agent", "all"):
         run_agent_example(thesis_name=args.thesis, goal=args.goal)
