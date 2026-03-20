@@ -5,6 +5,7 @@ import { BLMainPage, BLMainProvider } from '@features/bl_main';
 import { BacktestPage } from '@features/backtest';
 import { AgentPage } from '@features/agent';
 import { AdminPage } from '@features/admin';
+import { AboutPage } from '@features/about';
 
 export const App: React.FC = () => {
   const [activePage, setActivePage] = useState<AppPage>('bl_main');
@@ -18,6 +19,7 @@ export const App: React.FC = () => {
           <div style={{ display: activePage === 'backtest' ? undefined : 'none' }}><BacktestPage /></div>
           <div style={{ display: activePage === 'agent'    ? undefined : 'none' }}><AgentPage /></div>
           <div style={{ display: activePage === 'admin'    ? undefined : 'none' }}><AdminPage /></div>
+          <div style={{ display: activePage === 'about'    ? undefined : 'none' }}><AboutPage /></div>
         </AppLayout>
       </BLMainProvider>
     </Providers>

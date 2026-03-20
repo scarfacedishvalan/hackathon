@@ -1,97 +1,135 @@
-# Black-Litterman Portfolio Dashboard
+# Frontend - Portfolio Optimization Dashboard
 
-A production-ready financial dashboard for Black-Litterman portfolio optimization built with Vite, React, and TypeScript.
+Production-ready financial dashboard for Black-Litterman portfolio optimization, backtesting, and AI-powered portfolio analysis built with Vite, React, and TypeScript.
+
+## Overview
+
+This frontend integrates with the FastAPI backend to provide a comprehensive portfolio management platform with:
+- **Black-Litterman Optimization**: Natural language view input, efficient frontier visualization, and allocation analysis
+- **Portfolio Backtesting**: Historical strategy testing with performance metrics and equity curves
+- **AI Agent Analysis**: Agentic BL analysis with stress testing and sensitivity exploration
+- **News Integration**: Analyst news with pre-structured BL views ready to add to portfolio recipes
+- **Admin Console**: LLM usage tracking and cost monitoring across all services
 
 ## 🏗 Architecture
 
-This application follows a feature-based architecture with clear separation of concerns:
+Feature-based architecture with clear separation of concerns and fully integrated with backend API:
 
 ```
 frontend/port_optim/
 ├── src/
 │   ├── app/                    # Application shell
-│   │   ├── App.tsx            # Root component
-│   │   ├── AppLayout.tsx      # Main layout with header
+│   │   ├── App.tsx            # Root component with routing
+│   │   ├── AppLayout.tsx      # Main layout with navigation
 │   │   └── providers.tsx      # Context providers
 │   │
-│   ├── features/              # Feature modules
-│   │   └── bl_main/           # Black-Litterman feature
-│   │       ├── pages/         # Page components
-│   │       ├── components/    # Feature-specific components
-│   │       ├── hooks/         # Custom hooks (useBLMain)
-│   │       ├── services/      # API service layer
-│   │       ├── domain/        # Business logic
-│   │       ├── types/         # TypeScript types
-│   │       └── mock/          # Mock data (simulates backend)
+│   ├── features/              # Feature modules (each with pages, components, services, types)
+│   │   ├── bl_main/           # Black-Litterman optimization
+│   │   │   ├── pages/BLMainPage.tsx
+│   │   │   ├── components/    # AssetSelection, ActiveViews, ModelControls, Charts
+│   │   │   ├── services/blMainService.ts
+│   │   │   ├── domain/        # Business logic (contribution calculations)
+│   │   │   └── types/blMainTypes.ts
+│   │   │
+│   │   ├── backtest/          # Portfolio backtesting
+│   │   │   ├── pages/BacktestPage.tsx
+│   │   │   ├── components/RecipeDisplay.tsx
+│   │   │   └── services/backtestService.ts
+│   │   │
+│   │   ├── agent/             # AI agent analysis
+│   │   │   ├── pages/AgentPage.tsx
+│   │   │   ├── components/    # AuditDisplay, StepTimeline
+│   │   │   └── services/agentService.ts
+│   │   │
+│   │   └── admin/             # LLM usage and cost tracking
+│   │       ├── pages/AdminPage.tsx
+│   │       └── services/adminService.ts
 │   │
-│   ├── shared/                # Shared/reusable code
-│   │   ├── components/        # Card, Table, Button, ChartWrapper
-│   │   ├── hooks/             # Shared hooks
-│   │   ├── utils/             # Utility functions
-│   │   └── types/             # Shared types
+│   ├── shared/                # Reusable components
+│   │   └── components/        # Card, Table, Button, ChartWrapper
 │   │
 │   ├── services/              # Global services
-│   │   └── apiClient.ts       # HTTP client
+│   │   └── apiClient.ts       # HTTP client with backend integration
 │   │
-│   ├── styles/                # Global styles
 │   └── main.tsx               # Application entry point
 │
+├── public/
 ├── index.html
 ├── package.json
-├── tsconfig.json
 └── vite.config.ts
 ```
 
-## 📁 Directory Overview
+## Feature Modules
 
-### `/src/app`
-Application shell containing the root component, layout, and global providers. Houses cross-cutting concerns like routing and theme.
+### **bl_main/** - Black-Litterman Optimization
+Complete BL workflow with asset selection, view management, and portfolio analysis.
+- **AnalystSuggestions.tsx**: News table with search/filter and "+ Active Views" button to add BL-formatted views
+- **AssetSelection.tsx**: Asset picker with weight allocation and validation
+- **ActiveViews.tsx**: Display and manage bottom-up and top-down views
+- **CreateView.tsx**: Natural language view input with example templates
+- **ModelControls.tsx**: Risk aversion, tau, and confidence scaling controls
+- **BLAllocationChart.tsx**: Bar chart comparing prior vs posterior allocations
+- **EfficientFrontierChart.tsx**: Scatter plot with prior and posterior portfolios
+- **TopDownContribution.tsx**: Factor contribution analysis with return/risk toggle
+- **domain/**: Pure functions for contribution calculations (return, risk, top-down aggregation)
 
-### `/src/features/bl_main`
-Complete Black-Litterman feature module with all business logic, UI components, and data management isolated in one place.
+### **backtest/** - Portfolio Backtesting
+Historical strategy testing with recipe management and performance visualization.
+- **BacktestPage.tsx**: Main backtesting interface with recipe input and results display
+- **RecipeDisplay.tsx**: Portfolio strategy recipe viewer with parameters and metrics
+- **backtestService.ts**: API client for backtest execution and data fetching
 
-- **pages/**: Top-level page components
-- **components/**: Feature-specific UI components (charts, tables, controls)
-- **hooks/**: Custom React hooks for state and data fetching
-- **services/**: Backend communication layer (currently mocked)
-- **domain/**: Pure business logic functions
-- **types/**: TypeScript interfaces and types
-- **mock/**: Mock JSON data simulating API responses
+### **agent/** - AI Agent Analysis
+Agentic workflow for stress testing and scenario exploration.
+- **AgentPage.tsx**: Agent orchestration interface with goal input and audit display
+- **AuditDisplay.tsx**: Execution log viewer with step-by-step breakdown
+- **StepTimeline.tsx**: Visual timeline of agent tool calls and decisions
 
-### `/src/shared`
-Reusable components, hooks, and utilities used across multiple features. Promotes DRY principles.
-
-### `/src/services`
-Global service utilities like API clients that are used application-wide.
+### **admin/** - Admin Console
+LLM usage tracking and cost monitoring dashboard.
+- **AdminPage.tsx**: Aggregated view of token usage, costs, and service breakdowns
+- **adminService.ts**: API client for admin console data
 
 ## 🎯 Key Features
 
-- **Collapsible Portfolio Context** - Compact portfolio selection that defaults to collapsed state showing summary (portfolio name, asset count, total weight)
-- **Natural language view input** - Textarea for analyst views with example inputs (Asset Views and Factor Views) for quick reference
-- **Active Views table** - Displays Type, Asset/Factor, Value, Direction, and Confidence columns
-- **Two-column responsive layout** - Portfolio context, views, and controls on the left (800px); charts on the right
-- **Three interactive charts:**
-  - Efficient Frontier with prior and posterior portfolios
-  - Grouped bar chart comparing prior vs BL allocations
-  - Top-down contribution analysis with return/risk toggle
-- **Portfolio management** - Create custom portfolios with weight validation and auto-normalize
-- **Model controls** with risk aversion slider and confidence scaling
-- **Mock data backend** structured for easy API integration
-- **Custom hook** (`useBLMain`) managing data fetching and state
-- **Service layer** ready to swap mock data for real API calls
-- **Fully typed** with TypeScript for type safety
+### Black-Litterman Optimization
+- **Asset Selection**: Custom portfolio builder with weight validation and auto-normalize
+- **Analyst News**: Search and filter news articles with fuzzy matching, add structured BL views to recipe
+- **Natural Language Views**: Textarea input with example templates for asset and factor views
+- **Active Views Table**: Display bottom-up (asset) and top-down (factor) views with confidence levels
+- **Model Controls**: Risk aversion slider (0.5-5.0), tau parameter, confidence scaling
+- **Three Interactive Charts**:
+  - Efficient Frontier with prior/posterior portfolios and Sharpe ratio annotations
+  - Grouped bar chart comparing prior vs BL-optimized allocations
+  - Top-down contribution analysis with return/risk decomposition toggle
+- **BL Calculations Display**: Step-by-step view construction and matrix operations
+
+### Portfolio Backtesting
+- **Strategy Recipe Input**: Natural language or JSON-based strategy definitions
+- **Historical Testing**: Execute strategies on historical price data
+- **Performance Metrics**: CAGR, Sharpe ratio, max drawdown, volatility
+- **Equity Curves**: Visual representation of strategy performance over time
+
+### AI Agent Analysis
+- **Goal-Based Exploration**: Define analysis goals in natural language
+- **Tool Calling**: Agent autonomously calls BL tools for stress testing and analysis
+- **Execution Audit**: Step-by-step log of agent decisions and tool calls
+- **Cost Tracking**: Token usage and LLM costs per agent run
+
+### Admin Console
+- **LLM Usage Dashboard**: Token counts and costs by service/operation
+- **Agent Audit Logs**: Historical agent runs with performance metrics
+- **Cost Breakdown**: Detailed view of API costs across all features
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
-- Node.js 16+ and npm/yarn
+- Node.js 16+ and npm
 
 ### Installation
 
 1. Navigate to the project directory:
 ```bash
-set PATH="C:\Program Files\nodejs\";%PATH%
 cd frontend/port_optim
 ```
 
@@ -100,82 +138,114 @@ cd frontend/port_optim
 npm install
 ```
 
+3. Configure environment (optional):
+```bash
+# Create .env file
+echo VITE_API_BASE_URL=http://localhost:8000 > .env
+```
+
 ### Running the Application
 
-Start the development server:
+**Development mode** (with backend running on port 8000):
 ```bash
 npm run dev
 ```
 
-The application will open automatically in your browser at `http://localhost:3000`.
+Application opens at `http://localhost:5173`
 
-### Build for Production
-
-Create an optimized production build:
+**Production build**:
 ```bash
 npm run build
 ```
 
-Preview the production build:
+**Preview production build**:
 ```bash
 npm run preview
 ```
 
-## 🔄 Backend Integration
+## 🧪 Development
 
-The application is structured for easy backend integration:
+### Backend Connection
+Ensure backend is running before starting frontend:
+```bash
+# In backend directory
+uvicorn app.main:app --reload --port 8000
+```
 
-1. **Update `blMainService.ts`** - Replace mock data calls with actual API endpoints:
+### Project Structure
+- Each feature is self-contained with pages, components, services, and types
+- Shared components in `shared/components/` for reusability
+- API client in `services/apiClient.ts` handles all HTTP requests
+- TypeScript types ensure type safety across the application
+
+### Code Quality
+- ESLint for code quality
+- TypeScript for static type checking
+- Vite's HMR for fast development iteration
+
+## � Backend Integration
+
+The frontend is fully integrated with the FastAPI backend:
+
+**API Configuration** (`services/apiClient.ts`):
 ```typescript
-// Before (mock)
-return new Promise(resolve => setTimeout(() => resolve(mockData), 500));
-
-// After (real API)
-return apiClient.get('/api/bl/data');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 ```
 
-2. **Set API URL** - Configure `VITE_API_BASE_URL` in `.env`:
-```
-VITE_API_BASE_URL=https://your-api.com
+**Key API Endpoints Used**:
+- `GET /api/news?keyword={keyword}&limit={limit}` - Fetch news with BL views
+- `POST /api/news/{id}/add-to-recipe` - Add news view to current recipe
+- `POST /api/bl/parse-views` - Parse natural language to BL views
+- `GET /api/bl/calculate` - Execute Black-Litterman optimization
+- `POST /api/agent/run` - Execute agentic analysis
+- `GET /api/admin/stats` - Fetch LLM usage and cost data
+
+**Environment Variables** (`.env`):
+```bash
+VITE_API_BASE_URL=http://localhost:8000  # Development
+# VITE_API_BASE_URL=http://167.172.198.36  # Production
 ```
 
-3. **Update types** - Adjust TypeScript types in `types/blMainTypes.ts` to match your API schema
+**Service Layer Structure**:
+```typescript
+// Each feature has its own service file
+bl_main/services/blMainService.ts
+backtest/services/backtestService.ts
+agent/services/agentService.ts
+admin/services/adminService.ts
+```
 
 ## 🎨 Design System
 
-- **Color Palette:**
-  - Primary Blue: `#2563eb`
-  - Deep Indigo: `#4338ca` (accent actions)
-  - Background: `#f3f4f6`
-  - White Cards: `#ffffff`
-  - Text: `#1f2937`, `#374151`, `#6b7280`
-  
-- **Components:** Institutional, clean design with subtle shadows and rounded corners
-- **Interactions:** Collapsible sections, hover states, smooth transitions
-- **Charts:** Recharts library with consistent color scheme
+**Professional financial UI** with consistent styling:
+- **Colors**: Blue/Indigo accents (#2563eb, #4338ca), light backgrounds (#f3f4f6), dark text hierarchy
+- **Components**: Clean cards with subtle shadows and rounded corners, institutional design
+- **Charts**: Recharts library for line, bar, pie, scatter plots with consistent color scheme
+- **Tables**: Custom DataTable with sorting, filtering, inline editing
+- **Forms**: LabeledInput, ButtonGroup, Slider for user inputs
 
 ## 📦 Tech Stack
 
-- **Vite** - Fast build tool and dev server
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Recharts** - Data visualization
-- **CSS Modules** - Scoped styling
+**Core**:
+- React 18.3 with TypeScript 5.6
+- Vite 6.0 (build tool with HMR)
+- React Router 7.1
 
-## 🧪 Development
+**UI & Visualization**:
+- Recharts 2.15 (charts)
+- Lucide React (icons)
+- CSS Modules (scoped styling)
 
-The project uses:
-- ESLint for code quality
-- TypeScript for type checking
-- Vite's hot module replacement for fast development
+**HTTP & Data**:
+- Axios (API client)
+- TypeScript interfaces for type safety
 
 ## 📝 Notes
 
-- All mock data is in `src/features/bl_main/mock/mockBlMainData.json`
-- Portfolio Context defaults to collapsed; click header or "Change" button to expand
-- Create View component includes example inputs for both Asset and Factor views with copy-to-input functionality
-- Active Views displays 4 sample views with Type, Asset/Factor, Value, Direction, and Confidence columns
-- Domain logic functions are placeholders - implement actual calculations as needed
+- Backend API must be running on port 8000 for full functionality
+- Environment variable `VITE_API_BASE_URL` configures API endpoint
+- Each feature module has its own service layer for API communication
+- LLM usage tracking in Admin Console provides cost monitoring
 - The "Run Black-Litterman" button triggers `refetch()` which currently returns mock data
 - Components are prop-typed and ready for real data integration
 

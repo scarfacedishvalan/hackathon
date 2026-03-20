@@ -2,7 +2,7 @@ import React from 'react';
 import './AppLayout.css';
 import logoImage from '../assets/bl_logo.png';
 
-export type AppPage = 'bl_main' | 'backtest' | 'agent' | 'admin';
+export type AppPage = 'bl_main' | 'backtest' | 'agent' | 'admin' | 'about';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -15,6 +15,7 @@ const NAV_TABS: { id: AppPage; label: string }[] = [
   { id: 'backtest',  label: 'Backtest' },
   { id: 'agent',     label: 'Agent Analysis' },
   { id: 'admin',     label: 'Admin Console' },
+  { id: 'about',     label: 'About' },
 ];
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNavigate }) => {

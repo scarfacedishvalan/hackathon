@@ -1,0 +1,120 @@
+.about-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.about-page__header {
+  margin-bottom: 2rem;
+}
+
+.about-page__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #e0e6ed;
+  margin: 0 0 0.625rem 0;
+  letter-spacing: -0.01em;
+}
+
+.about-page__subtitle {
+  font-size: 1rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 680px;
+}
+
+/* ── Section Stack ───────────────────────────────────────────────── */
+.about-page__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Content Blocks inside a section ────────────────────────────── */
+.about-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.about-content__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.about-content__heading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin: 0 0 0.375rem 0;
+}
+
+.about-content p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.about-content__output {
+  color: #94a3b8;
+}
+
+.about-content__output strong {
+  color: #cbd5e1;
+}
+
+.about-content__closing {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Bullet lists ────────────────────────────────────────────────── */
+.about-content__list {
+  margin: 0.25rem 0 0.25rem 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #94a3b8;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.about-content__list li {
+  padding-left: 0.25rem;
+}
+
+/* ── Feature list (labeled callouts) ────────────────────────────── */
+.about-content__feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-left: 0;
+  list-style: none;
+  margin: 0.25rem 0;
+  border-left: 2px solid #334155;
+  padding-left: 1rem;
+}
+
+.about-content__feature {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.about-content__feature-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.about-content__feature-description {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.6;
+}
