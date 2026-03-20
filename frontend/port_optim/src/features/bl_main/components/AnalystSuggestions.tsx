@@ -11,10 +11,10 @@ interface AnalystSuggestionsProps {
 }
 
 export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAdded }) => {
-  const [allNews, setAllNews] = useState<AnalystNews[]>([]);
   const [filteredNews, setFilteredNews] = useState<AnalystNews[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingFetch, setLoadingFetch] = useState(false);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -22,10 +22,16 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
   // ── Load cached news on mount ─────────────────────────────────────────────
   const MAX_ROWS = 5;
 
-  const loadNews = useCallback(async () => {
-    const items = await newsService.getNews();
-    setAllNews(items);
-    setFilteredNews(items.slice(0, MAX_ROWS));
+  const loadNews = useCallback(async (keyword?: string) => {
+    setLoadingSearch(true);
+    try {
+      const items = await newsService.getNews(keyword, MAX_ROWS);
+      setFilteredNews(items);
+    } catch {
+      setError('Failed to load news.');
+    } finally {
+      setLoadingSearch(false);
+    }
   }, []);
 
   useEffect(() => { loadNews(); }, [loadNews]);
@@ -35,10 +41,9 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
     setLoadingFetch(true);
     setError(null);
     try {
-      const items = await newsService.fetchNews();
-      setAllNews(items);
-      setFilteredNews(items.slice(0, MAX_ROWS));
+      await newsService.fetchNews();
       setSearchTerm('');
+      await loadNews(); // Reload with no filter
     } catch (e) {
       setError('Failed to fetch news. Check the backend is running.');
     } finally {
@@ -46,23 +51,10 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
     }
   };
 
-  // ── Search / filter ──────────────────────────────────────────────────────
-  const handleSearch = () => {
-    if (!searchTerm.trim()) {
-      setFilteredNews(allNews.slice(0, MAX_ROWS));
-      return;
-    }
-    const term = searchTerm.toLowerCase();
-    setFilteredNews(
-      allNews
-        .filter(
-          (n) =>
-            n.heading.toLowerCase().includes(term) ||
-            n.translatedView.toLowerCase().includes(term) ||
-            (n.ticker ?? '').toLowerCase().includes(term),
-        )
-        .slice(0, MAX_ROWS),
-    );
+  // ── Search / filter (backend-side with fuzzy matching) ───────────────────
+  const handleSearch = async () => {
+    const keyword = searchTerm.trim() || undefined;
+    await loadNews(keyword);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -139,14 +131,15 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={handleKeyPress}
+            disabled={loadingSearch}
           />
-          <button className="search-btn" onClick={handleSearch}>
-            Search
+          <button className="search-btn" onClick={handleSearch} disabled={loadingSearch}>
+            {loadingSearch ? 'Searching…' : 'Search'}
           </button>
           <button
             className="refresh-btn"
             onClick={handleRefresh}
-            disabled={loadingFetch}
+            disabled={loadingFetch || loadingSearch}
           >
             {loadingFetch ? 'Fetching…' : 'Refresh News'}
           </button>
@@ -156,11 +149,13 @@ export const AnalystSuggestions: React.FC<AnalystSuggestionsProps> = ({ onViewAd
 
         {/* Table */}
         <div className="news-table-container">
-          {filteredNews.length === 0 ? (
+          {loadingSearch ? (
+            <div className="no-results">Loading news...</div>
+          ) : filteredNews.length === 0 ? (
             <div className="no-results">
-              {allNews.length === 0
-                ? 'No news loaded. Click "Refresh News" to fetch the latest articles.'
-                : `No news items found matching "${searchTerm}"`}
+              {searchTerm
+                ? `No news items found matching "${searchTerm}"`
+                : 'No news loaded. Click "Refresh News" to fetch the latest articles.'}
             </div>
           ) : (
             <Table data={filteredNews} columns={columns} />

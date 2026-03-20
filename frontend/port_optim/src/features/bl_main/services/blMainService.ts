@@ -140,9 +140,15 @@ export const universeService = {
 
 export const newsService = {
   /** GET /news — return cached items from news.json */
-  getNews: async (): Promise<AnalystNews[]> => {
+  getNews: async (keyword?: string, limit: number = 5): Promise<AnalystNews[]> => {
     try {
-      const response = await apiClient.get<{ items: AnalystNews[] }>('/news');
+      const params = new URLSearchParams();
+      if (keyword) params.append('keyword', keyword);
+      params.append('limit', limit.toString());
+      
+      const response = await apiClient.get<{ items: AnalystNews[] }>(
+        `/news?${params.toString()}`
+      );
       return response.items;
     } catch {
       return [];
