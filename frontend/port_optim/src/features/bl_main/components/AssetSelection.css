@@ -111,7 +111,7 @@
 /* Expanded split layout: checkboxes left, chart right */
 .universe-expanded-body {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 38% 62%;
   gap: 0;
   min-height: 320px;
 }
@@ -120,6 +120,7 @@
   border-right: 1px solid #334155;
   overflow-y: auto;
   max-height: 380px;
+  padding: 4px 0;
 }
 
 /* Expanded 2-column grid (inside the narrow left panel) */

@@ -26,7 +26,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNa
         <div className="header-content">
           <div className="header-branding">
             <img src={logoImage} alt="View Matrix Dashboard" className="app-logo" />
-            <h1 className="app-title">ViewMatrix: Express, Build, Optimize!</h1>
+            <div className="app-title-block">
+              <span className="app-title-main">ViewMatrix</span>
+              <span className="app-title-sub">Express views. Optimize portfolios.</span>
+            </div>
           </div>
         </div>
 
