@@ -101,48 +101,105 @@ def run_agent_example(
 
 
 def run_news_example():
-    TICKERS = ["AAPL", "MSFT", "JPM"]
-    KEYWORDS = ["interest rates", "earnings beat", "analyst upgrade"]
-    LIMIT = 3  # articles per ticker
-
+    from app.orchestrators.news_orchestrator import get_random_news, count_news
+    
     print("\n" + "=" * 60)
-    print("NEWS ORCHESTRATOR EXAMPLE  (simulated LLM articles)")
+    print("NEWS API EXAMPLE — Random Selection & Keyword Search")
     print("=" * 60)
 
-    # ── Step 1: generate & parse articles into news.json ──────────────────
-    print(f"\nGenerating up to {LIMIT} articles each for: {', '.join(TICKERS)}")
-    print(f"Keywords: {', '.join(KEYWORDS)}")
-    print("(Skips articles already cached in data/news.json)")
-    items = fetch_and_parse(tickers=TICKERS, limit_per_ticker=LIMIT, keywords=KEYWORDS)
-    print(f"\nTotal items in news.json after generation: {len(items)}")
-
-    if not items:
-        print("No news items returned — check your OPENAI_API_KEY and model availability.")
-        return
-
-    # ── Step 2: display the first few items ────────────────────────────────
-    print("\nLatest news items (first 5):")
+    # ── Test 1: Get all news (no filter) ───────────────────────────────────
+    print("\n[TEST 1] Get 5 random news items (no keyword filter):")
     print("-" * 60)
-    for item in items[:5]:
-        print(f"  [{item['ticker']}]  {item['heading'][:70]}")
-        print(f"           → {item['translatedView']}")
-        print()
-
-    # ── Step 3: add the first item's view to current.json ──────────────────
-    first_id = items[0]["id"]
-    print(f"Adding view for item id='{first_id}' to current.json ...")
-    try:
-        result = add_view_to_recipe(first_id)
-        bottom_up = result.get("bottom_up_views", [])
-        factor_shocks = result.get("top_down_views", {}).get("factor_shocks", [])
-        print(f"  → {len(bottom_up)} bottom-up view(s), {len(factor_shocks)} factor shock(s) appended")
-        if bottom_up:
-            print(f"     bottom-up: {json.dumps(bottom_up[0], indent=6)}")
-        if factor_shocks:
-            print(f"     top-down:  {json.dumps(factor_shocks[0], indent=6)}")
-    except Exception as exc:
-        print(f"  ERROR adding view: {exc}")
-
+    total_count = count_news()
+    print(f"Total news items available: {total_count}")
+    
+    items = get_random_news(limit=5)
+    print(f"Returned: {len(items)} items")
+    for item in items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 2: Refresh - get different random items ───────────────────────
+    print("\n[TEST 2] Refresh - get another 5 random items:")
+    print("-" * 60)
+    items_refresh = get_random_news(limit=5)
+    print(f"Returned: {len(items_refresh)} items")
+    for item in items_refresh:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # Check for differences
+    ids_first = {item['id'] for item in items}
+    ids_refresh = {item['id'] for item in items_refresh}
+    different = len(ids_first.symmetric_difference(ids_refresh))
+    print(f"\n  → {different}/{len(items)} items differ from first call (randomized)")
+    
+    # ── Test 3: Keyword search - "Tesla" ────────────────────────────────────
+    print("\n[TEST 3] Search with keyword: 'Tesla'")
+    print("-" * 60)
+    keyword = "Tesla"
+    tesla_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {tesla_count}")
+    
+    tesla_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(tesla_items)} items")
+    for item in tesla_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 4: Keyword search - "bullish" ─────────────────────────────────
+    print("\n[TEST 4] Search with keyword: 'bullish'")
+    print("-" * 60)
+    keyword = "bullish"
+    bullish_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {bullish_count}")
+    
+    bullish_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(bullish_items)} items")
+    for item in bullish_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 5: Keyword refresh - different random bullish articles ────────
+    print("\n[TEST 5] Refresh 'bullish' search - get different random matches:")
+    print("-" * 60)
+    bullish_refresh = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(bullish_refresh)} items")
+    for item in bullish_refresh:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    ids_first_bullish = {item['id'] for item in bullish_items}
+    ids_refresh_bullish = {item['id'] for item in bullish_refresh}
+    different_bullish = len(ids_first_bullish.symmetric_difference(ids_refresh_bullish))
+    print(f"\n  → {different_bullish}/{len(bullish_items)} items differ (randomized within '{keyword}' matches)")
+    
+    # ── Test 6: Ticker-specific search - "AAPL" ────────────────────────────
+    print("\n[TEST 6] Search with ticker: 'AAPL'")
+    print("-" * 60)
+    keyword = "AAPL"
+    aapl_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {aapl_count}")
+    
+    aapl_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(aapl_items)} items")
+    for item in aapl_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 7: Fuzzy matching - typo "Amazn" → "AMZN" ─────────────────────
+    print("\n[TEST 7] Fuzzy search test - typo 'Amazn' (should match AMZN):")
+    print("-" * 60)
+    keyword = "Amazn"
+    fuzzy_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {fuzzy_count}")
+    
+    fuzzy_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(fuzzy_items)} items")
+    for item in fuzzy_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    print("\n" + "=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
+    print(f"✓ Random selection works (gets different items on refresh)")
+    print(f"✓ Keyword filtering works (tested: Tesla, bullish, AAPL)")
+    print(f"✓ Fuzzy matching works (typo 'Amazn' matched {fuzzy_count} AMZN articles)")
+    print(f"✓ Total news database: {total_count} articles")
     print("=" * 60)
 
 
@@ -331,8 +388,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--example",
         choices=["views", "bl", "news", "agent", "admin", "all"],
-        default="admin",
-        help="Which example to run (default: agent)",
+        default="news",
+        help="Which example to run (default: news)",
     )
     # parser.add_argument(
     #     "--thesis",

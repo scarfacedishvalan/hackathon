@@ -11,6 +11,7 @@ quantified bottom_up_views / factor_shocks and appends them to current.json.
 
 import hashlib
 import json
+import logging
 import random
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
@@ -21,6 +22,8 @@ from app.services.news_api.fetch_news import fetch_news_for_stock
 from app.services.news_api.view_parser import parse_article_to_views_safe
 from app.services.bl_llm_parser.parser import BlackLittermanLLMParser
 from app.orchestrators import view_orchestrator
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -64,14 +67,14 @@ def save_news(items: List[Dict[str, Any]]) -> None:
         json.dump({"items": items}, f, indent=2, ensure_ascii=False)
 
 
-def _fuzzy_match(text: str, keyword: str, threshold: float = 0.6) -> bool:
+def _fuzzy_match(text: str, keyword: str, threshold: float = 0.75) -> bool:
     """
     Check if keyword fuzzy-matches text using SequenceMatcher.
     
     Args:
         text: Text to search in
         keyword: Keyword to search for
-        threshold: Similarity threshold (0.0 to 1.0, default 0.6)
+        threshold: Similarity threshold (0.0 to 1.0, default 0.75)
     
     Returns:
         True if keyword matches text with similarity >= threshold
@@ -88,12 +91,15 @@ def _fuzzy_match(text: str, keyword: str, threshold: float = 0.6) -> bool:
     if ratio >= threshold:
         return True
     
-    # Fuzzy match on individual words
+    # Fuzzy match on individual words (only similar length words to avoid false positives)
     words = text_lower.split()
+    keyword_len = len(keyword_lower)
     for word in words:
-        ratio = SequenceMatcher(None, word, keyword_lower).ratio()
-        if ratio >= threshold:
-            return True
+        # Only fuzzy match words of similar length (within 2 characters)
+        if abs(len(word) - keyword_len) <= 2:
+            ratio = SequenceMatcher(None, word, keyword_lower).ratio()
+            if ratio >= threshold:
+                return True
     
     return False
 
@@ -108,29 +114,46 @@ def get_random_news(keyword: Optional[str] = None, limit: int = 5) -> List[Dict[
     - ticker symbol
     
     Args:
-        keyword: Optional keyword to filter by (fuzzy matching with 60% threshold)
+        keyword: Optional keyword to filter by (fuzzy matching with 75% threshold)
         limit:   Maximum number of items to return (default: 5)
     
     Returns:
         List of random news items (up to *limit* items)
     """
     all_items = load_news()
+    logger.info(f"get_random_news: Loaded {len(all_items)} total items from news.json")
     
     # Filter by keyword if provided
     if keyword:
+        logger.info(f"get_random_news: Filtering by keyword='{keyword}' with 75% fuzzy threshold")
         filtered = [
             item for item in all_items
             if (_fuzzy_match(item.get("heading", ""), keyword) or
                 _fuzzy_match(item.get("translatedView", ""), keyword) or
                 _fuzzy_match(item.get("ticker", ""), keyword))
         ]
+        logger.info(f"get_random_news: Filtered to {len(filtered)} matching items")
+        
+        # Log ticker distribution of matches
+        if filtered:
+            tickers = {}
+            for item in filtered:
+                ticker = item.get("ticker", "Unknown")
+                tickers[ticker] = tickers.get(ticker, 0) + 1
+            logger.debug(f"get_random_news: Match distribution by ticker: {tickers}")
     else:
+        logger.info("get_random_news: No keyword filter, using all items")
         filtered = all_items
     
     # Return random sample
     if len(filtered) <= limit:
-        return filtered
-    return random.sample(filtered, limit)
+        result = filtered
+        logger.info(f"get_random_news: Returning all {len(result)} filtered items (≤ limit)")
+    else:
+        result = random.sample(filtered, limit)
+        logger.info(f"get_random_news: Randomly sampled {len(result)} items from {len(filtered)} matches")
+    
+    return result
 
 
 def count_news(keyword: Optional[str] = None) -> int:
@@ -146,14 +169,17 @@ def count_news(keyword: Optional[str] = None) -> int:
     all_items = load_news()
     
     if not keyword:
+        logger.debug(f"count_news: No keyword filter, returning total count: {len(all_items)}")
         return len(all_items)
     
-    return sum(
+    count = sum(
         1 for item in all_items
         if (_fuzzy_match(item.get("heading", ""), keyword) or
             _fuzzy_match(item.get("translatedView", ""), keyword) or
             _fuzzy_match(item.get("ticker", ""), keyword))
     )
+    logger.debug(f"count_news: keyword='{keyword}' matched {count} items")
+    return count
 
 
 # ---------------------------------------------------------------------------

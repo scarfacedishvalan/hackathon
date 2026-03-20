@@ -7,11 +7,13 @@ Exposes three endpoints for the Analyst Suggestions feature:
   POST /news/{id}/add-view — parse translatedView and append to current.json
 """
 
+import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from app.orchestrators import news_orchestrator
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/news", tags=["news"])
 
 
@@ -29,7 +31,7 @@ async def get_news(
     """
     Return random news items from news.json, optionally filtered by keyword.
 
-    Uses fuzzy matching (60% similarity threshold) to find articles where the
+    Uses fuzzy matching (75% similarity threshold) to find articles where the
     keyword appears in heading, translatedView, or ticker symbol.
 
     Query params:
@@ -61,13 +63,33 @@ async def get_news(
       - GET /news?keyword=AAPL  → 5 random AAPL articles
       - GET /news?keyword=bullish&limit=3  → 3 random bullish articles
     """
+    logger.info(f"GET /news - Request: keyword='{keyword}', limit={limit}")
+    
     items = news_orchestrator.get_random_news(keyword=keyword, limit=limit)
     total = news_orchestrator.count_news(keyword=keyword)
-    return {
+    
+    response = {
         "items": items,
         "total_available": total,
         "returned": len(items)
     }
+    
+    logger.info(
+        f"GET /news - Response: returned {len(items)} items, "
+        f"total_available={total}, "
+        f"keyword_filter={'YES' if keyword else 'NO'}"
+    )
+    
+    if items:
+        # Log first item preview for debugging
+        first_item = items[0]
+        logger.debug(
+            f"GET /news - First item: id={first_item['id'][:12]}..., "
+            f"ticker={first_item['ticker']}, "
+            f"heading='{first_item['heading'][:50]}...'"
+        )
+    
+    return response
 
 
 @router.post("/fetch")
