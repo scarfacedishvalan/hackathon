@@ -76,9 +76,9 @@ export const BLMainPage: React.FC = () => {
     parseView, parseViewLoading,
     deleteBottomUpView, deleteTopDownView,
     loadViews,
-    portfolios, portfoliosLoading,
-    createPortfolio, deletePortfolio,
-    selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio,
+    portfolios: _portfolios, portfoliosLoading: _portfoliosLoading,
+    createPortfolio: _createPortfolio, deletePortfolio: _deletePortfolio,
+    selectedPortfolioId: _selectedPortfolioId, setSelectedPortfolioId: _setSelectedPortfolioId, selectedPortfolio: _selectedPortfolio,
     refetch, runLoading,
     saveThesis, saveThesisLoading,
   } = useBLMain();

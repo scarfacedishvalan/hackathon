@@ -6,7 +6,7 @@ import type { SectorContribution, AllocationData } from '../types/blMainTypes';
  */
 export const computeReturnContribution = (
   allocation: AllocationData[],
-  sectorMapping?: Record<string, string>
+  _sectorMapping?: Record<string, string>
 ): SectorContribution[] => {
   // This is a placeholder for actual calculation
   // Real implementation would aggregate by sector using portfolio weights and expected returns
