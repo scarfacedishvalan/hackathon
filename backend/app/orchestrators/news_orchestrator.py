@@ -11,7 +11,9 @@ quantified bottom_up_views / factor_shocks and appends them to current.json.
 
 import hashlib
 import json
+import random
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -60,6 +62,98 @@ def save_news(items: List[Dict[str, Any]]) -> None:
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
     with open(_NEWS_PATH, "w", encoding="utf-8") as f:
         json.dump({"items": items}, f, indent=2, ensure_ascii=False)
+
+
+def _fuzzy_match(text: str, keyword: str, threshold: float = 0.6) -> bool:
+    """
+    Check if keyword fuzzy-matches text using SequenceMatcher.
+    
+    Args:
+        text: Text to search in
+        keyword: Keyword to search for
+        threshold: Similarity threshold (0.0 to 1.0, default 0.6)
+    
+    Returns:
+        True if keyword matches text with similarity >= threshold
+    """
+    text_lower = text.lower()
+    keyword_lower = keyword.lower()
+    
+    # Exact substring match (fast path)
+    if keyword_lower in text_lower:
+        return True
+    
+    # Fuzzy match on whole text
+    ratio = SequenceMatcher(None, text_lower, keyword_lower).ratio()
+    if ratio >= threshold:
+        return True
+    
+    # Fuzzy match on individual words
+    words = text_lower.split()
+    for word in words:
+        ratio = SequenceMatcher(None, word, keyword_lower).ratio()
+        if ratio >= threshold:
+            return True
+    
+    return False
+
+
+def get_random_news(keyword: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+    """
+    Return random news items from news.json, optionally filtered by keyword.
+    
+    Uses fuzzy matching to find articles where the keyword appears in:
+    - heading
+    - translatedView
+    - ticker symbol
+    
+    Args:
+        keyword: Optional keyword to filter by (fuzzy matching with 60% threshold)
+        limit:   Maximum number of items to return (default: 5)
+    
+    Returns:
+        List of random news items (up to *limit* items)
+    """
+    all_items = load_news()
+    
+    # Filter by keyword if provided
+    if keyword:
+        filtered = [
+            item for item in all_items
+            if (_fuzzy_match(item.get("heading", ""), keyword) or
+                _fuzzy_match(item.get("translatedView", ""), keyword) or
+                _fuzzy_match(item.get("ticker", ""), keyword))
+        ]
+    else:
+        filtered = all_items
+    
+    # Return random sample
+    if len(filtered) <= limit:
+        return filtered
+    return random.sample(filtered, limit)
+
+
+def count_news(keyword: Optional[str] = None) -> int:
+    """
+    Count total news items, optionally filtered by keyword.
+    
+    Args:
+        keyword: Optional keyword to filter by (fuzzy matching)
+    
+    Returns:
+        Count of matching items
+    """
+    all_items = load_news()
+    
+    if not keyword:
+        return len(all_items)
+    
+    return sum(
+        1 for item in all_items
+        if (_fuzzy_match(item.get("heading", ""), keyword) or
+            _fuzzy_match(item.get("translatedView", ""), keyword) or
+            _fuzzy_match(item.get("ticker", ""), keyword))
+    )
 
 
 # ---------------------------------------------------------------------------

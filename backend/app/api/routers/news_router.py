@@ -7,7 +7,7 @@ Exposes three endpoints for the Analyst Suggestions feature:
   POST /news/{id}/add-view — parse translatedView and append to current.json
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from app.orchestrators import news_orchestrator
@@ -22,9 +22,19 @@ class FetchNewsRequest(BaseModel):
 
 
 @router.get("")
-async def get_news():
+async def get_news(
+    keyword: Optional[str] = Query(None, description="Filter news by keyword (fuzzy searches heading, translatedView, ticker)"),
+    limit: int = Query(5, ge=1, le=50, description="Number of random items to return")
+):
     """
-    Return all cached news items from news.json.
+    Return random news items from news.json, optionally filtered by keyword.
+
+    Uses fuzzy matching (60% similarity threshold) to find articles where the
+    keyword appears in heading, translatedView, or ticker symbol.
+
+    Query params:
+      - keyword: Filter articles by keyword with fuzzy matching
+      - limit: Number of random items to return (default: 5, max: 50)
 
     Response shape::
 
@@ -40,11 +50,24 @@ async def get_news():
               "fetched_at": str
             },
             ...
-          ]
+          ],
+          "total_available": int,
+          "returned": int
         }
+    
+    Examples:
+      - GET /news               → 5 random articles
+      - GET /news?limit=10      → 10 random articles
+      - GET /news?keyword=AAPL  → 5 random AAPL articles
+      - GET /news?keyword=bullish&limit=3  → 3 random bullish articles
     """
-    items = news_orchestrator.load_news()
-    return {"items": items}
+    items = news_orchestrator.get_random_news(keyword=keyword, limit=limit)
+    total = news_orchestrator.count_news(keyword=keyword)
+    return {
+        "items": items,
+        "total_available": total,
+        "returned": len(items)
+    }
 
 
 @router.post("/fetch")
