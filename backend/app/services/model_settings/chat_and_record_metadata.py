@@ -31,7 +31,7 @@ CHAT_AND_RECORD_METADATA = {
         "parse_views": {
             "service": "black_litterman_parser",
             "operation": "parse_views",
-            "model": "gpt-4o",
+            "model": "gpt-4.1-mini",
             "temperature": 0,  # Deterministic: strict JSON schema output
         }
     },
@@ -39,7 +39,7 @@ CHAT_AND_RECORD_METADATA = {
         "parse_strategy": {
             "service": "recipe_interpreter_bt",
             "operation": "parse_strategy",
-            "model": "gpt-4o",
+            "model": "gpt-4.1-mini",
             "temperature": 0,  # Deterministic for backtesting strategies
         }
     },
@@ -53,7 +53,7 @@ CHAT_AND_RECORD_METADATA = {
         "generate_article": {
             "service": "news_api",
             "operation": "generate_article",
-            "model": "gpt-4o-mini",
+            "model": "gpt-4.1-mini",
             "temperature": 0.8,  # Some creativity for varied simulated articles
         },
     },
@@ -61,7 +61,7 @@ CHAT_AND_RECORD_METADATA = {
         "parse_stress_request": {
             "service": "bl_stress_parser",
             "operation": "parse_stress_request",
-            "model": "gpt-4o",
+            "model": "gpt-4.1-mini",
             "temperature": 0,  # Deterministic for stress test specification
         }
     },
