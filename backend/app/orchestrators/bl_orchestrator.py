@@ -305,6 +305,8 @@ def _capture_calculation_steps(
         "Q": Q,
         "Omega": Omega,
         "assets": universe,
+        "factor_matrix": factor_matrix,
+        "factor_names": factor_names,
         "tau_Sigma": tau_Sigma,
         "tau_Sigma_inv": tau_Sigma_inv,
         "Omega_inv": Omega_inv,

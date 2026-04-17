@@ -144,7 +144,32 @@ $$
     pi = calc_steps.get("pi")
     Omega = calc_steps.get("Omega")
     assets = calc_steps.get("assets", [])
-    
+    factor_matrix = calc_steps.get("factor_matrix")
+    factor_names = calc_steps.get("factor_names")
+
+    # Build factor exposure table as LaTeX array if available
+    factor_block = ""
+    if factor_matrix is not None and factor_names:
+        header = " & ".join([f"\\text{{{f}}}" for f in factor_names])
+        rows = []
+        for i, asset in enumerate(assets):
+            vals = " & ".join([f"{v:.2f}" for v in factor_matrix[i]])
+            rows.append(f"\\text{{{asset}}} & {vals}")
+        table_body = " \\\\ ".join(rows)
+        factor_block = f"""
+$$
+\\text{{Factor Exposure Matrix }} B \\text{{ (rows = assets, cols = factors)}}
+$$
+
+$$
+\\begin{{array}}{{l{'c' * len(factor_names)}}}
+\\text{{Asset}} & {header} \\\\
+\\hline
+{table_body}
+\\end{{array}}
+$$
+"""
+
     inputs_latex = f"""
 $$
 \\tau \\text{{ (Uncertainty Scaling Parameter)}} = {tau}
@@ -161,7 +186,7 @@ $$
 $$
 {series_to_latex(pi, with_names=True) if isinstance(pi, pd.Series) else np_to_latex(pi)}
 $$
-
+{factor_block}
 $$
 \\Sigma \\text{{ (Covariance Matrix)}}
 $$
