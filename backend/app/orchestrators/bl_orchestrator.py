@@ -443,7 +443,7 @@ def _compute_chart_data(
     ]
 
     # ── Calculation Steps for LaTeX Display ───────────────────────────────────
-    
+    market_context = recipe.get("market_context", {})
     factor_matrix_ctx = np.array([
         market_context["factor_exposures"][asset] for asset in universe
     ]) if "factor_exposures" in market_context else None
