@@ -174,6 +174,13 @@
       "expected_return": 0.02,
       "confidence": 0.6,
       "label": "Strong earnings report for Microsoft"
+    },
+    {
+      "type": "absolute",
+      "asset": "JNJ",
+      "expected_return": 0.03,
+      "confidence": 0.6,
+      "label": "JNJ absolute return view"
     }
   ],
   "top_down_views": {

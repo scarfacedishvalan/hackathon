@@ -358,7 +358,7 @@ def run_view_parsing_example():
     SAMPLE_TEXTS = [
         # "Apple will strongly outperform Google by 5% next quarter.",
         # "I'm bearish on Tesla, expecting a 4% decline. Rising interest rates are a concern.",
-        # "Microsoft looks neutral; no strong view.",
+        "JNJ will return 3%",
         "Technology sector will outperform by 4%. AI adoption driving growth across the sector."
     ]
 
@@ -535,7 +535,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--example",
         choices=["views", "bl", "news", "news_views", "agent", "admin", "all"],
-        default="news",
+        default="views",
         help="Which example to run (default: news)",
     )
     # parser.add_argument(

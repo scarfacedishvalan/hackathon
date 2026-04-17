@@ -25,13 +25,23 @@ _METADATA_PATH = _PARSER_DIR / "sector_metadata.json"
 
 # Recipes are stored in backend/data/bl_recipes/
 _RECIPES_DIR = Path(__file__).resolve().parents[2] / "data" / "bl_recipes"
+_MARKET_DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "market_data.json"
 
 # ---------------------------------------------------------------------------
-# Defaults
+# Defaults — loaded from market_data.json at import time
 # ---------------------------------------------------------------------------
 
-DEFAULT_ASSETS: List[str] = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"]
-DEFAULT_FACTORS: List[str] = ["Rates", "Growth", "Value", "Momentum"]
+def _load_market_data_defaults() -> tuple:
+    try:
+        with open(_MARKET_DATA_PATH, "r", encoding="utf-8") as f:
+            md = json.load(f)
+        assets = md.get("all_assets") or ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"]
+        factors = md.get("factor_names") or ["Rates", "Growth", "Value", "Momentum"]
+        return assets, factors
+    except (FileNotFoundError, json.JSONDecodeError):
+        return ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"], ["Rates", "Growth", "Value", "Momentum"]
+
+DEFAULT_ASSETS, DEFAULT_FACTORS = _load_market_data_defaults()
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -298,7 +308,6 @@ def get_model_parameters() -> Dict[str, float]:
     Falls back to ``market_data.json`` model_defaults when ``current.json``
     is absent or has no ``model_parameters`` key.
     """
-    defaults: Dict[str, float] = {"tau": 0.05, "risk_aversion": 2.5, "risk_free_rate": 0.02}
     try:
         recipe = load_recipe("current")
         params = recipe.get("model_parameters")
@@ -306,7 +315,14 @@ def get_model_parameters() -> Dict[str, float]:
             return {k: float(v) for k, v in params.items()}
     except FileNotFoundError:
         pass
-    return defaults
+    # Fall back to market_data.json model_defaults
+    try:
+        with open(_MARKET_DATA_PATH, "r", encoding="utf-8") as f:
+            md = json.load(f)
+        defaults = md.get("model_defaults", {})
+        return {k: float(v) for k, v in defaults.items() if k in ("tau", "risk_aversion", "risk_free_rate")}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"tau": 0.05, "risk_aversion": 1.0, "risk_free_rate": 0.02}
 
 
 def update_model_parameters(params: Dict[str, float]) -> None:
