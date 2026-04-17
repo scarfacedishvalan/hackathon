@@ -79,11 +79,12 @@ export const BLMainPage: React.FC = () => {
     portfolios: _portfolios, portfoliosLoading: _portfoliosLoading,
     createPortfolio: _createPortfolio, deletePortfolio: _deletePortfolio,
     selectedPortfolioId: _selectedPortfolioId, setSelectedPortfolioId: _setSelectedPortfolioId, selectedPortfolio: _selectedPortfolio,
-    refetch, runLoading,
+    refetch, runLoading, error,
     saveThesis, saveThesisLoading,
   } = useBLMain();
 
   const [thesisModalOpen, setThesisModalOpen] = useState(false);
+  const [dismissedError, setDismissedError] = useState<Error | null>(null);
   const [viewInput, setViewInput] = useState('');
 
   if (loading) {
@@ -127,6 +128,20 @@ export const BLMainPage: React.FC = () => {
           {runLoading ? 'Running…' : 'Run Black-Litterman'}
         </Button>
       </div>
+
+      {/* Optimization error banner */}
+      {error && error !== dismissedError && (
+        <div className="bl-error-banner" role="alert">
+          <span className="bl-error-banner__message">{error.message}</span>
+          <button
+            className="bl-error-banner__dismiss"
+            onClick={() => setDismissedError(error)}
+            aria-label="Dismiss error"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* 1. Asset Universe */}
       <AssetSelection />
