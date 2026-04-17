@@ -17,12 +17,12 @@ import BLCalculationSteps from '../components/BLCalculationSteps';
 import './BLMainPage.css';
 
 const ASSET_VIEW_EXAMPLES = [
-  'AAPL will outperform MSFT by 3% over the next quarter.',
+  'AAPL is expected to return 8% over the next year.',
   'TSLA expected to underperform JPM by 5%.',
 ];
 
 const FACTOR_VIEW_EXAMPLES = [
-  'Growth factor is expected to deliver a +4% annualized excess return (factor premium) over cash',
+  'I am bullish on tech and bearish on Consumer Staples.',
   'Rising rates will strongly benefit financials and slightly hurt defensives.',
 ];
 
