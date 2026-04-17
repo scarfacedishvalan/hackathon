@@ -225,6 +225,15 @@ def _portfolio_metrics(
     rolling_max = portfolio_eq.cummax()
     drawdown_pct = (portfolio_eq - rolling_max) / rolling_max * 100
     max_dd = float(drawdown_pct.min())
+    avg_dd = round(float(drawdown_pct.mean()), 4)
+
+    # Sortino: annualised return / annualised downside deviation
+    downside_returns = daily_returns[daily_returns < 0]
+    downside_std = float(downside_returns.std() * (252 ** 0.5)) if len(downside_returns) > 1 else 0.0
+    sortino = round((ann_return / 100 - risk_free_rate) / downside_std, 4) if downside_std > 1e-9 else None
+
+    # Calmar: annualised return / abs(max drawdown)
+    calmar = round((ann_return / 100) / abs(max_dd / 100), 4) if max_dd < -1e-9 else None
 
     return {
         "start":               str(portfolio_eq.index[0]),
@@ -236,12 +245,12 @@ def _portfolio_metrics(
         "annualReturnPct":     round(ann_return, 4),
         "annualVolatilityPct": round(ann_vol, 4),
         "sharpeRatio":         round(sharpe, 4),
+        "sortinoRatio":        sortino,
+        "calmarRatio":         calmar,
         "maxDrawdownPct":      round(max_dd, 4),
-        # Not computable at portfolio level without merged trade log
+        "avgDrawdownPct":      avg_dd,
+        # Trade-level fields patched in by run_portfolio_recipe after aggregation
         "buyHoldReturnPct":    None,
-        "sortinoRatio":        None,
-        "calmarRatio":         None,
-        "avgDrawdownPct":      None,
         "numTrades":           None,
         "winRatePct":          None,
         "bestTradePct":        None,
@@ -367,6 +376,24 @@ def run_portfolio_recipe(
     # Apply strategy params once (mutates class vars — same as single-asset path)
     strategy_cls = _apply_strategy_params(_STRATEGY_MAP[strategy_name], strategy_params)
 
+    # 4b. Compute equal-weight buy-and-hold return for the universe
+    bh_return: float | None = None
+    try:
+        bh_series = price_df[assets].copy()
+        if start_ts is not None:
+            bh_series = bh_series.loc[bh_series.index >= start_ts]
+        if end_ts is not None:
+            bh_series = bh_series.loc[bh_series.index <= end_ts]
+        bh_series = bh_series.dropna(how="all")
+        if len(bh_series) >= 2:
+            entry = bh_series.apply(lambda col: col.dropna().iloc[0])
+            exit_ = bh_series.apply(lambda col: col.dropna().iloc[-1])
+            asset_bh_returns = (exit_ / entry - 1) * 100
+            bh_return = round(float(asset_bh_returns.mean()), 4)
+            logger.info(f"B&H return computed: {bh_return:.2f}%")
+    except Exception as exc:
+        logger.warning(f"Could not compute B&H return: {exc}")
+
     # 5. Per-asset backtest loop
     logger.info(f"Starting backtests for {n} assets with {strategy_name}")
     raw_stats: dict[str, Any] = {}
@@ -401,6 +428,21 @@ def run_portfolio_recipe(
         if eq is not None:
             equity_series[asset] = eq
 
+    # 6b. Aggregate trade-level metrics across all assets
+    all_pnl = [t["pnl"] for ts_list in asset_trades.values() for t in ts_list if t["pnl"] is not None]
+    all_ret = [t["returnPct"] for ts_list in asset_trades.values() for t in ts_list if t["returnPct"] is not None]
+    num_trades_total = sum(len(v) for v in asset_trades.values())
+    win_count = sum(1 for p in all_pnl if p > 0)
+    win_sum = sum(p for p in all_pnl if p > 0)
+    lose_sum = abs(sum(p for p in all_pnl if p < 0))
+    portfolio_num_trades: int | None = num_trades_total if num_trades_total > 0 else None
+    portfolio_win_rate: float | None = round(win_count / num_trades_total * 100, 4) if num_trades_total > 0 else None
+    portfolio_profit_factor: float | None = round(win_sum / lose_sum, 4) if lose_sum > 1e-9 else None
+    portfolio_best_trade: float | None = round(max(all_ret), 4) if all_ret else None
+    portfolio_worst_trade: float | None = round(min(all_ret), 4) if all_ret else None
+    portfolio_avg_trade: float | None = round(sum(all_ret) / len(all_ret), 4) if all_ret else None
+    logger.info(f"Trade aggregates: {num_trades_total} trades, win rate {portfolio_win_rate}%, PF {portfolio_profit_factor}")
+
     # 7. Combine into portfolio equity curve
     logger.info("Combining asset backtests into portfolio equity curve...")
     portfolio_equity: pd.Series | None = None
@@ -423,6 +465,15 @@ def run_portfolio_recipe(
     logger.info("Computing portfolio-level metrics...")
     metrics = _portfolio_metrics(portfolio_equity, cash) if portfolio_equity is not None else {}
     equity_curve = _downsample_equity(portfolio_equity) if portfolio_equity is not None else []
+    metrics.update({
+        "buyHoldReturnPct": bh_return,
+        "numTrades":        portfolio_num_trades,
+        "winRatePct":       portfolio_win_rate,
+        "profitFactor":     portfolio_profit_factor,
+        "bestTradePct":     portfolio_best_trade,
+        "worstTradePct":    portfolio_worst_trade,
+        "avgTradePct":      portfolio_avg_trade,
+    })
     
     logger.info(f"Portfolio backtest complete: {metrics.get('returnPct', 0):.2f}% return, "
                f"{metrics.get('sharpeRatio', 0):.2f} Sharpe, {metrics.get('maxDrawdownPct', 0):.2f}% max DD")
