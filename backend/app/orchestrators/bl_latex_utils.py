@@ -253,14 +253,11 @@ $$
                 P_row = view.get('P_row')
                 Q_val = view.get('Q_val')
                 confidence = view.get('confidence')
-                row_idx = view.get('row_index', len(bottom_up_views) + i - 1)
-                
-                # Format P row with asset labels
-                p_row_latex = _format_p_row_with_assets(P_row, assets)
-                
-                # Get Omega value safely
-                omega_val = Omega[row_idx, row_idx] if Omega is not None and row_idx < Omega.shape[0] else 0.0
-                
+
+                # P_row is now the factor exposure column B[:,factor_idx]
+                # Format it to show which assets carry this factor and by how much
+                p_row_latex = _format_p_row_with_assets(P_row, assets, precision=2)
+
                 view_translation_parts.append(f"""
 $$
 \\text{{Factor View {i}: {label}}}
@@ -271,19 +268,15 @@ $$
 $$
 
 $$
-\\text{{(Factor exposures for all assets)}}
+\\text{{Factor exposure vector }} B[:,\\text{{{factor}}}] = {p_row_latex}
 $$
 
 $$
-P[{row_idx}] = {p_row_latex}
+\\Delta f = {Q_val:+.4f}
 $$
 
 $$
-Q[{row_idx}] = {Q_val:.4f}
-$$
-
-$$
-\\text{{Confidence: {confidence:.2f}}} \\quad \\Rightarrow \\quad \\Omega[{row_idx},{row_idx}] = {omega_val:.6f}
+\\text{{Confidence: {confidence:.2f}}} \\quad \\Rightarrow \\quad \\Delta\\mu = B[:,\\text{{{factor}}}] \\times {Q_val:+.4f}
 $$
                 """)
         

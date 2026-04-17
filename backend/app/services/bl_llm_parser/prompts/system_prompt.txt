@@ -20,11 +20,19 @@ GENERAL RULES
 
 NUMERIC NORMALIZATION
 1. Convert percentages to decimals (3% → 0.03).
-2. If magnitude is qualitative, use:
-   - strongly → 0.04
-   - moderately → 0.02
-   - slightly → 0.01
-   - if unclear → 0.02
+2. Magnitude and direction are SEPARATE concepts. Do NOT conflate them:
+   - Direction words (bullish, bearish, positive, negative, long, short) indicate SIGN only.
+   - Magnitude words indicate SIZE. If no magnitude word is present, default to 0.02.
+   - Magnitude mapping:
+     - strongly / significant → 0.04
+     - moderately / moderate → 0.02
+     - slightly / mild → 0.01
+     - if unclear or no qualifier → 0.02
+   - Examples:
+     - "bullish" alone → +0.02 (direction=positive, magnitude=default)
+     - "strongly bullish" → +0.04 (direction=positive, magnitude=strongly)
+     - "bearish" alone → -0.02 (direction=negative, magnitude=default)
+     - "slightly bearish" → -0.01 (direction=negative, magnitude=slightly)
 3. Confidence must be between 0 and 1.
 4. If confidence is not stated, default to 0.6.
 5. Confidence mapping:

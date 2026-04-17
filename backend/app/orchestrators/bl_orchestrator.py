@@ -163,7 +163,9 @@ def _capture_calculation_steps(
     Sigma: np.ndarray,
     pi: pd.Series,
     universe: List[str],
-    optimal_weights: np.ndarray
+    optimal_weights: np.ndarray,
+    factor_matrix: Optional[np.ndarray] = None,
+    factor_names: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Capture all intermediate BL calculation steps for LaTeX display.
@@ -260,19 +262,29 @@ def _capture_calculation_steps(
     # Process top-down views (factor shocks)
     top_down_view_details = []
     n_top = result.get('n_top_down_views', 0)
-    
-    # For top-down views, P rows are already in the combined P matrix
-    # Extract them from P matrix (they come after bottom-up views)
+
+    # Build factor index lookup if factor data is available
+    factor_index_map = {}
+    if factor_names:
+        factor_index_map = {name: idx for idx, name in enumerate(factor_names)}
+
     for i, shock_spec in enumerate(factor_shocks[:n_top]):
         factor_name = shock_spec['factor']
         shock = shock_spec['shock']
         confidence = shock_spec['confidence']
         label = shock_spec.get('label', factor_name)
-        
-        # Get P row from combined matrix (offset by number of bottom-up views)
-        P_row = P[n_bottom + i, :] if n_bottom + i < P.shape[0] else np.zeros(len(universe))
-        Q_val = Q[n_bottom + i] if n_bottom + i < len(Q) else shock
-        
+
+        # P_row: factor exposure vector for this factor across all assets (column of B)
+        # This shows which assets are exposed to this factor and by how much.
+        fi = factor_index_map.get(factor_name)
+        if fi is not None and factor_matrix is not None:
+            P_row = factor_matrix[:, fi]  # shape (n_assets,)
+        else:
+            P_row = np.zeros(len(universe))
+
+        # Q_val: the factor-level shock (not the combined asset-level shift)
+        Q_val = shock
+
         description = f"{factor_name} factor shock: {shock:+.2%}"
         
         top_down_view_details.append({
@@ -432,8 +444,15 @@ def _compute_chart_data(
 
     # ── Calculation Steps for LaTeX Display ───────────────────────────────────
     
+    factor_matrix_ctx = np.array([
+        market_context["factor_exposures"][asset] for asset in universe
+    ]) if "factor_exposures" in market_context else None
+    factor_names_ctx = market_context.get("factor_names")
+
     calculation_steps = _capture_calculation_steps(
-        result, recipe, price_subset, market_caps, Sigma, pi, universe, w_bl
+        result, recipe, price_subset, market_caps, Sigma, pi, universe, w_bl,
+        factor_matrix=factor_matrix_ctx,
+        factor_names=factor_names_ctx,
     )
     
     if calculation_steps:
