@@ -288,15 +288,10 @@ def run_bl_recipe(
     else:
         print(f"\n  ⚠️  WARNING: No views available after filtering")
         print(f"     Proceeding with market equilibrium (no BL adjustment)")
-        # Return market equilibrium results
-        ef = EfficientFrontier(
-            pi, 
-            cov_matrix, 
-            weight_bounds=(0.0, 1.0),
-            risk_free_rate=risk_free_rate
-        )
-        ef.max_sharpe()
-        weights = ef.clean_weights()
+        # No views → posterior == prior, so use market-cap equilibrium weights
+        # (max_sharpe on π would give different weights → Prior ≠ Posterior on chart)
+        total_cap = sum(filtered_market_caps.values())
+        weights = {asset: filtered_market_caps[asset] / total_cap for asset in universe}
         
         return {
             'recipe_name': recipe['meta']['name'],
