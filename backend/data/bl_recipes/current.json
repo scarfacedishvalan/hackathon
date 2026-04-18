@@ -164,8 +164,8 @@
     {
       "type": "absolute",
       "asset": "AMZN",
-      "expected_return": 0.055,
-      "confidence": 0.6,
+      "expected_return": 0.049999999999999996,
+      "confidence": 0.49999999999999994,
       "label": "Credit modest upside"
     },
     {

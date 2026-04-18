@@ -186,6 +186,41 @@ async def update_universe(body: dict):
     return {"assets": saved}
 
 
+@router.patch("/bottom_up/{index}")
+async def patch_bottom_up_view(index: int, body: dict):
+    """
+    Update the numeric fields of the bottom-up view at *index* in current.json.
+
+    Accepted body keys: ``value`` (maps to expected_return or
+    expected_outperformance), ``confidence``.
+    Returns the refreshed adapted views.
+    """
+    try:
+        view_orchestrator.update_bottom_up_view(index, body)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except IndexError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return _adapt_views(view_orchestrator.load_recipe("current"))
+
+
+@router.patch("/top_down/{index}")
+async def patch_top_down_view(index: int, body: dict):
+    """
+    Update the numeric fields of the factor shock at *index* in current.json.
+
+    Accepted body keys: ``shock``, ``confidence``.
+    Returns the refreshed adapted views.
+    """
+    try:
+        view_orchestrator.update_top_down_view(index, body)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except IndexError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return _adapt_views(view_orchestrator.load_recipe("current"))
+
+
 @router.delete("/bottom_up/{index}", status_code=204)
 async def delete_bottom_up_view(index: int):
     """

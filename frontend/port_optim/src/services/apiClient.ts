@@ -58,6 +58,24 @@ export const apiClient = {
     return response.json();
   },
 
+  async patch<T>(endpoint: string, data: unknown): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `API Error: ${response.statusText}`);
+    }
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    return response.json();
+  },
+
   async delete(endpoint: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',

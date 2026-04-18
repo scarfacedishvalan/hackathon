@@ -425,6 +425,63 @@ def delete_top_down_view(index: int) -> None:
     save_recipe(recipe, "current")
 
 
+def update_bottom_up_view(index: int, fields: Dict[str, Any]) -> None:
+    """
+    Update numeric fields of the bottom-up view at *index* in current.json.
+
+    Accepted fields: ``value`` (maps to expected_return or
+    expected_outperformance depending on view type), ``confidence``.
+
+    Raises:
+        FileNotFoundError: if current.json does not exist.
+        IndexError: if *index* is out of range.
+    """
+    recipe = load_recipe("current")
+    views: List[Dict[str, Any]] = recipe.get("bottom_up_views", [])
+    if index < 0 or index >= len(views):
+        raise IndexError(
+            f"bottom_up_views index {index} out of range (len={len(views)})"
+        )
+    view = views[index]
+    if "value" in fields:
+        v = float(fields["value"])
+        if view.get("type") == "relative":
+            view["expected_outperformance"] = v
+        else:
+            view["expected_return"] = v
+    if "confidence" in fields:
+        view["confidence"] = max(0.0, min(1.0, float(fields["confidence"])))
+    recipe["bottom_up_views"] = views
+    save_recipe(recipe, "current")
+
+
+def update_top_down_view(index: int, fields: Dict[str, Any]) -> None:
+    """
+    Update numeric fields of the factor shock at *index* in current.json.
+
+    Accepted fields: ``shock``, ``confidence``.
+
+    Raises:
+        FileNotFoundError: if current.json does not exist.
+        IndexError: if *index* is out of range.
+    """
+    recipe = load_recipe("current")
+    shocks: List[Dict[str, Any]] = (
+        recipe.get("top_down_views", {}).get("factor_shocks", [])
+    )
+    if index < 0 or index >= len(shocks):
+        raise IndexError(
+            f"factor_shocks index {index} out of range (len={len(shocks)})"
+        )
+    shock = shocks[index]
+    if "shock" in fields:
+        shock["shock"] = float(fields["shock"])
+    if "confidence" in fields:
+        shock["confidence"] = max(0.0, min(1.0, float(fields["confidence"])))
+    recipe.setdefault("top_down_views", {})["factor_shocks"] = shocks
+    save_recipe(recipe, "current")
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------

@@ -81,6 +81,7 @@ export const BLMainPage: React.FC = () => {
     selectedPortfolioId: _selectedPortfolioId, setSelectedPortfolioId: _setSelectedPortfolioId, selectedPortfolio: _selectedPortfolio,
     refetch, runLoading, error,
     saveThesis, saveThesisLoading,
+    updateBottomUpView, updateTopDownView,
   } = useBLMain();
 
   const [thesisModalOpen, setThesisModalOpen] = useState(false);
@@ -162,6 +163,8 @@ export const BLMainPage: React.FC = () => {
         topDownViews={topDownViews}
         onDeleteBottomUp={deleteBottomUpView}
         onDeleteTopDown={deleteTopDownView}
+        onUpdateBottomUp={updateBottomUpView}
+        onUpdateTopDown={updateTopDownView}
       />
 
       {/* 3. Allocation Chart + Portfolio Stats */}

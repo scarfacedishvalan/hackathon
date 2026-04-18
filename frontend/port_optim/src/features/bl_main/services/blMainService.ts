@@ -81,6 +81,22 @@ export const blMainService = {
     await apiClient.delete(`/views/top_down/${index}`);
   },
 
+  /** PATCH /views/bottom_up/{index} — update value and/or confidence in current.json */
+  updateBottomUpView: async (
+    index: number,
+    fields: { value?: number; confidence?: number },
+  ): Promise<void> => {
+    await apiClient.patch(`/views/bottom_up/${index}`, fields);
+  },
+
+  /** PATCH /views/top_down/{index} — update shock and/or confidence in current.json */
+  updateTopDownView: async (
+    index: number,
+    fields: { shock?: number; confidence?: number },
+  ): Promise<void> => {
+    await apiClient.patch(`/views/top_down/${index}`, fields);
+  },
+
   /**
    * Re-run BL optimisation and return fresh chart data merged with mock.
    * Called by the "Run" / "Refresh" button in the UI.
