@@ -36,10 +36,10 @@ def _load_market_data_defaults() -> tuple:
         with open(_MARKET_DATA_PATH, "r", encoding="utf-8") as f:
             md = json.load(f)
         assets = md.get("all_assets") or ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"]
-        factors = md.get("factor_names") or ["Rates", "Growth", "Value", "Momentum"]
+        factors = md.get("factor_names") or ["Growth", "Financial", "Defensive", "Market", "Rates"]
         return assets, factors
     except (FileNotFoundError, json.JSONDecodeError):
-        return ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"], ["Rates", "Growth", "Value", "Momentum"]
+        return ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"], ["Growth", "Financial", "Defensive", "Market", "Rates"]
 
 DEFAULT_ASSETS, DEFAULT_FACTORS = _load_market_data_defaults()
 
