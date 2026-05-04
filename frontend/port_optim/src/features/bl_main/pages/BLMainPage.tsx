@@ -18,7 +18,7 @@ import './BLMainPage.css';
 
 const ASSET_VIEW_EXAMPLES = [
   'AAPL is expected to return 8% over the next year.',
-  'TSLA expected to underperform JPM by 5%.',
+  'MSFT expected to underperform AMZN by 5%.',
 ];
 
 const FACTOR_VIEW_EXAMPLES = [
