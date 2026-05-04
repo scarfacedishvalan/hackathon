@@ -248,12 +248,17 @@ def _append_views_to_current(new_result: Dict[str, Any]) -> None:
     save_recipe(existing, "current")
 
 
-def save_thesis(name: str) -> str:
+def save_thesis(name: str, description: Optional[str] = None) -> str:
     """
     Persist a named copy of ``current.json`` in the same directory.
 
     The file name is derived from *name* by lower-casing and replacing
     every run of whitespace / special characters with ``_``.
+
+    Args:
+        name:        Human-readable thesis name.
+        description: Optional free-text description.  When omitted a default
+                     is generated from the view count and save date.
 
     Returns:
         The sanitised file stem used (without ``.json``).
@@ -262,10 +267,18 @@ def save_thesis(name: str) -> str:
         FileNotFoundError: If ``current.json`` does not exist.
     """
     import re
+    from datetime import datetime as _dt
     recipe = load_recipe("current")  # raises FileNotFoundError if absent
     safe = re.sub(r"[^a-z0-9]+", "_", name.lower().strip()).strip("_") or "thesis"
+    n_bottom = len(recipe.get("bottom_up_views", []))
+    n_factor = len(recipe.get("top_down_views", {}).get("factor_shocks", []))
+    default_description = (
+        f"{n_bottom} bottom-up view{'s' if n_bottom != 1 else ''}"
+        + (f", {n_factor} factor shock{'s' if n_factor != 1 else ''}" if n_factor else "")
+        + f" — saved {_dt.now().strftime('%b %d, %Y')}"
+    )
     recipe.setdefault("meta", {})["name"] = name
-    recipe["meta"].pop("description", None)
+    recipe["meta"]["description"] = (description.strip() if description and description.strip() else default_description)
     save_recipe(recipe, safe)
     return safe
 

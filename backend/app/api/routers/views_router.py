@@ -158,8 +158,9 @@ async def save_thesis(body: dict):
     name = (body.get("name") or "").strip()
     if not name:
         raise HTTPException(status_code=422, detail="'name' must be a non-empty string")
+    description = body.get("description") or None
     try:
-        saved = view_orchestrator.save_thesis(name)
+        saved = view_orchestrator.save_thesis(name, description=description)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     return {"name": saved}
