@@ -26,7 +26,9 @@ frontend/port_optim/
 │   ├── features/              # Feature modules (each with pages, components, services, types)
 │   │   ├── bl_main/           # Black-Litterman optimization
 │   │   │   ├── pages/BLMainPage.tsx
-│   │   │   ├── components/    # AssetSelection, ActiveViews, ModelControls, Charts
+│   │   │   ├── components/    # AssetSelection, ActiveViews, ModelControls, Charts, BLCalculationSteps, PortfolioStats
+│   │   │   ├── context/BLMainContext.tsx
+│   │   │   ├── hooks/useBLMain.ts
 │   │   │   ├── services/blMainService.ts
 │   │   │   ├── domain/        # Business logic (contribution calculations)
 │   │   │   └── types/blMainTypes.ts
@@ -34,16 +36,26 @@ frontend/port_optim/
 │   │   ├── backtest/          # Portfolio backtesting
 │   │   │   ├── pages/BacktestPage.tsx
 │   │   │   ├── components/RecipeDisplay.tsx
-│   │   │   └── services/backtestService.ts
+│   │   │   ├── context/BacktestContext.tsx
+│   │   │   ├── hooks/useBacktest.ts
+│   │   │   ├── services/backtestService.ts
+│   │   │   └── types/backtestTypes.ts
 │   │   │
 │   │   ├── agent/             # AI agent analysis
 │   │   │   ├── pages/AgentPage.tsx
 │   │   │   ├── components/    # AuditDisplay, StepTimeline
-│   │   │   └── services/agentService.ts
+│   │   │   ├── services/agentService.ts
+│   │   │   └── types/agentTypes.ts
 │   │   │
-│   │   └── admin/             # LLM usage and cost tracking
-│   │       ├── pages/AdminPage.tsx
-│   │       └── services/adminService.ts
+│   │   ├── admin/             # LLM usage and cost tracking
+│   │   │   ├── pages/AdminPage.tsx
+│   │   │   ├── services/adminService.ts
+│   │   │   └── types/adminTypes.ts
+│   │   │
+│   │   └── about/             # About / project info page
+│   │       ├── pages/AboutPage.tsx
+│   │       ├── components/AboutSection.tsx
+│   │       └── index.ts
 │   │
 │   ├── shared/                # Reusable components
 │   │   └── components/        # Card, Table, Button, ChartWrapper
@@ -71,6 +83,8 @@ Complete BL workflow with asset selection, view management, and portfolio analys
 - **BLAllocationChart.tsx**: Bar chart comparing prior vs posterior allocations
 - **EfficientFrontierChart.tsx**: Scatter plot with prior and posterior portfolios
 - **TopDownContribution.tsx**: Factor contribution analysis with return/risk toggle
+- **BLCalculationSteps.tsx**: Step-by-step display of BL matrix construction and calculations
+- **PortfolioStats.tsx**: Portfolio performance statistics summary panel
 - **domain/**: Pure functions for contribution calculations (return, risk, top-down aggregation)
 
 ### **backtest/** - Portfolio Backtesting
@@ -89,6 +103,11 @@ Agentic workflow for stress testing and scenario exploration.
 LLM usage tracking and cost monitoring dashboard.
 - **AdminPage.tsx**: Aggregated view of token usage, costs, and service breakdowns
 - **adminService.ts**: API client for admin console data
+
+### **about/** - About Page
+Project information and attribution page.
+- **AboutPage.tsx**: Main about page composing multiple AboutSection panels
+- **AboutSection.tsx**: Reusable panel component with title, optional image, and content body
 
 ## 🎯 Key Features
 
