@@ -4,6 +4,9 @@ Runs against either:
 - an in-process FastAPI app (default), or
 - a running server (pass --base-url http://localhost:8000)
 
+Only hits GET endpoints that don't require an OPENAI_API_KEY / LLM call,
+so this can run without any external dependency.
+
 Usage (from repo root):
   python backend/test_api_endpoints.py
   python backend/test_api_endpoints.py --base-url http://localhost:8000
@@ -43,54 +46,54 @@ def _pretty(obj: Any) -> str:
         return repr(obj)
 
 
-def _check_root(get_json: Callable[[str], Any]) -> None:
-    data = get_json("/")
-    _assert(isinstance(data, dict), f"GET / should return JSON object, got: {type(data)}")
-    _assert(data.get("status") == "running", f"GET / status mismatch: {_pretty(data)}")
-
-
-def _check_health(get_json: Callable[[str], Any]) -> None:
-    data = get_json("/health")
-    _assert(isinstance(data, dict), f"GET /health should return JSON object, got: {type(data)}")
-    _assert(data.get("status") == "healthy", f"GET /health status mismatch: {_pretty(data)}")
-
-
-def _check_generate_recipe(
-    post_json: Callable[[str, dict[str, Any]], Any],
-) -> str:
-    payload = {
-        "stocks": ["SPY"],
-        # Keep it blank to avoid hitting any optional LLM/OpenAI dependency.
-        "strategy_instruction": "",
-    }
-
-    data = post_json("/api/generate-recipe", payload)
-    _assert(isinstance(data, dict), f"POST /api/generate-recipe should return JSON object, got: {type(data)}")
-
-    for key in ("recipe", "equity_curve", "summary_stats"):
+def _check_views_current(get_json: Callable[[str], Any]) -> None:
+    data = get_json("/views/current")
+    _assert(isinstance(data, dict), f"GET /views/current should return JSON object, got: {type(data)}")
+    for key in ("bottom_up", "top_down"):
         _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
-
-    _assert(isinstance(data["recipe"], dict), f"recipe should be object: {type(data['recipe'])}")
-    _assert(isinstance(data["equity_curve"], list), f"equity_curve should be list: {type(data['equity_curve'])}")
-    _assert(isinstance(data["summary_stats"], dict), f"summary_stats should be object: {type(data['summary_stats'])}")
-
-    plot_url = data.get("plot_url")
-    _assert(isinstance(plot_url, str) and plot_url.startswith("/plots/"), f"plot_url missing/invalid: {_pretty(data)}")
-
-    return plot_url
+        _assert(isinstance(data[key], list), f"'{key}' should be a list: {_pretty(data)}")
 
 
-def _check_plot_fetch(get_text: Callable[[str], tuple[int, str, dict[str, str]]], plot_url: str) -> None:
-    status_code, text, headers = get_text(plot_url)
-    _assert(status_code == 200, f"GET {plot_url} expected 200, got {status_code}")
+def _check_model_parameters(get_json: Callable[[str], Any]) -> None:
+    data = get_json("/views/model_parameters")
+    _assert(isinstance(data, dict), f"GET /views/model_parameters should return JSON object, got: {type(data)}")
 
-    content_type = headers.get("content-type", "")
-    _assert(
-        "text/html" in content_type or plot_url.endswith(".html"),
-        f"Expected HTML content for {plot_url}, got content-type={content_type!r}",
-    )
 
-    _assert("<html" in text.lower(), f"Plot HTML response didn't look like HTML")
+def _check_constraints(get_json: Callable[[str], Any]) -> None:
+    data = get_json("/views/constraints")
+    _assert(isinstance(data, dict), f"GET /views/constraints should return JSON object, got: {type(data)}")
+
+
+def _check_universe(get_json: Callable[[str], Any]) -> None:
+    data = get_json("/views/universe")
+    _assert(isinstance(data, dict), f"GET /views/universe should return JSON object, got: {type(data)}")
+    _assert("assets" in data, f"Missing key 'assets' in response: {_pretty(data)}")
+    _assert(isinstance(data["assets"], list), f"'assets' should be a list: {_pretty(data)}")
+
+
+def _check_portfolios(get_json: Callable[[str], Any]) -> None:
+    data = get_json("/portfolios")
+    _assert(isinstance(data, list), f"GET /portfolios should return a JSON array, got: {type(data)}")
+
+
+def _check_backtest_theses(get_json: Callable[[str], Any]) -> None:
+    data = get_json("/backtest/theses")
+    _assert(isinstance(data, list), f"GET /backtest/theses should return a JSON array, got: {type(data)}")
+
+
+def _check_admin_console(get_json: Callable[[str], Any]) -> None:
+    data = get_json("/admin/console")
+    _assert(isinstance(data, dict), f"GET /admin/console should return JSON object, got: {type(data)}")
+
+
+def _run_all_checks(get_json: Callable[[str], Any]) -> None:
+    _check_views_current(get_json)
+    _check_model_parameters(get_json)
+    _check_constraints(get_json)
+    _check_universe(get_json)
+    _check_portfolios(get_json)
+    _check_backtest_theses(get_json)
+    _check_admin_console(get_json)
 
 
 def _run_inprocess() -> int:
@@ -105,7 +108,7 @@ def _run_inprocess() -> int:
         )
         return 1
 
-    from app.main import PLOTS_DIR, app
+    from app.main import app
 
     client = TestClient(app)
 
@@ -114,25 +117,9 @@ def _run_inprocess() -> int:
         _assert(resp.status_code == 200, f"GET {path} -> {resp.status_code}: {resp.text}")
         return resp.json()
 
-    def post_json(path: str, payload: dict[str, Any]) -> Any:
-        resp = client.post(path, json=payload)
-        _assert(resp.status_code == 200, f"POST {path} -> {resp.status_code}: {resp.text}")
-        return resp.json()
-
-    def get_text(path: str) -> tuple[int, str, dict[str, str]]:
-        resp = client.get(path)
-        return resp.status_code, resp.text, {k.lower(): v for k, v in resp.headers.items()}
-
-    _check_root(get_json)
-    _check_health(get_json)
-    plot_url = _check_generate_recipe(post_json)
-    _check_plot_fetch(get_text, plot_url)
-
-    plot_path = PLOTS_DIR / Path(plot_url).name
-    _assert(plot_path.exists(), f"Expected plot file to exist on disk: {plot_path}")
+    _run_all_checks(get_json)
 
     print("OK: in-process API tests passed")
-    print(f"- Plot saved: {plot_path}")
     return 0
 
 
@@ -144,22 +131,9 @@ def _run_live(base_url: str) -> int:
         _assert(resp.status_code == 200, f"GET {path} -> {resp.status_code}: {resp.text}")
         return resp.json()
 
-    def post_json(path: str, payload: dict[str, Any]) -> Any:
-        resp = requests.post(base_url + path, json=payload, timeout=300)
-        _assert(resp.status_code == 200, f"POST {path} -> {resp.status_code}: {resp.text}")
-        return resp.json()
-
-    def get_text(path: str) -> tuple[int, str, dict[str, str]]:
-        resp = requests.get(base_url + path, timeout=60)
-        return resp.status_code, resp.text, {k.lower(): v for k, v in resp.headers.items()}
-
-    _check_root(get_json)
-    _check_health(get_json)
-    plot_url = _check_generate_recipe(post_json)
-    _check_plot_fetch(get_text, plot_url)
+    _run_all_checks(get_json)
 
     print("OK: live-server API tests passed")
-    print(f"- Plot URL: {base_url}{plot_url}")
     return 0
 
 
