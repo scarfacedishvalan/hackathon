@@ -19,6 +19,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
+import numpy as np
+
 _MARKET_DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "market_data.json"
 
 
@@ -100,3 +102,41 @@ def _write_atomic(data: Dict[str, Any]) -> None:
     with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     os.replace(tmp_path, _MARKET_DATA_PATH)
+
+
+def get_correlation_matrix(frequency: int = 252) -> Dict[str, Any]:
+    """
+    Compute the annualized asset correlation matrix and per-asset annualized
+    volatility from real price history.
+
+    Note: the correlation matrix itself is mathematically invariant to
+    ``frequency`` (it cancels out of the covariance-to-correlation
+    normalisation) — only ``annualized_volatility`` changes with it.
+
+    Args:
+        frequency: Periods per year used to annualize (252 daily, 52 weekly, 12 monthly).
+
+    Returns:
+        ``{"assets": [...], "frequency": int, "correlation": [[...]], "annualized_volatility": {asset: float}}``
+    """
+    if frequency <= 0:
+        raise ValueError("frequency must be positive")
+
+    # Imported lazily: load_data.py imports this module, so a top-level
+    # import here would create a circular import.
+    from app.services.price_data.load_data import load_market_data
+    from app.services.bl_engine.bl_standalone import sample_cov
+
+    price_df, *_ = load_market_data()
+    cov = sample_cov(price_df, frequency)
+    assets = cov.columns.tolist()
+    std = np.sqrt(np.diag(cov.values))
+    corr = cov.values / np.outer(std, std)
+    np.fill_diagonal(corr, 1.0)
+
+    return {
+        "assets": assets,
+        "frequency": frequency,
+        "correlation": corr.tolist(),
+        "annualized_volatility": dict(zip(assets, std.tolist())),
+    }

@@ -5,7 +5,6 @@ import './MarketCapsTable.css';
 
 interface MarketCapsTableProps {
   data: MarketAssumptions;
-  onChange: (asset: string, value: number) => void;
 }
 
 interface Row {
@@ -13,7 +12,7 @@ interface Row {
   cap: number;
 }
 
-export const MarketCapsTable: React.FC<MarketCapsTableProps> = ({ data, onChange }) => {
+export const MarketCapsTable: React.FC<MarketCapsTableProps> = ({ data }) => {
   const rows: Row[] = data.all_assets.map((asset) => ({ asset, cap: data.market_caps[asset] ?? 0 }));
 
   const columns: Column<Row>[] = [
@@ -21,16 +20,7 @@ export const MarketCapsTable: React.FC<MarketCapsTableProps> = ({ data, onChange
     {
       key: 'cap',
       header: 'Market Cap ($B)',
-      render: (row) => (
-        <input
-          type="number"
-          min="0"
-          step="1"
-          value={row.cap}
-          onChange={(e) => onChange(row.asset, Number(e.target.value))}
-          className="assumptions-input"
-        />
-      ),
+      render: (row) => row.cap.toLocaleString(),
     },
   ];
 

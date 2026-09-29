@@ -1,17 +1,14 @@
-.assumptions-input {
-  width: 100%;
-  max-width: 140px;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 4px;
-  color: #e0e6ed;
-  padding: 4px 8px;
-  font-size: 13px;
+.market-caps-table .data-table {
+  font-size: 12.5px;
 }
 
-.assumptions-input:focus {
-  outline: none;
-  border-color: #6366f1;
+.market-caps-table .data-table th {
+  font-size: 11px;
+  padding: 8px 14px;
+}
+
+.market-caps-table .data-table td {
+  padding: 6px 12px;
 }
 
 .market-caps-table th:first-child,

@@ -111,6 +111,16 @@ def _check_market_data_assumptions(
         put_json("/market-data/assumptions", {"market_caps": {asset: original_cap}})
 
 
+def _check_market_data_correlations(get_json: Callable[[str], Any]) -> None:
+    """GET /market-data/correlations shape check — requires real price history (SQLite)."""
+    data = get_json("/market-data/correlations?frequency=52")
+    _assert(isinstance(data, dict), f"GET /market-data/correlations should return JSON object, got: {type(data)}")
+    for key in ("assets", "frequency", "correlation", "annualized_volatility"):
+        _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
+    n = len(data["assets"])
+    _assert(len(data["correlation"]) == n, f"correlation matrix row count mismatch: {_pretty(data)}")
+
+
 def _run_all_checks(
     get_json: Callable[[str], Any],
     put_json: Callable[[str, dict[str, Any]], Any],
@@ -123,6 +133,7 @@ def _run_all_checks(
     _check_backtest_theses(get_json)
     _check_admin_console(get_json)
     _check_market_data_assumptions(get_json, put_json)
+    _check_market_data_correlations(get_json)
 
 
 # ---------------------------------------------------------------------------

@@ -31,3 +31,16 @@ async def update_assumptions(body: dict):
         return market_data_orchestrator.update_assumptions(body)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.get("/correlations")
+async def get_correlations(frequency: int = 252):
+    """
+    Return the annualized asset correlation matrix and per-asset annualized
+    volatility, computed from real price history. Read-only — not yet
+    linked to any persisted assumptions.
+    """
+    try:
+        return market_data_orchestrator.get_correlation_matrix(frequency)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))

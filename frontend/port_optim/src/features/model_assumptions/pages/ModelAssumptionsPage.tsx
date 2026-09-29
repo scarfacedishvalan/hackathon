@@ -1,12 +1,14 @@
 import React from 'react';
-import { Card } from '@shared/components';
 import { useModelAssumptions } from '../hooks/useModelAssumptions';
+import { CollapsibleSection } from '../components/CollapsibleSection';
 import { MarketCapsTable } from '../components/MarketCapsTable';
 import { FactorExposuresGrid } from '../components/FactorExposuresGrid';
+import { PriceHistoryPanel } from '../components/PriceHistoryPanel';
+import { CorrelationsPanel } from '../components/CorrelationsPanel';
 import './ModelAssumptionsPage.css';
 
 export const ModelAssumptionsPage: React.FC = () => {
-  const { data, loading, error, saving, updateMarketCap, updateFactorExposure } = useModelAssumptions();
+  const { data, loading, error, saving, updateFactorExposure } = useModelAssumptions();
 
   if (loading) return <div className="model-assumptions-page">Loading…</div>;
   if (error && !data) return <div className="model-assumptions-page model-assumptions-error">Failed to load: {error}</div>;
@@ -21,13 +23,21 @@ export const ModelAssumptionsPage: React.FC = () => {
       </p>
       {error && <p className="model-assumptions-error">{error}</p>}
 
-      <Card title="Market Caps">
-        <MarketCapsTable data={data} onChange={updateMarketCap} />
-      </Card>
-
-      <Card title="Factor Exposures">
+      <CollapsibleSection title="Factor Exposures">
         <FactorExposuresGrid data={data} onChange={updateFactorExposure} />
-      </Card>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Market Caps">
+        <MarketCapsTable data={data} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Price History">
+        <PriceHistoryPanel tickers={data.all_assets} />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Correlations">
+        <CorrelationsPanel />
+      </CollapsibleSection>
     </div>
   );
 };

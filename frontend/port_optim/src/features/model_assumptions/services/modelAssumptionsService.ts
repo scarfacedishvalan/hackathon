@@ -1,5 +1,5 @@
 import { apiClient } from '../../../services/apiClient';
-import type { MarketAssumptions, MarketAssumptionsUpdate } from '../types/modelAssumptionsTypes';
+import type { MarketAssumptions, MarketAssumptionsUpdate, CorrelationMatrix } from '../types/modelAssumptionsTypes';
 
 export const modelAssumptionsService = {
   /** GET /market-data/assumptions — all_assets, factor_names, market_caps, factor_exposures. */
@@ -9,4 +9,8 @@ export const modelAssumptionsService = {
   /** PUT /market-data/assumptions — persists partial edits to market_data.json. */
   updateAssumptions: (payload: MarketAssumptionsUpdate): Promise<MarketAssumptions> =>
     apiClient.put<MarketAssumptions>('/market-data/assumptions', payload),
+
+  /** GET /market-data/correlations — annualized correlation matrix + per-asset volatility. */
+  getCorrelations: (frequency: number): Promise<CorrelationMatrix> =>
+    apiClient.get<CorrelationMatrix>(`/market-data/correlations?frequency=${frequency}`),
 };
