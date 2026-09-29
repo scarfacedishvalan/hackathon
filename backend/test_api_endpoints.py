@@ -4,12 +4,15 @@ Runs against either:
 - an in-process FastAPI app (default), or
 - a running server (pass --base-url http://localhost:8000)
 
-Only hits GET endpoints that don't require an OPENAI_API_KEY / LLM call,
-so this can run without any external dependency.
+By default only hits GET endpoints that don't require an OPENAI_API_KEY /
+LLM call. Pass --with-llm to additionally exercise the LLM-backed endpoints
+(/backtest/parse, /views/parse) with real OpenAI calls — requires
+OPENAI_API_KEY to be set and will incur API cost.
 
 Usage (from repo root):
   python backend/test_api_endpoints.py
   python backend/test_api_endpoints.py --base-url http://localhost:8000
+  python backend/test_api_endpoints.py --base-url http://localhost:8000 --with-llm
 
 Exit code:
   0 on success, 1 on failure.
@@ -86,7 +89,42 @@ def _check_admin_console(get_json: Callable[[str], Any]) -> None:
     _assert(isinstance(data, dict), f"GET /admin/console should return JSON object, got: {type(data)}")
 
 
-def _run_all_checks(get_json: Callable[[str], Any]) -> None:
+def _check_market_data_assumptions(
+    get_json: Callable[[str], Any],
+    put_json: Callable[[str, dict[str, Any]], Any],
+) -> None:
+    """GET /market-data/assumptions shape check + PUT round-trip (restores original value)."""
+    data = get_json("/market-data/assumptions")
+    _assert(isinstance(data, dict), f"GET /market-data/assumptions should return JSON object, got: {type(data)}")
+    for key in ("all_assets", "factor_names", "market_caps", "factor_exposures"):
+        _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
+
+    asset = data["all_assets"][0]
+    original_cap = data["market_caps"][asset]
+    try:
+        updated = put_json("/market-data/assumptions", {"market_caps": {asset: original_cap + 1}})
+        _assert(
+            updated["market_caps"][asset] == original_cap + 1,
+            f"PUT did not persist updated market cap for {asset}: {_pretty(updated)}",
+        )
+    finally:
+        put_json("/market-data/assumptions", {"market_caps": {asset: original_cap}})
+
+
+def _check_market_data_correlations(get_json: Callable[[str], Any]) -> None:
+    """GET /market-data/correlations shape check — requires real price history (SQLite)."""
+    data = get_json("/market-data/correlations?frequency=52")
+    _assert(isinstance(data, dict), f"GET /market-data/correlations should return JSON object, got: {type(data)}")
+    for key in ("assets", "frequency", "correlation", "annualized_volatility"):
+        _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
+    n = len(data["assets"])
+    _assert(len(data["correlation"]) == n, f"correlation matrix row count mismatch: {_pretty(data)}")
+
+
+def _run_all_checks(
+    get_json: Callable[[str], Any],
+    put_json: Callable[[str, dict[str, Any]], Any],
+) -> None:
     _check_views_current(get_json)
     _check_model_parameters(get_json)
     _check_constraints(get_json)
@@ -94,9 +132,58 @@ def _run_all_checks(get_json: Callable[[str], Any]) -> None:
     _check_portfolios(get_json)
     _check_backtest_theses(get_json)
     _check_admin_console(get_json)
+    _check_market_data_assumptions(get_json, put_json)
+    _check_market_data_correlations(get_json)
 
 
-def _run_inprocess() -> int:
+# ---------------------------------------------------------------------------
+# LLM-backed checks (opt-in via --with-llm; real OpenAI calls, real cost)
+# ---------------------------------------------------------------------------
+
+def _check_llm_backtest_parse(post_json: Callable[[str, dict[str, Any]], Any]) -> None:
+    """POST /backtest/parse — real LLM call, no side effects."""
+    payload = {"text": "Backtest SmaCross on AAPL daily from 2021-01-01 to 2022-01-01"}
+    data = post_json("/backtest/parse", payload)
+    _assert(isinstance(data, dict), f"POST /backtest/parse should return JSON object, got: {type(data)}")
+    _assert("strategy_name" in data, f"Missing key 'strategy_name' in response: {_pretty(data)}")
+
+
+def _check_llm_views_parse(
+    get_json: Callable[[str], Any],
+    post_json: Callable[[str, dict[str, Any]], Any],
+    delete_call: Callable[[str], None],
+) -> None:
+    """POST /views/parse — real LLM call that appends to current.json; cleans up after itself."""
+    before = get_json("/views/current")
+    n_bottom_before = len(before.get("bottom_up", []))
+    n_top_before = len(before.get("top_down", []))
+
+    payload = {"text": "AAPL is expected to outperform the market by 5% with high confidence"}
+    data = post_json("/views/parse", payload)
+    _assert(isinstance(data, dict), f"POST /views/parse should return JSON object, got: {type(data)}")
+    _assert("view" in data, f"Missing key 'view' in response: {_pretty(data)}")
+
+    after = get_json("/views/current")
+    n_bottom_after = len(after.get("bottom_up", []))
+    n_top_after = len(after.get("top_down", []))
+
+    # Clean up any newly appended rows (delete from the end so indices stay valid).
+    for i in range(n_bottom_after - 1, n_bottom_before - 1, -1):
+        delete_call(f"/views/bottom_up/{i}")
+    for i in range(n_top_after - 1, n_top_before - 1, -1):
+        delete_call(f"/views/top_down/{i}")
+
+
+def _run_llm_checks(
+    get_json: Callable[[str], Any],
+    post_json: Callable[[str, dict[str, Any]], Any],
+    delete_call: Callable[[str], None],
+) -> None:
+    _check_llm_backtest_parse(post_json)
+    _check_llm_views_parse(get_json, post_json, delete_call)
+
+
+def _run_inprocess(with_llm: bool) -> int:
     try:
         from fastapi.testclient import TestClient  # type: ignore
     except Exception as exc:
@@ -117,13 +204,29 @@ def _run_inprocess() -> int:
         _assert(resp.status_code == 200, f"GET {path} -> {resp.status_code}: {resp.text}")
         return resp.json()
 
-    _run_all_checks(get_json)
+    def post_json(path: str, payload: dict[str, Any]) -> Any:
+        resp = client.post(path, json=payload)
+        _assert(resp.status_code == 200, f"POST {path} -> {resp.status_code}: {resp.text}")
+        return resp.json()
 
-    print("OK: in-process API tests passed")
+    def put_json(path: str, payload: dict[str, Any]) -> Any:
+        resp = client.put(path, json=payload)
+        _assert(resp.status_code == 200, f"PUT {path} -> {resp.status_code}: {resp.text}")
+        return resp.json()
+
+    def delete_call(path: str) -> None:
+        resp = client.delete(path)
+        _assert(resp.status_code in (200, 204), f"DELETE {path} -> {resp.status_code}: {resp.text}")
+
+    _run_all_checks(get_json, put_json)
+    if with_llm:
+        _run_llm_checks(get_json, post_json, delete_call)
+
+    print("OK: in-process API tests passed" + (" (incl. LLM calls)" if with_llm else ""))
     return 0
 
 
-def _run_live(base_url: str) -> int:
+def _run_live(base_url: str, with_llm: bool) -> int:
     base_url = base_url.rstrip("/")
 
     def get_json(path: str) -> Any:
@@ -131,9 +234,25 @@ def _run_live(base_url: str) -> int:
         _assert(resp.status_code == 200, f"GET {path} -> {resp.status_code}: {resp.text}")
         return resp.json()
 
-    _run_all_checks(get_json)
+    def post_json(path: str, payload: dict[str, Any]) -> Any:
+        resp = requests.post(base_url + path, json=payload, timeout=300)
+        _assert(resp.status_code == 200, f"POST {path} -> {resp.status_code}: {resp.text}")
+        return resp.json()
 
-    print("OK: live-server API tests passed")
+    def put_json(path: str, payload: dict[str, Any]) -> Any:
+        resp = requests.put(base_url + path, json=payload, timeout=60)
+        _assert(resp.status_code == 200, f"PUT {path} -> {resp.status_code}: {resp.text}")
+        return resp.json()
+
+    def delete_call(path: str) -> None:
+        resp = requests.delete(base_url + path, timeout=60)
+        _assert(resp.status_code in (200, 204), f"DELETE {path} -> {resp.status_code}: {resp.text}")
+
+    _run_all_checks(get_json, put_json)
+    if with_llm:
+        _run_llm_checks(get_json, post_json, delete_call)
+
+    print("OK: live-server API tests passed" + (" (incl. LLM calls)" if with_llm else ""))
     return 0
 
 
@@ -145,13 +264,18 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="If provided, test against a running server (e.g. http://localhost:8000). Otherwise uses in-process TestClient.",
     )
+    parser.add_argument(
+        "--with-llm",
+        action="store_true",
+        help="Also exercise LLM-backed endpoints (/backtest/parse, /views/parse) with real OpenAI calls. Requires OPENAI_API_KEY.",
+    )
 
     args = parser.parse_args(argv)
 
     try:
         if args.base_url:
-            return _run_live(args.base_url)
-        return _run_inprocess()
+            return _run_live(args.base_url, args.with_llm)
+        return _run_inprocess(args.with_llm)
     except AssertionError as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1
