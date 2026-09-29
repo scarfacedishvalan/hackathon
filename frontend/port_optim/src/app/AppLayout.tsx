@@ -2,7 +2,7 @@ import React from 'react';
 import './AppLayout.css';
 import logoImage from '../assets/bl_logo.png';
 
-export type AppPage = 'bl_main' | 'backtest' | 'agent' | 'admin';
+export type AppPage = 'bl_main' | 'backtest' | 'agent' | 'admin' | 'model_assumptions' | 'about';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -15,6 +15,8 @@ const NAV_TABS: { id: AppPage; label: string }[] = [
   { id: 'backtest',  label: 'Backtest' },
   { id: 'agent',     label: 'Agent Analysis' },
   { id: 'admin',     label: 'Admin Console' },
+  { id: 'model_assumptions', label: 'Model Assumptions' },
+  { id: 'about',     label: 'About' },
 ];
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNavigate }) => {
@@ -25,7 +27,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activePage, onNa
         <div className="header-content">
           <div className="header-branding">
             <img src={logoImage} alt="View Matrix Dashboard" className="app-logo" />
-            <h1 className="app-title">ViewMatrix: Express, Build, Optimize!</h1>
+            <div className="app-title-block">
+              <span className="app-title-main">ViewMatrix</span>
+              <span className="app-title-sub">Express views. Optimize portfolios.</span>
+            </div>
           </div>
         </div>
 

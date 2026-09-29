@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.services.bl_llm_parser.parser import BlackLittermanLLMParser
+from app.orchestrators.market_data_orchestrator import load_market_data_raw
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -27,11 +28,19 @@ _METADATA_PATH = _PARSER_DIR / "sector_metadata.json"
 _RECIPES_DIR = Path(__file__).resolve().parents[2] / "data" / "bl_recipes"
 
 # ---------------------------------------------------------------------------
-# Defaults
+# Defaults — loaded from market_data.json at import time
 # ---------------------------------------------------------------------------
 
-DEFAULT_ASSETS: List[str] = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"]
-DEFAULT_FACTORS: List[str] = ["Rates", "Growth", "Value", "Momentum"]
+def _load_market_data_defaults() -> tuple:
+    try:
+        md = load_market_data_raw()
+        assets = md.get("all_assets") or ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"]
+        factors = md.get("factor_names") or ["Growth", "Financial", "Defensive", "Market", "Rates"]
+        return assets, factors
+    except (FileNotFoundError, json.JSONDecodeError):
+        return ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"], ["Growth", "Financial", "Defensive", "Market", "Rates"]
+
+DEFAULT_ASSETS, DEFAULT_FACTORS = _load_market_data_defaults()
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -238,12 +247,17 @@ def _append_views_to_current(new_result: Dict[str, Any]) -> None:
     save_recipe(existing, "current")
 
 
-def save_thesis(name: str) -> str:
+def save_thesis(name: str, description: Optional[str] = None) -> str:
     """
     Persist a named copy of ``current.json`` in the same directory.
 
     The file name is derived from *name* by lower-casing and replacing
     every run of whitespace / special characters with ``_``.
+
+    Args:
+        name:        Human-readable thesis name.
+        description: Optional free-text description.  When omitted a default
+                     is generated from the view count and save date.
 
     Returns:
         The sanitised file stem used (without ``.json``).
@@ -252,10 +266,18 @@ def save_thesis(name: str) -> str:
         FileNotFoundError: If ``current.json`` does not exist.
     """
     import re
+    from datetime import datetime as _dt
     recipe = load_recipe("current")  # raises FileNotFoundError if absent
     safe = re.sub(r"[^a-z0-9]+", "_", name.lower().strip()).strip("_") or "thesis"
+    n_bottom = len(recipe.get("bottom_up_views", []))
+    n_factor = len(recipe.get("top_down_views", {}).get("factor_shocks", []))
+    default_description = (
+        f"{n_bottom} bottom-up view{'s' if n_bottom != 1 else ''}"
+        + (f", {n_factor} factor shock{'s' if n_factor != 1 else ''}" if n_factor else "")
+        + f" — saved {_dt.now().strftime('%b %d, %Y')}"
+    )
     recipe.setdefault("meta", {})["name"] = name
-    recipe["meta"].pop("description", None)
+    recipe["meta"]["description"] = (description.strip() if description and description.strip() else default_description)
     save_recipe(recipe, safe)
     return safe
 
@@ -298,7 +320,6 @@ def get_model_parameters() -> Dict[str, float]:
     Falls back to ``market_data.json`` model_defaults when ``current.json``
     is absent or has no ``model_parameters`` key.
     """
-    defaults: Dict[str, float] = {"tau": 0.05, "risk_aversion": 2.5, "risk_free_rate": 0.02}
     try:
         recipe = load_recipe("current")
         params = recipe.get("model_parameters")
@@ -306,7 +327,13 @@ def get_model_parameters() -> Dict[str, float]:
             return {k: float(v) for k, v in params.items()}
     except FileNotFoundError:
         pass
-    return defaults
+    # Fall back to market_data.json model_defaults
+    try:
+        md = load_market_data_raw()
+        defaults = md.get("model_defaults", {})
+        return {k: float(v) for k, v in defaults.items() if k in ("tau", "risk_aversion", "risk_free_rate")}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {"tau": 0.05, "risk_aversion": 1.0, "risk_free_rate": 0.02}
 
 
 def update_model_parameters(params: Dict[str, float]) -> None:
@@ -405,6 +432,63 @@ def delete_top_down_view(index: int) -> None:
             f"factor_shocks index {index} out of range (len={len(shocks)})"
         )
     shocks.pop(index)
+    recipe.setdefault("top_down_views", {})["factor_shocks"] = shocks
+    save_recipe(recipe, "current")
+
+
+def update_bottom_up_view(index: int, fields: Dict[str, Any]) -> None:
+    """
+    Update numeric fields of the bottom-up view at *index* in current.json.
+
+    Accepted fields: ``value`` (maps to expected_return or
+    expected_outperformance depending on view type), ``confidence``.
+
+    Raises:
+        FileNotFoundError: if current.json does not exist.
+        IndexError: if *index* is out of range.
+    """
+    recipe = load_recipe("current")
+    views: List[Dict[str, Any]] = recipe.get("bottom_up_views", [])
+    if index < 0 or index >= len(views):
+        raise IndexError(
+            f"bottom_up_views index {index} out of range (len={len(views)})"
+        )
+    view = views[index]
+    if "value" in fields:
+        v = float(fields["value"])
+        if view.get("type") == "relative":
+            view["expected_outperformance"] = v
+        else:
+            view["expected_return"] = v
+    if "confidence" in fields:
+        view["confidence"] = max(0.0, min(1.0, float(fields["confidence"])))
+    recipe["bottom_up_views"] = views
+    save_recipe(recipe, "current")
+
+
+def update_top_down_view(index: int, fields: Dict[str, Any]) -> None:
+    """
+    Update numeric fields of the factor shock at *index* in current.json.
+
+    Accepted fields: ``shock``, ``confidence``.
+
+    Raises:
+        FileNotFoundError: if current.json does not exist.
+        IndexError: if *index* is out of range.
+    """
+    recipe = load_recipe("current")
+    shocks: List[Dict[str, Any]] = (
+        recipe.get("top_down_views", {}).get("factor_shocks", [])
+    )
+    if index < 0 or index >= len(shocks):
+        raise IndexError(
+            f"factor_shocks index {index} out of range (len={len(shocks)})"
+        )
+    shock = shocks[index]
+    if "shock" in fields:
+        shock["shock"] = float(fields["shock"])
+    if "confidence" in fields:
+        shock["confidence"] = max(0.0, min(1.0, float(fields["confidence"])))
     recipe.setdefault("top_down_views", {})["factor_shocks"] = shocks
     save_recipe(recipe, "current")
 

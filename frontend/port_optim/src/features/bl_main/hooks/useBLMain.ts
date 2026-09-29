@@ -16,6 +16,8 @@ interface UseBLMainReturn {
   loadViews: () => Promise<void>;
   deleteBottomUpView: (id: string) => Promise<void>;
   deleteTopDownView: (id: string) => Promise<void>;
+  updateBottomUpView: (id: string, fields: { value?: number; confidence?: number }) => Promise<void>;
+  updateTopDownView: (id: string, fields: { shock?: number; confidence?: number }) => Promise<void>;
   portfolios: Portfolio[];
   portfoliosLoading: boolean;
   createPortfolio: (portfolio: Omit<Portfolio, 'id'> & { id?: string }) => Promise<void>;
@@ -161,6 +163,34 @@ export const useBLMain = (): UseBLMainReturn => {
     }
   }, [loadViews]);
 
+  // ── Update views — persisted to current.json via backend ───────────────────────
+
+  const updateBottomUpView = useCallback(async (
+    id: string,
+    fields: { value?: number; confidence?: number },
+  ) => {
+    const index = parseInt(id.split('-')[1], 10);
+    try {
+      await blMainService.updateBottomUpView(index, fields);
+      await loadViews();
+    } catch (err) {
+      console.error('Error updating bottom-up view:', err);
+    }
+  }, [loadViews]);
+
+  const updateTopDownView = useCallback(async (
+    id: string,
+    fields: { shock?: number; confidence?: number },
+  ) => {
+    const index = parseInt(id.split('-')[1], 10);
+    try {
+      await blMainService.updateTopDownView(index, fields);
+      await loadViews();
+    } catch (err) {
+      console.error('Error updating top-down view:', err);
+    }
+  }, [loadViews]);
+
   return {
     data,
     loading,
@@ -175,6 +205,8 @@ export const useBLMain = (): UseBLMainReturn => {
     loadViews,
     deleteBottomUpView,
     deleteTopDownView,
+    updateBottomUpView,
+    updateTopDownView,
     portfolios,
     portfoliosLoading,
     createPortfolio,

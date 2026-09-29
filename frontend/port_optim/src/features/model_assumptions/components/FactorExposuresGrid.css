@@ -1,0 +1,25 @@
+.factor-exposures-grid th:first-child,
+.factor-exposures-grid td:first-child {
+  font-weight: 600;
+}
+
+.assumptions-input {
+  width: 100%;
+  max-width: 140px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #e0e6ed;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.assumptions-input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.factor-exposures-grid .assumptions-input {
+  max-width: 90px;
+}
+

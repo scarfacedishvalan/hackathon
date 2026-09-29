@@ -30,6 +30,7 @@ from app.services.bl_engine.bl_standalone import (
 )
 from app.services.bl_engine.factor_views import FactorView, FactorViewTransformer
 from app.services.price_data.load_data import load_market_data
+from app.orchestrators.market_data_orchestrator import load_market_data_raw
 
 
 def create_synthetic_data():
@@ -83,54 +84,17 @@ def create_synthetic_data():
     
     price_df = pd.DataFrame(prices, columns=assets)
     
-    # Market capitalizations (in billions)
-    market_caps = {
-        'AAPL': 2800,
-        'MSFT': 2400,
-        'GOOGL': 1800,
-        'AMZN': 1600,
-        'TSLA': 800,
-        'JPM': 450,
-        'BAC': 280,
-        'WMT': 400,
-        'PG': 360,
-        'JNJ': 420
-    }
-    
-    # Define factor exposure matrix B
-    # Factors: 0=Tech/Growth, 1=Financial, 2=Defensive/Consumer, 3=Market/Beta
-    factor_names = ['Growth', 'Financial', 'Defensive', 'Market']
-    n_factors = len(factor_names)
-    
-    # Factor exposures (n_assets x n_factors)
-    # Each row = asset, each column = factor
-    B = np.array([
-        # AAPL: High growth, low financial, low defensive, high market
-        [1.2, 0.0, 0.1, 1.1],
-        # MSFT: High growth, low financial, low defensive, high market
-        [1.1, 0.0, 0.2, 1.0],
-        # GOOGL: High growth, low financial, low defensive, high market
-        [1.3, 0.0, 0.1, 1.2],
-        # AMZN: Very high growth, low financial, low defensive, high market
-        [1.4, 0.0, 0.1, 1.3],
-        # TSLA: Extreme growth, low financial, low defensive, very high market
-        [1.6, 0.0, 0.0, 1.5],
-        # JPM: Low growth, very high financial, low defensive, moderate market
-        [0.2, 1.5, 0.2, 0.9],
-        # BAC: Low growth, high financial, low defensive, moderate market
-        [0.1, 1.3, 0.2, 0.8],
-        # WMT: Low growth, low financial, moderate defensive, low market
-        [0.3, 0.1, 1.1, 0.7],
-        # PG: Low growth, low financial, high defensive, low market
-        [0.2, 0.0, 1.3, 0.6],
-        # JNJ: Low growth, low financial, very high defensive, low market
-        [0.2, 0.0, 1.4, 0.6],
-    ])
-    
+    # Market caps, factor names, and factor exposures come from
+    # market_data.json (single source of truth) instead of being hardcoded.
+    md = load_market_data_raw()
+    factor_names = md['factor_names']
+    market_caps = {a: md['market_caps'][a] for a in assets}
+    B = np.array([md['factor_exposures'][a] for a in assets])
+
     return price_df, market_caps, B, factor_names, assets
 
 
-def run_combined_bl(price_df, market_caps, B, asset_view, factor_views, tau=0.05, risk_aversion=2.5):
+def run_combined_bl(price_df, market_caps, B, asset_view, factor_views, factor_names=None, tau=0.05, risk_aversion=2.5):
     """
     Run Black-Litterman with BOTH bottom-up asset views AND top-down factor views.
     
@@ -142,6 +106,8 @@ def run_combined_bl(price_df, market_caps, B, asset_view, factor_views, tau=0.05
         B: Factor exposure matrix
         asset_view: Tuple of (asset_index, expected_return, confidence) for bottom-up view
         factor_views: List of FactorView objects for top-down views
+        factor_names: Names for each factor column in B (for display only); falls
+            back to generic "Factor N" labels if not provided
         tau: Uncertainty in prior
         risk_aversion: Risk aversion parameter
     
@@ -170,7 +136,8 @@ def run_combined_bl(price_df, market_caps, B, asset_view, factor_views, tau=0.05
     
     # Top-down factor views
     print(f"\n  Top-Down Factor Views:")
-    factor_names = ['Growth', 'Financial', 'Defensive', 'Market']
+    if factor_names is None:
+        factor_names = [f"Factor {i}" for i in range(B.shape[1])]
     for view in factor_views:
         print(f"    {factor_names[view.factor_index]} factor: {view.shock:+.2%} shock (confidence: {view.confidence:.2f})")
     
@@ -322,7 +289,7 @@ def main(use_real_data=True):
     # Run combined Black-Litterman
     results = run_combined_bl(
         price_df, market_caps, B, asset_view, factor_views,
-        tau=0.05, risk_aversion=2.5
+        factor_names=factor_names, tau=0.05, risk_aversion=2.5
     )
     
     print("\n" + "="*70)

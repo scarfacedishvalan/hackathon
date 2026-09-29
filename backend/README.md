@@ -17,6 +17,17 @@ backend/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py                          # FastAPI application and routes
+│   ├── api/
+│   │   └── routers/                     # API route handlers
+│   ├── db/
+│   │   └── database.py                  # Database connections and models
+│   ├── orchestrators/                   # Business logic orchestration
+│   │   ├── view_orchestrator.py         # View parsing and recipe management
+│   │   ├── bl_orchestrator.py           # Black-Litterman optimization runner
+│   │   ├── bl_agent_orchestrator.py     # Agentic BL analysis with tool calling
+│   │   ├── news_orchestrator.py         # News fetching and view conversion
+│   │   ├── backtest_orchestrator.py     # Backtesting workflow coordination
+│   │   └── admin_console_orchestrator.py # LLM usage and cost tracking
 │   └── services/
 │       ├── backtest/                    # Portfolio backtesting and optimization
 │       │   ├── algo_optimiser.py        # Custom algorithms for bt library
@@ -27,8 +38,7 @@ backend/
 │       │   ├── view_translation.py      # Convert views to matrix format
 │       │   ├── metrics.py               # Portfolio performance metrics
 │       │   ├── chart_formatters.py      # Format data for UI charts
-│       │   ├── factor_views.py          # Factor-based view construction
-│       │   └── bl_standalone.py         # Standalone BL runner
+│       │   └── factor_views.py          # Factor-based view construction
 │       │
 │       ├── bl_llm_parser/               # LLM-based Black-Litterman parser
 │       │   ├── parser.py                # Convert natural language to BL views
@@ -36,30 +46,43 @@ backend/
 │       │   ├── sector_metadata.json     # Sector and ticker metadata
 │       │   └── prompts/                 # LLM prompt templates
 │       │
+│       ├── bl_stress/                   # Stress testing and sensitivity analysis
+│       │   └── stress_tester.py         # Vary parameters and analyze impact
+│       │
 │       ├── news_api/                    # Financial news integration
-│       │   ├── fetch_news.py            # Fetch news from NewsAPI
+│       │   ├── fetch_news.py            # Fetch and simulate news articles
 │       │   ├── article.py               # Article data structures
-│       │   ├── view_parser.py           # Parse articles into BL views
-│       │   └── view_schema.py           # Pydantic schemas for views
+│       │   └── view_parser.py           # Parse articles into BL views
 │       │
 │       ├── price_data/                  # Market data management
-│       │   ├── data_fetch.py            # Price data fetching and processing
-│       │   └── load_csv_to_db.py        # Load CSV data to SQLite
+│       │   └── load_data.py             # Load price data and market metadata
 │       │
-│       ├── recipe_interpreter/          # Natural language strategy parser
-│       │   ├── llm_parser.py            # Parse text to JSON recipe
-│       │   ├── backtesting_from_json.py # Execute backtest from recipe
-│       │   ├── semantic_schema_backtesting.py  # Recipe schema definitions
-│       │   └── get_bt_classes.py        # Backtesting.py class utilities
+│       ├── llm_client/                  # LLM integration utilities
+│       │   ├── client.py                # Unified LLM client with cost tracking
+│       │   └── cost_tracker.py          # Track token usage and costs
 │       │
 │       └── plots/                       # Generated backtest charts
 │
+├── data/
+│   ├── news.json                        # News articles with BL-formatted views
+│   ├── market_data.json                 # Historical prices and factor exposures
+│   ├── bl_recipes/                      # Saved BL view recipes
+│   └── agent_audits/                    # Agent execution logs and audits
+│
 ├── requirements.txt
-├── failed_requirements.txt
 └── README.md
 ```
 
 ## Service Modules
+
+### 🎯 **orchestrators/**
+Business logic layer coordinating multiple services for complex workflows.
+- **view_orchestrator.py**: Manages view parsing from natural language and recipe file operations (load, save, append views)
+- **bl_orchestrator.py**: Coordinates Black-Litterman model execution with price data loading and result formatting
+- **bl_agent_orchestrator.py**: Agentic workflow with LLM-powered tool calling for stress testing, sensitivity analysis, and scenario exploration
+- **news_orchestrator.py**: Fetches news articles, converts them to BL-formatted views, and integrates with the view pipeline
+- **backtest_orchestrator.py**: Coordinates backtesting workflow from recipe creation to execution and result generation
+- **admin_console_orchestrator.py**: Aggregates LLM usage statistics, token costs, and agent execution audits from tracking databases
 
 ### 🔬 **backtest/**
 Portfolio backtesting and optimization using the bt library and custom algorithms.
@@ -80,24 +103,24 @@ LLM-based parser for converting natural language investment views into structure
 - **output_schema.json**: Defines the JSON schema for validated Black-Litterman output (tickers, view types, confidence levels)
 - **sector_metadata.json**: Metadata mapping for stock tickers to sectors/industries for view validation
 
+### 🧪 **bl_stress/**
+Stress testing and sensitivity analysis for Black-Litterman portfolios.
+- **stress_tester.py**: Systematically varies confidence levels, factor shocks, and view parameters to analyze portfolio sensitivity
+
 ### 📰 **news_api/**
-Financial news integration and analysis using NewsAPI.
-- **fetch_news.py**: Fetches recent news articles for specified stock tickers from NewsAPI
-- **article.py**: Data structures representing news articles with metadata (title, source, publication date, content)
-- **view_parser.py**: LLM-based extraction of structured Black-Litterman views from news article text
-- **view_schema.py**: Pydantic models for validating extracted investment views from news
+Financial news integration with BL-formatted view generation.
+- **fetch_news.py**: Fetches and simulates news articles for stock tickers with market sentiment
+- **article.py**: Data structures representing news articles with metadata (title, source, publication date, ticker)
+- **view_parser.py**: Converts news article text into structured Black-Litterman views with confidence levels and expected returns
 
 ### 💹 **price_data/**
-Market data management and historical price fetching.
-- **data_fetch.py**: Core module for fetching historical price data from multiple sources (Excel, SQLite, synthetic data)
-- **load_csv_to_db.py**: Utility to load CSV price data into SQLite database for efficient querying
+Market data management and historical price loading.
+- **load_data.py**: Loads historical price data, market caps, and factor exposure matrices from market_data.json
 
-### 📝 **recipe_interpreter/**
-Natural language strategy interpretation and execution.
-- **llm_parser.py**: Converts plain text trading strategy descriptions into structured JSON recipes using LLM
-- **backtesting_from_json.py**: Executes backtests based on JSON recipe specifications, supporting various strategy types
-- **semantic_schema_backtesting.py**: Defines the semantic schema for backtest recipes (strategy parameters, indicators, rules)
-- **get_bt_classes.py**: Utility functions for dynamically accessing Backtesting.py classes and methods
+### 🤖 **llm_client/**
+Centralized LLM integration with cost tracking.
+- **client.py**: Unified client for OpenAI API calls with automatic token counting and cost calculation
+- **cost_tracker.py**: Persistent tracking of LLM usage per service/operation with SQLite storage
 
 ## Setup
 
@@ -137,44 +160,7 @@ Health check endpoint
 Health status
 - Returns: `{"status": "healthy"}`
 
-### `POST /api/generate-recipe`
-Generate a portfolio recipe and backtest results
-
-**Request Body:**
-```json
-{
-  "stocks": ["AAPL", "MSFT", "GOOGL"],
-  "strategy_instruction": "Run the strategy WeighMeanVar with lookbacks 3y, 2y and 1y with yearly rebalance"
-}
-```
-
-**Response:**
-```json
-{
-  "recipe": {
-    "strategy": "WeighMeanVar",
-    "lookbacks": ["3y", "2y", "1y"],
-    "rebalance": "yearly",
-    "stocks": ["AAPL", "MSFT", "GOOGL"],
-    "start_date": "2020-01-01",
-    "end_date": "2024-12-31",
-    "initial_capital": 100000,
-    "risk_model": {
-      "covariance_method": "sample",
-      "expected_returns": "mean_historical_return"
-    }
-  },
-  "equity_curve": [...],
-  "summary_stats": {
-    "cagr": "18.4%",
-    "sharpe_ratio": "1.42",
-    "max_drawdown": "-12.8%",
-    "volatility": "15.2%"
-  }
-}
-```
-
-### `POST /api/parse-bl-views`
+### `POST /api/bl/parse-views`
 Parse natural language investment views into structured Black-Litterman format
 
 **Request Body:**
@@ -182,12 +168,9 @@ Parse natural language investment views into structured Black-Litterman format
 {
   "investor_text": "I believe tech stocks will outperform by 5% this year. Apple should beat Microsoft by 2%.",
   "assets": ["AAPL", "MSFT", "GOOGL", "AMZN"],
-  "factors": ["Growth", "Rates", "Momentum", "Value"],
-  "use_schema": true
+  "factors": ["Growth", "Rates", "Momentum", "Value"]
 }
 ```
-
-**Note:** `assets` and `factors` are optional. If omitted, defaults to a predefined list of major stocks and common factors.
 
 **Response:**
 ```json
@@ -195,9 +178,8 @@ Parse natural language investment views into structured Black-Litterman format
   "bottom_up_views": [
     {
       "type": "relative",
-      "assets": ["AAPL", "MSFT"],
-      "weights": [1.0, -1.0],
-      "expected_outperformance": 0.02,
+      "asset": "AAPL",
+      "expected_return": 0.02,
       "confidence": 0.7,
       "label": "Apple expected to outperform Microsoft by 2%"
     }
@@ -215,9 +197,72 @@ Parse natural language investment views into structured Black-Litterman format
 }
 ```
 
+### `GET /api/news?keyword={keyword}&limit={limit}`
+Fetch random news articles with BL-formatted views, optionally filtered by keyword
+
+**Query Parameters:**
+- `keyword` (optional): Fuzzy search keyword for filtering (searches heading, translatedView, ticker)
+- `limit` (optional): Maximum number of items to return (default: 5)
+
+**Response:**
+```json
+{
+  "items": [
+    {
+      "id": "abc123",
+      "heading": "TSLA Analysts Bullish on Growth",
+      "translatedView": "Medium confidence: TSLA expected absolute return of +7% (bullish view).",
+      "ticker": "TSLA",
+      "source": "Bloomberg",
+      "link": "https://...",
+      "fetched_at": "2026-03-15T10:00:00Z"
+    }
+  ],
+  "total_available": 10,
+  "returned": 5
+}
+```
+
+### `POST /api/news/{item_id}/add-to-recipe`
+Add a news article's translatedView to the current BL recipe by parsing it through the LLM
+
+**Response:**
+```json
+{
+  "bottom_up_views": [...],
+  "top_down_views": {...}
+}
+```
+
 ## Development Notes
 
-- CORS is configured to allow requests from the frontend (localhost:5173 and 127.0.0.1)
-- Generated backtest charts are served from `/plots` endpoint
+- CORS is configured to allow requests from the frontend (localhost:5173 and production deployment)
+- News articles stored in `data/news.json` with BL-formatted `translatedView` fields
+- Market data (prices, caps, factor exposures) loaded from `data/market_data.json`
+- BL recipes saved in `data/bl_recipes/` directory, `current.json` is the active recipe
 - LLM integration requires OpenAI API key in environment variables
-- NewsAPI integration requires API key configured in `news_api/fetch_news.py`
+- LLM usage and costs tracked in SQLite databases (`llm_usage.db`, `agent_costs.db`)
+- Agent execution audits saved to `data/agent_audits/` as JSON files
+
+## Testing
+
+Run orchestrator examples:
+```bash
+# Test news API (random selection, keyword search, fuzzy matching)
+python run_orchestrators.py --example news
+
+# Test news → active views integration (LLM parsing)
+python run_orchestrators.py --example news_views
+
+# Test BL model execution
+python run_orchestrators.py --example bl
+
+# Test agentic BL orchestrator
+python run_orchestrators.py --example agent
+
+# Test admin console (LLM costs and usage)
+python run_orchestrators.py --example admin
+
+# Run all tests
+python run_orchestrators.py --example all
+```

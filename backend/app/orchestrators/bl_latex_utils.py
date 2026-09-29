@@ -144,7 +144,32 @@ $$
     pi = calc_steps.get("pi")
     Omega = calc_steps.get("Omega")
     assets = calc_steps.get("assets", [])
-    
+    factor_matrix = calc_steps.get("factor_matrix")
+    factor_names = calc_steps.get("factor_names")
+
+    # Build factor exposure table as LaTeX array if available
+    factor_block = ""
+    if factor_matrix is not None and factor_names:
+        header = " & ".join([f"\\text{{{f}}}" for f in factor_names])
+        rows = []
+        for i, asset in enumerate(assets):
+            vals = " & ".join([f"{v:.2f}" for v in factor_matrix[i]])
+            rows.append(f"\\text{{{asset}}} & {vals}")
+        table_body = " \\\\ ".join(rows)
+        factor_block = f"""
+$$
+\\text{{Factor Exposure Matrix }} B \\text{{ (rows = assets, cols = factors)}}
+$$
+
+$$
+\\begin{{array}}{{l{'c' * len(factor_names)}}}
+\\text{{Asset}} & {header} \\\\
+\\hline
+{table_body}
+\\end{{array}}
+$$
+"""
+
     inputs_latex = f"""
 $$
 \\tau \\text{{ (Uncertainty Scaling Parameter)}} = {tau}
@@ -161,7 +186,7 @@ $$
 $$
 {series_to_latex(pi, with_names=True) if isinstance(pi, pd.Series) else np_to_latex(pi)}
 $$
-
+{factor_block}
 $$
 \\Sigma \\text{{ (Covariance Matrix)}}
 $$
@@ -253,14 +278,11 @@ $$
                 P_row = view.get('P_row')
                 Q_val = view.get('Q_val')
                 confidence = view.get('confidence')
-                row_idx = view.get('row_index', len(bottom_up_views) + i - 1)
-                
-                # Format P row with asset labels
-                p_row_latex = _format_p_row_with_assets(P_row, assets)
-                
-                # Get Omega value safely
-                omega_val = Omega[row_idx, row_idx] if Omega is not None and row_idx < Omega.shape[0] else 0.0
-                
+
+                # P_row is now the factor exposure column B[:,factor_idx]
+                # Format it to show which assets carry this factor and by how much
+                p_row_latex = _format_p_row_with_assets(P_row, assets, precision=2)
+
                 view_translation_parts.append(f"""
 $$
 \\text{{Factor View {i}: {label}}}
@@ -271,19 +293,15 @@ $$
 $$
 
 $$
-\\text{{(Factor exposures for all assets)}}
+\\text{{Factor exposure vector }} B[:,\\text{{{factor}}}] = {p_row_latex}
 $$
 
 $$
-P[{row_idx}] = {p_row_latex}
+\\Delta f = {Q_val:+.4f}
 $$
 
 $$
-Q[{row_idx}] = {Q_val:.4f}
-$$
-
-$$
-\\text{{Confidence: {confidence:.2f}}} \\quad \\Rightarrow \\quad \\Omega[{row_idx},{row_idx}] = {omega_val:.6f}
+\\text{{Confidence: {confidence:.2f}}} \\quad \\Rightarrow \\quad \\Delta\\mu = B[:,\\text{{{factor}}}] \\times {Q_val:+.4f}
 $$
                 """)
         

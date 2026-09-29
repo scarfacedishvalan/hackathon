@@ -25,7 +25,9 @@ load_audit(audit_id) -> dict
 from __future__ import annotations
 
 import json
+import logging
 import os
+import traceback
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -41,6 +43,8 @@ from app.services.llm_client import (
     chat_with_history,
 )
 from app.services.price_data.load_data import load_market_data
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Paths & tunables
@@ -194,7 +198,11 @@ def _extract_goal_mutations(goal: str) -> dict:
             if isinstance(parsed, dict):
                 return parsed
     except Exception:
-        pass  # fall through to regex
+        logger.warning(
+            "LLM constraint extraction failed for goal '%.120s'; falling back to regex",
+            goal,
+            exc_info=True,
+        )  # fall through to regex
 
     # --- Regex fallback ---
     mutations: dict = {}
@@ -269,6 +277,7 @@ def run_agent(
     """
     audit_id = str(uuid.uuid4())
     run_start = datetime.now()
+    logger.info("Agent run started [audit_id=%s thesis=%s]", audit_id, thesis_name)
 
     # ---- Load recipe & price data ----------------------------------------
     recipe = load_recipe(thesis_name)
@@ -286,7 +295,8 @@ def run_agent(
             raw_base = run_black_litterman(base_recipe_for_run, price_df)
         base_summary = _summarise_result(raw_base, base_recipe_for_run, price_df)
     except Exception as exc:
-        base_summary = {"error": str(exc)}
+        logger.exception("Base BL run failed [audit_id=%s thesis=%s]: %s", audit_id, thesis_name, exc)
+        base_summary = {"error": str(exc), "traceback": traceback.format_exc()}
 
     # ---- Run cache (label -> summary) ------------------------------------
     run_cache: Dict[str, dict] = {"base": base_summary}
@@ -483,6 +493,11 @@ def run_agent(
         "scenarios_run": {k: v for k, v in run_cache.items() if k != "base"},
         "diagnostics": diagnostics,
         "synthesis": synthesis or {"narrative": "Max steps reached without synthesis."},
+        "run_errors": [
+            {"step": s["step"], "tool": s.get("tool"), "error": s["result"]["error"]}
+            for s in steps_log
+            if isinstance(s.get("result"), dict) and "error" in s.get("result", {})
+        ],
         "final_weights": final_weights,
         "weight_delta_vs_base": weight_delta_vs_base,
         "cost_breakdown": cost_breakdown,
@@ -491,6 +506,10 @@ def run_agent(
 
     # ---- Persist to disk -------------------------------------------------
     audit_path = AGENT_AUDITS_DIR / f"{audit_id}.json"
+    logger.info(
+        "Agent run completed [audit_id=%s thesis=%s steps=%d]",
+        audit_id, thesis_name, len(steps_log),
+    )
     with open(audit_path, "w", encoding="utf-8") as f:
         json.dump(audit, f, indent=2)
 

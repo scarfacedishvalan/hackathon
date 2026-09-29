@@ -54,37 +54,37 @@
   ],
   "analystNews": [
     {
-      "id": 1,
+      "id": "1",
       "heading": "Apple iPhone demand exceeds expectations",
       "translatedView": "AAPL expected to outperform large-cap tech peers",
       "link": "https://example.com/apple-news"
     },
     {
-      "id": 2,
+      "id": "2",
       "heading": "Microsoft cloud growth accelerates",
       "translatedView": "MSFT positive growth momentum",
       "link": "https://example.com/msft-news"
     },
     {
-      "id": 3,
+      "id": "3",
       "heading": "Bond yields stabilize amid rate pause",
       "translatedView": "BND neutral duration outlook",
       "link": "https://example.com/bond-news"
     },
     {
-      "id": 4,
+      "id": "4",
       "heading": "Gold prices surge on inflation fears",
       "translatedView": "GLD outperforming commodity basket",
       "link": "https://example.com/gold-news"
     },
     {
-      "id": 5,
+      "id": "5",
       "heading": "Tech sector faces regulatory headwinds",
       "translatedView": "GOOG and MSFT moderate near-term uncertainty",
       "link": "https://example.com/tech-regulation"
     },
     {
-      "id": 6,
+      "id": "6",
       "heading": "Real estate market shows resilience",
       "translatedView": "VNQ stable yield outlook",
       "link": "https://example.com/real-estate"

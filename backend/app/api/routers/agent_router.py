@@ -12,6 +12,8 @@ GET  /agent/audits/{audit_id} -- load a specific audit record
 from __future__ import annotations
 
 import asyncio
+import logging
+import traceback
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -24,6 +26,8 @@ from app.orchestrators.bl_agent_orchestrator import (
     load_audit,
     AGENT_AUDITS_DIR,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
@@ -111,7 +115,9 @@ async def start_agent_run(
                 lambda: _exec_run(audit_id, request.thesis_name, request.goal, request.max_steps),
             )
         except Exception:
-            pass
+            logger.exception(
+                "Unhandled async executor error for agent run [audit_id=%s]", audit_id
+            )
 
     background_tasks.add_task(_run_in_thread)
     return {"audit_id": audit_id, "status": "running"}
@@ -139,7 +145,15 @@ def _exec_run(audit_id: str, thesis_name: str, goal: str, max_steps: int):
         run_agent(thesis_name=thesis_name, goal=goal, max_steps=max_steps)
         _running[audit_id] = "done"
     except Exception as exc:
-        _running[audit_id] = f"error: {exc}"
+        tb = traceback.format_exc()
+        logger.exception(
+            "Agent run failed [audit_id=%s thesis=%s]: %s", audit_id, thesis_name, exc
+        )
+        _running[audit_id] = {
+            "status": "error",
+            "detail": str(exc),
+            "traceback": tb,
+        }
     finally:
         _uuid_mod.uuid4 = _original
 
@@ -172,8 +186,8 @@ async def get_audit(audit_id: str) -> Dict[str, Any]:
     status = _running.get(audit_id)
     if status == "running":
         return {"status": "running", "audit_id": audit_id}
-    if status and status.startswith("error"):
-        return {"status": "error", "audit_id": audit_id, "detail": status}
+    if isinstance(status, dict) and status.get("status") == "error":
+        return {"audit_id": audit_id, **status}
 
     try:
         audit = load_audit(audit_id)

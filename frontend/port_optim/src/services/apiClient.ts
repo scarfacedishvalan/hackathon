@@ -18,7 +18,8 @@ export const apiClient = {
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `API Error: ${response.statusText}`);
     }
     return response.json();
   },
@@ -32,7 +33,8 @@ export const apiClient = {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `API Error: ${response.statusText}`);
     }
     // 204 No Content — valid success, no body to parse
     if (response.status === 204) {
@@ -50,7 +52,26 @@ export const apiClient = {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `API Error: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  async patch<T>(endpoint: string, data: unknown): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `API Error: ${response.statusText}`);
+    }
+    if (response.status === 204) {
+      return undefined as T;
     }
     return response.json();
   },
@@ -60,7 +81,8 @@ export const apiClient = {
       method: 'DELETE',
     });
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      const body = await response.json().catch(() => null);
+      throw new Error(body?.detail ?? `API Error: ${response.statusText}`);
     }
   },
 };

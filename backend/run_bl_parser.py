@@ -7,9 +7,14 @@ sys.path.insert(0, str(BACKEND_DIR))
 
 from app.services.bl_llm_parser.parser import BlackLittermanLLMParser
 
+_MARKET_DATA_PATH = BACKEND_DIR / "data" / "market_data.json"
 
-ASSETS = ["AAPL", "AMZN", "BAC", "BND", "GLD", "GOOG", "GOOGL", "JNJ", "JPM", "MSFT", "PG", "TSLA", "VNQ", "WMT"]
-FACTORS = ["Growth", "Financial", "Defensive", "Market", "Rates"]
+def _load_market_defaults():
+    with open(_MARKET_DATA_PATH, "r", encoding="utf-8") as f:
+        md = json.load(f)
+    return md["all_assets"], md["factor_names"]
+
+ASSETS, FACTORS = _load_market_defaults()
 
 INVESTOR_TEXT = (
     "Rising rates will strongly benefit financials and slightly hurt defensives."

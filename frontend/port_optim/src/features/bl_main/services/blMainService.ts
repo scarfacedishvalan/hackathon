@@ -81,6 +81,22 @@ export const blMainService = {
     await apiClient.delete(`/views/top_down/${index}`);
   },
 
+  /** PATCH /views/bottom_up/{index} — update value and/or confidence in current.json */
+  updateBottomUpView: async (
+    index: number,
+    fields: { value?: number; confidence?: number },
+  ): Promise<void> => {
+    await apiClient.patch(`/views/bottom_up/${index}`, fields);
+  },
+
+  /** PATCH /views/top_down/{index} — update shock and/or confidence in current.json */
+  updateTopDownView: async (
+    index: number,
+    fields: { shock?: number; confidence?: number },
+  ): Promise<void> => {
+    await apiClient.patch(`/views/top_down/${index}`, fields);
+  },
+
   /**
    * Re-run BL optimisation and return fresh chart data merged with mock.
    * Called by the "Run" / "Refresh" button in the UI.
@@ -120,6 +136,18 @@ export const portfolioService = {
   },
 };
 
+export interface PriceHistory {
+  dates: string[];
+  prices: Record<string, number[]>;
+}
+
+export const priceHistoryService = {
+  /** GET /bl/price-history — full historical close prices for all assets */
+  get: async (): Promise<PriceHistory> => {
+    return apiClient.get<PriceHistory>('/bl/price-history');
+  },
+};
+
 export const universeService = {
   /** GET /views/universe — active asset tickers in current.json */
   getUniverse: async (): Promise<string[]> => {
@@ -140,9 +168,15 @@ export const universeService = {
 
 export const newsService = {
   /** GET /news — return cached items from news.json */
-  getNews: async (): Promise<AnalystNews[]> => {
+  getNews: async (keyword?: string, limit: number = 5): Promise<AnalystNews[]> => {
     try {
-      const response = await apiClient.get<{ items: AnalystNews[] }>('/news');
+      const params = new URLSearchParams();
+      if (keyword) params.append('keyword', keyword);
+      params.append('limit', limit.toString());
+      
+      const response = await apiClient.get<{ items: AnalystNews[] }>(
+        `/news?${params.toString()}`
+      );
       return response.items;
     } catch {
       return [];

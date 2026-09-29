@@ -1,0 +1,26 @@
+.model-assumptions-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.model-assumptions-note {
+  color: #94a3b8;
+  font-size: 13px;
+  margin: 0;
+}
+
+.model-assumptions-note code {
+  color: #e0e6ed;
+}
+
+.model-assumptions-error {
+  color: #f87171;
+  font-size: 13px;
+}
+
+.saving-indicator {
+  color: #6366f1;
+  font-style: italic;
+}

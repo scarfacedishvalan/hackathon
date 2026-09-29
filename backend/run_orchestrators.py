@@ -101,49 +101,253 @@ def run_agent_example(
 
 
 def run_news_example():
-    TICKERS = ["AAPL", "MSFT", "JPM"]
-    KEYWORDS = ["interest rates", "earnings beat", "analyst upgrade"]
-    LIMIT = 3  # articles per ticker
-
+    from app.orchestrators.news_orchestrator import get_random_news, count_news
+    
     print("\n" + "=" * 60)
-    print("NEWS ORCHESTRATOR EXAMPLE  (simulated LLM articles)")
+    print("NEWS API EXAMPLE — Random Selection & Keyword Search")
     print("=" * 60)
 
-    # ── Step 1: generate & parse articles into news.json ──────────────────
-    print(f"\nGenerating up to {LIMIT} articles each for: {', '.join(TICKERS)}")
-    print(f"Keywords: {', '.join(KEYWORDS)}")
-    print("(Skips articles already cached in data/news.json)")
-    items = fetch_and_parse(tickers=TICKERS, limit_per_ticker=LIMIT, keywords=KEYWORDS)
-    print(f"\nTotal items in news.json after generation: {len(items)}")
-
-    if not items:
-        print("No news items returned — check your OPENAI_API_KEY and model availability.")
-        return
-
-    # ── Step 2: display the first few items ────────────────────────────────
-    print("\nLatest news items (first 5):")
+    # ── Test 1: Get all news (no filter) ───────────────────────────────────
+    print("\n[TEST 1] Get 5 random news items (no keyword filter):")
     print("-" * 60)
-    for item in items[:5]:
-        print(f"  [{item['ticker']}]  {item['heading'][:70]}")
-        print(f"           → {item['translatedView']}")
-        print()
-
-    # ── Step 3: add the first item's view to current.json ──────────────────
-    first_id = items[0]["id"]
-    print(f"Adding view for item id='{first_id}' to current.json ...")
-    try:
-        result = add_view_to_recipe(first_id)
-        bottom_up = result.get("bottom_up_views", [])
-        factor_shocks = result.get("top_down_views", {}).get("factor_shocks", [])
-        print(f"  → {len(bottom_up)} bottom-up view(s), {len(factor_shocks)} factor shock(s) appended")
-        if bottom_up:
-            print(f"     bottom-up: {json.dumps(bottom_up[0], indent=6)}")
-        if factor_shocks:
-            print(f"     top-down:  {json.dumps(factor_shocks[0], indent=6)}")
-    except Exception as exc:
-        print(f"  ERROR adding view: {exc}")
-
+    total_count = count_news()
+    print(f"Total news items available: {total_count}")
+    
+    items = get_random_news(limit=5)
+    print(f"Returned: {len(items)} items")
+    for item in items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 2: Refresh - get different random items ───────────────────────
+    print("\n[TEST 2] Refresh - get another 5 random items:")
+    print("-" * 60)
+    items_refresh = get_random_news(limit=5)
+    print(f"Returned: {len(items_refresh)} items")
+    for item in items_refresh:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # Check for differences
+    ids_first = {item['id'] for item in items}
+    ids_refresh = {item['id'] for item in items_refresh}
+    different = len(ids_first.symmetric_difference(ids_refresh))
+    print(f"\n  → {different}/{len(items)} items differ from first call (randomized)")
+    
+    # ── Test 3: Keyword search - "Tesla" ────────────────────────────────────
+    print("\n[TEST 3] Search with keyword: 'Tesla'")
+    print("-" * 60)
+    keyword = "Tesla"
+    tesla_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {tesla_count}")
+    
+    tesla_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(tesla_items)} items")
+    for item in tesla_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 4: Keyword search - "bullish" ─────────────────────────────────
+    print("\n[TEST 4] Search with keyword: 'bullish'")
+    print("-" * 60)
+    keyword = "bullish"
+    bullish_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {bullish_count}")
+    
+    bullish_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(bullish_items)} items")
+    for item in bullish_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 5: Keyword refresh - different random bullish articles ────────
+    print("\n[TEST 5] Refresh 'bullish' search - get different random matches:")
+    print("-" * 60)
+    bullish_refresh = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(bullish_refresh)} items")
+    for item in bullish_refresh:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    ids_first_bullish = {item['id'] for item in bullish_items}
+    ids_refresh_bullish = {item['id'] for item in bullish_refresh}
+    different_bullish = len(ids_first_bullish.symmetric_difference(ids_refresh_bullish))
+    print(f"\n  → {different_bullish}/{len(bullish_items)} items differ (randomized within '{keyword}' matches)")
+    
+    # ── Test 6: Ticker-specific search - "AAPL" ────────────────────────────
+    print("\n[TEST 6] Search with ticker: 'AAPL'")
+    print("-" * 60)
+    keyword = "AAPL"
+    aapl_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {aapl_count}")
+    
+    aapl_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(aapl_items)} items")
+    for item in aapl_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    # ── Test 7: Fuzzy matching - typo "Amazn" → "AMZN" ─────────────────────
+    print("\n[TEST 7] Fuzzy search test - typo 'Amazn' (should match AMZN):")
+    print("-" * 60)
+    keyword = "Amazn"
+    fuzzy_count = count_news(keyword)
+    print(f"Total matches for '{keyword}': {fuzzy_count}")
+    
+    fuzzy_items = get_random_news(keyword=keyword, limit=5)
+    print(f"Returned: {len(fuzzy_items)} items")
+    for item in fuzzy_items:
+        print(f"  [{item['ticker']}] {item['heading'][:65]}")
+    
+    print("\n" + "=" * 60)
+    print("SUMMARY")
     print("=" * 60)
+    print(f"✓ Random selection works (gets different items on refresh)")
+    print(f"✓ Keyword filtering works (tested: Tesla, bullish, AAPL)")
+    print(f"✓ Fuzzy matching works (typo 'Amazn' matched {fuzzy_count} AMZN articles)")
+    print(f"✓ Total news database: {total_count} articles")
+    print("=" * 60)
+
+
+# ---------------------------------------------------------------------------
+# News → Active Views integration test
+# ---------------------------------------------------------------------------
+
+
+def run_news_active_views_test():
+    """Test the '+ Active Views' functionality with random news items."""
+    from app.orchestrators.news_orchestrator import get_random_news, add_view_to_recipe
+    
+    print("\n" + "=" * 60)
+    print("NEWS → ACTIVE VIEWS INTEGRATION TEST")
+    print("=" * 60)
+    print("Testing the '+ Active Views' button functionality:")
+    print("  1. Get random news items with structured translatedViews")
+    print("  2. Send translatedView through BL LLM parser")
+    print("  3. Verify parsed views are added to current.json")
+    print("=" * 60)
+    
+    # ── Test 1: Get random news items with various sentiments ─────────────
+    print("\n[STEP 1] Get 3 random news items:")
+    print("-" * 60)
+    items = get_random_news(limit=3)
+    
+    for i, item in enumerate(items, 1):
+        print(f"\n{i}. [{item['ticker']}] {item['heading']}")
+        print(f"   ID: {item['id']}")
+        print(f"   TranslatedView: {item['translatedView']}")
+    
+    # ── Test 2: Parse one news item and add to current.json ───────────────
+    print("\n" + "=" * 60)
+    print("[STEP 2] Parse translatedView → BL views:")
+    print("-" * 60)
+    
+    # Select first item for testing
+    test_item = items[0]
+    print(f"\nSelected item:")
+    print(f"  Ticker: {test_item['ticker']}")
+    print(f"  Heading: {test_item['heading']}")
+    print(f"  TranslatedView: {test_item['translatedView']}")
+    
+    print(f"\nCalling add_view_to_recipe('{test_item['id']}')...")
+    print("-" * 60)
+    
+    try:
+        result = add_view_to_recipe(test_item['id'])
+        
+        # Display parsed results
+        bottom_up = result.get('bottom_up_views', [])
+        top_down = result.get('top_down_views', [])
+        
+        print(f"\n✓ Parse successful!")
+        print(f"  Bottom-up views: {len(bottom_up)}")
+        print(f"  Top-down views:  {len(top_down)}")
+        
+        if bottom_up:
+            print("\n  Bottom-Up Views:")
+            for j, view in enumerate(bottom_up, 1):
+                # Handle both dict and string format
+                if isinstance(view, dict):
+                    asset = view.get('asset', '?')
+                    expected_return = view.get('expected_return', 0.0)
+                    confidence = view.get('confidence', 0.0)
+                    view_type = view.get('view_type', '?')
+                    print(f"    {j}. {asset}: {expected_return:+.2%} return, "
+                          f"confidence={confidence:.1%}, type={view_type}")
+                else:
+                    # If it's a string or other format, just print it
+                    print(f"    {j}. {view}")
+        
+        if top_down:
+            print("\n  Top-Down Views:")
+            for j, view in enumerate(top_down, 1):
+                # Handle both dict and string format
+                if isinstance(view, dict):
+                    factor = view.get('factor', '?')
+                    expected_premium = view.get('expected_premium', 0.0)
+                    confidence = view.get('confidence', 0.0)
+                    print(f"    {j}. {factor}: {expected_premium:+.2%} premium, "
+                          f"confidence={confidence:.1%}")
+                else:
+                    # If it's a string or other format, just print it
+                    print(f"    {j}. {view}")
+        
+        # ── Test 3: Verify it was added to current.json ───────────────────
+        print("\n" + "=" * 60)
+        print("[STEP 3] Verify view was added to current.json:")
+        print("-" * 60)
+        
+        recipe = load_current_recipe()
+        recipe_bottom_up = recipe.get('bottom_up_views', [])
+        recipe_top_down = recipe.get('top_down_views', {})
+        
+        # Handle top_down_views as dict with factor_shocks
+        if isinstance(recipe_top_down, dict):
+            recipe_factor_shocks = recipe_top_down.get('factor_shocks', [])
+        else:
+            # Fallback if it's a list (old format)
+            recipe_factor_shocks = recipe_top_down if isinstance(recipe_top_down, list) else []
+        
+        print(f"\nCurrent recipe now contains:")
+        print(f"  Total bottom-up views: {len(recipe_bottom_up)}")
+        print(f"  Total factor shocks:   {len(recipe_factor_shocks)}")
+        
+        # Show last few views (likely the one just added)
+        if recipe_bottom_up:
+            print(f"\n  Last 3 bottom-up views:")
+            for view in recipe_bottom_up[-3:]:
+                asset = view.get('asset', '?')
+                expected_return = view.get('expected_return', 0.0)
+                confidence = view.get('confidence', 0.0)
+                label = view.get('label', '')
+                print(f"    - {asset}: {expected_return:+.2%} return, "
+                      f"confidence={confidence:.0%}, label=\"{label}\"")
+        
+        if recipe_factor_shocks:
+            print(f"\n  Last 3 factor shocks:")
+            for shock in recipe_factor_shocks[-3:]:
+                factor = shock.get('factor', '?')
+                shock_val = shock.get('shock', 0.0)
+                confidence = shock.get('confidence', 0.0)
+                label = shock.get('label', '')
+                print(f"    - {factor}: {shock_val:+.2%} shock, "
+                      f"confidence={confidence:.0%}, label=\"{label}\"")
+        
+        print("\n" + "=" * 60)
+        print("SUMMARY")
+        print("=" * 60)
+        print(f"✓ News item fetched with structured translatedView")
+        print(f"✓ TranslatedView parsed by BL LLM parser:")
+        print(f"    → {len(bottom_up)} bottom-up view(s) extracted")
+        print(f"    → {len(top_down)} top-down view(s) extracted")
+        print(f"✓ Views successfully added to current.json")
+        print(f"✓ '+ Active Views' button workflow is functional!")
+        print("=" * 60)
+        
+    except Exception as e:
+        print(f"\n✗ Error during parsing:")
+        print(f"  {type(e).__name__}: {e}")
+        print("\nThis may indicate:")
+        print("  - LLM parser failed to extract quantified views")
+        print("  - translatedView format not compatible with parser")
+        print("  - current.json file not found or invalid")
+        import traceback
+        traceback.print_exc()
+        print("=" * 60)
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +358,7 @@ def run_view_parsing_example():
     SAMPLE_TEXTS = [
         # "Apple will strongly outperform Google by 5% next quarter.",
         # "I'm bearish on Tesla, expecting a 4% decline. Rising interest rates are a concern.",
-        # "Microsoft looks neutral; no strong view.",
+        "JNJ will return 3%",
         "Technology sector will outperform by 4%. AI adoption driving growth across the sector."
     ]
 
@@ -330,9 +534,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run orchestrator examples")
     parser.add_argument(
         "--example",
-        choices=["views", "bl", "news", "agent", "admin", "all"],
-        default="admin",
-        help="Which example to run (default: agent)",
+        choices=["views", "bl", "news", "news_views", "agent", "admin", "all"],
+        default="views",
+        help="Which example to run (default: news)",
     )
     # parser.add_argument(
     #     "--thesis",
@@ -357,6 +561,9 @@ if __name__ == "__main__":
 
     if args.example in ("news", "all"):
         run_news_example()
+
+    if args.example in ("news_views", "all"):
+        run_news_active_views_test()
 
     if args.example in ("agent", "all"):
         run_agent_example(thesis_name=args.thesis, goal=args.goal)

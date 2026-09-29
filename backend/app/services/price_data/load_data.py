@@ -6,17 +6,13 @@ for Black-Litterman portfolio optimization.
 """
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
 
 from app.services.price_data.data_fetch import read_from_sqlite
-
-# Backend directory is 4 levels up from this file
-BACKEND_DIR = Path(__file__).resolve().parent.parent.parent.parent
+from app.orchestrators.market_data_orchestrator import load_market_data_raw
 
 
 def load_market_data(as_dict: bool = False):
@@ -32,10 +28,8 @@ def load_market_data(as_dict: bool = False):
         - asset_names: List of asset symbols
     """
     # Load market data configuration
-    market_data_path = BACKEND_DIR / 'data' / 'market_data.json'
-    with open(market_data_path, 'r') as f:
-        market_data = json.load(f)
-    
+    market_data = load_market_data_raw()
+
     # Get assets and other configuration from JSON
     assets = market_data['all_assets']
     market_caps = market_data['market_caps']

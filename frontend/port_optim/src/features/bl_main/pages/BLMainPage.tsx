@@ -17,12 +17,12 @@ import BLCalculationSteps from '../components/BLCalculationSteps';
 import './BLMainPage.css';
 
 const ASSET_VIEW_EXAMPLES = [
-  'AAPL will outperform MSFT by 3% over the next quarter.',
-  'TSLA expected to underperform JPM by 5%.',
+  'AAPL is expected to return 8% over the next year.',
+  'MSFT expected to underperform AMZN by 5%.',
 ];
 
 const FACTOR_VIEW_EXAMPLES = [
-  'Growth factor is expected to deliver a +4% annualized excess return (factor premium) over cash',
+  'I am bullish on tech and bearish on Consumer Staples.',
   'Rising rates will strongly benefit financials and slightly hurt defensives.',
 ];
 
@@ -76,14 +76,16 @@ export const BLMainPage: React.FC = () => {
     parseView, parseViewLoading,
     deleteBottomUpView, deleteTopDownView,
     loadViews,
-    portfolios, portfoliosLoading,
-    createPortfolio, deletePortfolio,
-    selectedPortfolioId, setSelectedPortfolioId, selectedPortfolio,
-    refetch, runLoading,
+    portfolios: _portfolios, portfoliosLoading: _portfoliosLoading,
+    createPortfolio: _createPortfolio, deletePortfolio: _deletePortfolio,
+    selectedPortfolioId: _selectedPortfolioId, setSelectedPortfolioId: _setSelectedPortfolioId, selectedPortfolio: _selectedPortfolio,
+    refetch, runLoading, error,
     saveThesis, saveThesisLoading,
+    updateBottomUpView, updateTopDownView,
   } = useBLMain();
 
   const [thesisModalOpen, setThesisModalOpen] = useState(false);
+  const [dismissedError, setDismissedError] = useState<Error | null>(null);
   const [viewInput, setViewInput] = useState('');
 
   if (loading) {
@@ -128,6 +130,20 @@ export const BLMainPage: React.FC = () => {
         </Button>
       </div>
 
+      {/* Optimization error banner */}
+      {error && error !== dismissedError && (
+        <div className="bl-error-banner" role="alert">
+          <span className="bl-error-banner__message">{error.message}</span>
+          <button
+            className="bl-error-banner__dismiss"
+            onClick={() => setDismissedError(error)}
+            aria-label="Dismiss error"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* 1. Asset Universe */}
       <AssetSelection />
 
@@ -147,6 +163,8 @@ export const BLMainPage: React.FC = () => {
         topDownViews={topDownViews}
         onDeleteBottomUp={deleteBottomUpView}
         onDeleteTopDown={deleteTopDownView}
+        onUpdateBottomUp={updateBottomUpView}
+        onUpdateTopDown={updateTopDownView}
       />
 
       {/* 3. Allocation Chart + Portfolio Stats */}

@@ -35,9 +35,12 @@ import contextlib
 import copy
 import io
 import json
+import logging
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager
@@ -406,6 +409,7 @@ def _summarise_result(
         port_vol = float(np.sqrt(np.dot(w, np.dot(cov, w))))
         sharpe = port_ret / port_vol if port_vol > 1e-8 else 0.0
     except Exception:
+        logger.warning("Portfolio metric calculation failed; defaulting to zeros", exc_info=True)
         port_ret, port_vol, sharpe = 0.0, 0.0, 0.0
 
     top_weights = sorted(weights.items(), key=lambda x: -x[1])[:5]
@@ -600,6 +604,7 @@ def dispatch_tool(
             run_cache[label] = summary
             return {"label": label, "status": "ok", **summary}
         except Exception as exc:
+            logger.exception("Tool run_bl_scenario failed [label=%s]: %s", label, exc)
             run_cache[label] = {"error": str(exc)}
             return {"label": label, "status": "error", "error": str(exc)}
 
@@ -647,6 +652,7 @@ def dispatch_tool(
                     "top_weights": summary["top_weights"],
                 })
             except Exception as exc:
+                logger.exception("Tool run_stress_sweep failed at value=%s [param=%s]: %s", value, sweep_param, exc)
                 rows.append({"value": value, "error": str(exc)})
 
         return {"sweep_parameter": sweep_param, "grid_results": rows}
@@ -737,6 +743,7 @@ def dispatch_tool(
                     "magnitude": mag,
                 }
             except Exception as exc:
+                logger.exception("Tool view_fragility_scan failed [view=%s magnitude=%s]: %s", view_label, mag, exc)
                 fragility_scan.append({
                     "magnitude": mag,
                     "error": str(exc),
@@ -794,6 +801,7 @@ def dispatch_tool(
                     "shock_magnitude": shock,
                 }
             except Exception as exc:
+                logger.exception("Tool factor_shock_scan failed [factor=%s shock=%s]: %s", factor, shock, exc)
                 shock_results.append({
                     "shock": shock,
                     "error": str(exc),
@@ -856,6 +864,7 @@ def dispatch_tool(
                     "removed_view": view_label,
                 }
             except Exception as exc:
+                logger.exception("Tool view_importance_test failed [view=%s]: %s", view_label, exc)
                 view_importance.append({
                     "view": view_label,
                     "error": str(exc),

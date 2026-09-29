@@ -6,8 +6,8 @@ import type { SectorContribution, AllocationData } from '../types/blMainTypes';
  */
 export const computeRiskContribution = (
   allocation: AllocationData[],
-  covarianceMatrix?: number[][],
-  sectorMapping?: Record<string, string>
+  _covarianceMatrix?: number[][],
+  _sectorMapping?: Record<string, string>
 ): SectorContribution[] => {
   // This is a placeholder for actual calculation
   // Real implementation would use marginal risk contribution: w_i * (Σw)_i / σ_p

@@ -1,0 +1,17 @@
+.market-caps-table .data-table {
+  font-size: 12.5px;
+}
+
+.market-caps-table .data-table th {
+  font-size: 11px;
+  padding: 8px 14px;
+}
+
+.market-caps-table .data-table td {
+  padding: 6px 12px;
+}
+
+.market-caps-table th:first-child,
+.market-caps-table td:first-child {
+  font-weight: 600;
+}
