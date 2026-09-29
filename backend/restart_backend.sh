@@ -12,7 +12,7 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-VENV_PYTHON="${VENV_PYTHON:-$SCRIPT_DIR/../.venv/bin/python}"
+VENV_PYTHON="${VENV_PYTHON:-$HOME/work/.venv/bin/python}"
 LOG_FILE="$SCRIPT_DIR/backend.log"
 PID_FILE="$SCRIPT_DIR/backend.pid"
 HOST="0.0.0.0"
