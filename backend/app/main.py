@@ -5,8 +5,12 @@ import logging
 import pathlib
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Load backend/.env before anything reads OPENAI_API_KEY etc.
+load_dotenv(pathlib.Path(__file__).resolve().parents[1] / ".env")
 
 # Configure logging
 logging.basicConfig(
