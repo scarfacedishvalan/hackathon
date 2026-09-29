@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.services.bl_llm_parser.parser import BlackLittermanLLMParser
+from app.orchestrators.market_data_orchestrator import load_market_data_raw
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -25,7 +26,6 @@ _METADATA_PATH = _PARSER_DIR / "sector_metadata.json"
 
 # Recipes are stored in backend/data/bl_recipes/
 _RECIPES_DIR = Path(__file__).resolve().parents[2] / "data" / "bl_recipes"
-_MARKET_DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "market_data.json"
 
 # ---------------------------------------------------------------------------
 # Defaults — loaded from market_data.json at import time
@@ -33,8 +33,7 @@ _MARKET_DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "market_data.
 
 def _load_market_data_defaults() -> tuple:
     try:
-        with open(_MARKET_DATA_PATH, "r", encoding="utf-8") as f:
-            md = json.load(f)
+        md = load_market_data_raw()
         assets = md.get("all_assets") or ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA"]
         factors = md.get("factor_names") or ["Growth", "Financial", "Defensive", "Market", "Rates"]
         return assets, factors
@@ -330,8 +329,7 @@ def get_model_parameters() -> Dict[str, float]:
         pass
     # Fall back to market_data.json model_defaults
     try:
-        with open(_MARKET_DATA_PATH, "r", encoding="utf-8") as f:
-            md = json.load(f)
+        md = load_market_data_raw()
         defaults = md.get("model_defaults", {})
         return {k: float(v) for k, v in defaults.items() if k in ("tau", "risk_aversion", "risk_free_rate")}
     except (FileNotFoundError, json.JSONDecodeError):

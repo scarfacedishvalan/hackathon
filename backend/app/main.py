@@ -26,6 +26,7 @@ from app.api.routers.news_router import router as news_router
 from app.api.routers.backtest_router import router as backtest_router
 from app.api.routers.agent_router import router as agent_router
 from app.api.routers.admin_router import router as admin_router
+from app.api.routers.market_data_router import router as market_data_router
 from app.db.database import init_db, seed_portfolios
 
 MOCK_PATH = (
@@ -60,3 +61,4 @@ app.include_router(news_router)
 app.include_router(backtest_router)
 app.include_router(agent_router)
 app.include_router(admin_router)
+app.include_router(market_data_router)

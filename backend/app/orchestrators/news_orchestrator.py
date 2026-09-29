@@ -22,6 +22,7 @@ from app.services.news_api.fetch_news import fetch_news_for_stock
 from app.services.news_api.view_parser import parse_article_to_views_safe
 from app.services.bl_llm_parser.parser import BlackLittermanLLMParser
 from app.orchestrators import view_orchestrator
+from app.orchestrators.market_data_orchestrator import load_market_data_raw
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +35,19 @@ _NEWS_PATH = _DATA_DIR / "news.json"
 _PARSER_PROMPTS = Path(__file__).resolve().parent.parent / "services" / "bl_llm_parser" / "prompts"
 
 # ---------------------------------------------------------------------------
-# Defaults  (kept in sync with market_data.json)
+# Defaults — sourced from market_data.json so this never drifts
 # ---------------------------------------------------------------------------
 
-DEFAULT_ASSETS: List[str] = [
-    "AAPL", "AMZN", "BAC", "BND", "GLD", "GOOG", "GOOGL",
-    "JNJ", "JPM", "MSFT", "PG", "TSLA", "VNQ", "WMT",
-]
-DEFAULT_FACTORS: List[str] = ["Growth", "Financial", "Defensive", "Market", "Rates"]
+try:
+    _md = load_market_data_raw()
+    DEFAULT_ASSETS: List[str] = _md.get("all_assets", [])
+    DEFAULT_FACTORS: List[str] = _md.get("factor_names", [])
+except (FileNotFoundError, json.JSONDecodeError):
+    DEFAULT_ASSETS = [
+        "AAPL", "AMZN", "BAC", "BND", "GLD", "GOOGL",
+        "JNJ", "JPM", "MSFT", "PG", "TSLA", "VNQ", "WMT",
+    ]
+    DEFAULT_FACTORS = ["Growth", "Financial", "Defensive", "Market", "Rates"]
 
 # ---------------------------------------------------------------------------
 # Persistence helpers

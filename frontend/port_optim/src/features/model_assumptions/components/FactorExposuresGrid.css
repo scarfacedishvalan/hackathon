@@ -1,0 +1,8 @@
+.factor-exposures-grid th:first-child,
+.factor-exposures-grid td:first-child {
+  font-weight: 600;
+}
+
+.factor-exposures-grid .assumptions-input {
+  max-width: 90px;
+}

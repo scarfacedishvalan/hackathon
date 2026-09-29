@@ -89,7 +89,32 @@ def _check_admin_console(get_json: Callable[[str], Any]) -> None:
     _assert(isinstance(data, dict), f"GET /admin/console should return JSON object, got: {type(data)}")
 
 
-def _run_all_checks(get_json: Callable[[str], Any]) -> None:
+def _check_market_data_assumptions(
+    get_json: Callable[[str], Any],
+    put_json: Callable[[str, dict[str, Any]], Any],
+) -> None:
+    """GET /market-data/assumptions shape check + PUT round-trip (restores original value)."""
+    data = get_json("/market-data/assumptions")
+    _assert(isinstance(data, dict), f"GET /market-data/assumptions should return JSON object, got: {type(data)}")
+    for key in ("all_assets", "factor_names", "market_caps", "factor_exposures"):
+        _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
+
+    asset = data["all_assets"][0]
+    original_cap = data["market_caps"][asset]
+    try:
+        updated = put_json("/market-data/assumptions", {"market_caps": {asset: original_cap + 1}})
+        _assert(
+            updated["market_caps"][asset] == original_cap + 1,
+            f"PUT did not persist updated market cap for {asset}: {_pretty(updated)}",
+        )
+    finally:
+        put_json("/market-data/assumptions", {"market_caps": {asset: original_cap}})
+
+
+def _run_all_checks(
+    get_json: Callable[[str], Any],
+    put_json: Callable[[str, dict[str, Any]], Any],
+) -> None:
     _check_views_current(get_json)
     _check_model_parameters(get_json)
     _check_constraints(get_json)
@@ -97,6 +122,7 @@ def _run_all_checks(get_json: Callable[[str], Any]) -> None:
     _check_portfolios(get_json)
     _check_backtest_theses(get_json)
     _check_admin_console(get_json)
+    _check_market_data_assumptions(get_json, put_json)
 
 
 # ---------------------------------------------------------------------------
@@ -172,11 +198,16 @@ def _run_inprocess(with_llm: bool) -> int:
         _assert(resp.status_code == 200, f"POST {path} -> {resp.status_code}: {resp.text}")
         return resp.json()
 
+    def put_json(path: str, payload: dict[str, Any]) -> Any:
+        resp = client.put(path, json=payload)
+        _assert(resp.status_code == 200, f"PUT {path} -> {resp.status_code}: {resp.text}")
+        return resp.json()
+
     def delete_call(path: str) -> None:
         resp = client.delete(path)
         _assert(resp.status_code in (200, 204), f"DELETE {path} -> {resp.status_code}: {resp.text}")
 
-    _run_all_checks(get_json)
+    _run_all_checks(get_json, put_json)
     if with_llm:
         _run_llm_checks(get_json, post_json, delete_call)
 
@@ -197,11 +228,16 @@ def _run_live(base_url: str, with_llm: bool) -> int:
         _assert(resp.status_code == 200, f"POST {path} -> {resp.status_code}: {resp.text}")
         return resp.json()
 
+    def put_json(path: str, payload: dict[str, Any]) -> Any:
+        resp = requests.put(base_url + path, json=payload, timeout=60)
+        _assert(resp.status_code == 200, f"PUT {path} -> {resp.status_code}: {resp.text}")
+        return resp.json()
+
     def delete_call(path: str) -> None:
         resp = requests.delete(base_url + path, timeout=60)
         _assert(resp.status_code in (200, 204), f"DELETE {path} -> {resp.status_code}: {resp.text}")
 
-    _run_all_checks(get_json)
+    _run_all_checks(get_json, put_json)
     if with_llm:
         _run_llm_checks(get_json, post_json, delete_call)
 

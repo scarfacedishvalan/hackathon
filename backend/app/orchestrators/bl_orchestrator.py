@@ -37,20 +37,16 @@ from app.services.bl_engine.bl_standalone import (  # noqa: E402
     sample_cov,
     market_implied_prior_returns,
 )
+from app.orchestrators.market_data_orchestrator import load_market_data_raw  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Market metadata
 # ---------------------------------------------------------------------------
 
-_MARKET_DATA_PATH = _BACKEND_DIR / "data" / "market_data.json"
-
 
 def _load_metadata() -> Dict[str, Any]:
-    """Return the full ``market_data.json`` dict (cached per process)."""
-    if not hasattr(_load_metadata, "_cache"):
-        with open(_MARKET_DATA_PATH, "r", encoding="utf-8") as f:
-            _load_metadata._cache = json.load(f)
-    return _load_metadata._cache
+    """Return the full ``market_data.json`` dict, read fresh so edits apply without a restart."""
+    return load_market_data_raw()
 
 
 def _apply_model_defaults(recipe: dict) -> dict:

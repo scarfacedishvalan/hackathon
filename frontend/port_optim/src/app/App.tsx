@@ -5,6 +5,7 @@ import { BLMainPage, BLMainProvider } from '@features/bl_main';
 import { BacktestPage } from '@features/backtest';
 import { AgentPage } from '@features/agent';
 import { AdminPage } from '@features/admin';
+import { ModelAssumptionsPage } from '@features/model_assumptions';
 import { AboutPage } from '@features/about';
 
 export const App: React.FC = () => {
@@ -19,6 +20,7 @@ export const App: React.FC = () => {
           <div style={{ display: activePage === 'backtest' ? undefined : 'none' }}><BacktestPage /></div>
           <div style={{ display: activePage === 'agent'    ? undefined : 'none' }}><AgentPage /></div>
           <div style={{ display: activePage === 'admin'    ? undefined : 'none' }}><AdminPage /></div>
+          <div style={{ display: activePage === 'model_assumptions' ? undefined : 'none' }}><ModelAssumptionsPage /></div>
           <div style={{ display: activePage === 'about'    ? undefined : 'none' }}><AboutPage /></div>
         </AppLayout>
       </BLMainProvider>
