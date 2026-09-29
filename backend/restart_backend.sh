@@ -32,7 +32,7 @@ pkill -f "uvicorn app.main:app" 2>/dev/null
 sleep 1
 
 echo "Starting backend (host=$HOST port=$PORT)..."
-nohup "$VENV_PYTHON" -m uvicorn app.main:app --host "$HOST" --port "$PORT" > "$LOG_FILE" 2>&1 &
+setsid nohup "$VENV_PYTHON" -m uvicorn app.main:app --host "$HOST" --port "$PORT" < /dev/null > "$LOG_FILE" 2>&1 &
 disown
 echo $! > "$PID_FILE"
 
