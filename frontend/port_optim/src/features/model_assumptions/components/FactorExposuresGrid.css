@@ -1,25 +1,93 @@
-.factor-exposures-grid th:first-child,
-.factor-exposures-grid td:first-child {
+.factor-exposures-grid-wrap {
+  overflow-x: auto;
+}
+
+.factor-exposures-grid {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.factor-exposures-grid th {
+  padding: 6px 8px;
+  color: #94a3b8;
   font-weight: 600;
+  font-size: 11px;
+  white-space: nowrap;
+  text-align: left;
 }
 
-.assumptions-input {
-  width: 100%;
-  max-width: 140px;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 4px;
+.factor-exposures-grid tbody th {
   color: #e0e6ed;
-  padding: 4px 8px;
-  font-size: 13px;
 }
 
-.assumptions-input:focus {
+.exposure-cell {
+  padding: 0;
+  text-align: center;
+  border: 1px solid #1a2129;
+}
+
+.exposure-cell-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 8px;
+  min-width: 64px;
+}
+
+.exposure-input {
+  width: 3.2em;
+  background: transparent;
+  border: none;
   outline: none;
-  border-color: #6366f1;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
-.factor-exposures-grid .assumptions-input {
-  max-width: 90px;
+.exposure-input::-webkit-inner-spin-button,
+.exposure-input::-webkit-outer-spin-button {
+  display: none;
+}
+
+.exposure-steppers {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.exposure-cell:hover .exposure-steppers {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.exposure-step-btn {
+  background: transparent;
+  border: none;
+  color: #0f172a;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 9px;
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+
+.exposure-step-btn:hover {
+  background: rgba(15, 23, 42, 0.15);
 }
 
