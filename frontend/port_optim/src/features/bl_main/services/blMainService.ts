@@ -51,13 +51,23 @@ export const blMainService = {
     return apiClient.get<{ bottom_up: BottomUpView[]; top_down: TopDownView[] }>('/views/current');
   },
 
-  /** GET /views/model_parameters — reads tau, risk_aversion, risk_free_rate from current.json */
-  getModelParameters: async (): Promise<{ tau: number; risk_aversion: number; risk_free_rate: number }> => {
+  /** GET /views/model_parameters — reads tau, risk_aversion, risk_free_rate, covariance_lookback_years from current.json */
+  getModelParameters: async (): Promise<{
+    tau: number;
+    risk_aversion: number;
+    risk_free_rate: number;
+    covariance_lookback_years: number;
+  }> => {
     return apiClient.get('/views/model_parameters');
   },
 
   /** PUT /views/model_parameters — persists updated params to current.json */
-  updateModelParameters: async (params: { tau?: number; risk_aversion?: number; risk_free_rate?: number }): Promise<void> => {
+  updateModelParameters: async (params: {
+    tau?: number;
+    risk_aversion?: number;
+    risk_free_rate?: number;
+    covariance_lookback_years?: number;
+  }): Promise<void> => {
     await apiClient.put('/views/model_parameters', params);
   },
 

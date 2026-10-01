@@ -57,9 +57,24 @@ def _check_views_current(get_json: Callable[[str], Any]) -> None:
         _assert(isinstance(data[key], list), f"'{key}' should be a list: {_pretty(data)}")
 
 
-def _check_model_parameters(get_json: Callable[[str], Any]) -> None:
+def _check_model_parameters(
+    get_json: Callable[[str], Any],
+    put_json: Callable[[str, dict[str, Any]], Any],
+) -> None:
     data = get_json("/views/model_parameters")
     _assert(isinstance(data, dict), f"GET /views/model_parameters should return JSON object, got: {type(data)}")
+    for key in ("tau", "risk_aversion", "risk_free_rate", "covariance_lookback_years"):
+        _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
+
+    original_lookback = data["covariance_lookback_years"]
+    try:
+        updated = put_json("/views/model_parameters", {"covariance_lookback_years": original_lookback + 1})
+        _assert(
+            updated["covariance_lookback_years"] == original_lookback + 1,
+            f"PUT did not persist updated covariance_lookback_years: {_pretty(updated)}",
+        )
+    finally:
+        put_json("/views/model_parameters", {"covariance_lookback_years": original_lookback})
 
 
 def _check_constraints(get_json: Callable[[str], Any]) -> None:
@@ -172,7 +187,7 @@ def _run_all_checks(
     put_json: Callable[[str, dict[str, Any]], Any],
 ) -> None:
     _check_views_current(get_json)
-    _check_model_parameters(get_json)
+    _check_model_parameters(get_json, put_json)
     _check_constraints(get_json)
     _check_universe(get_json)
     _check_portfolios(get_json)

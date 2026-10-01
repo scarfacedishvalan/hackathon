@@ -87,7 +87,8 @@
     "risk_aversion": 1.0,
     "tau": 0.05,
     "risk_free_rate": 0.02,
-    "frontier_points": 40
+    "frontier_points": 40,
+    "covariance_lookback_years": 5
   },
   "description": {
     "factors": {
