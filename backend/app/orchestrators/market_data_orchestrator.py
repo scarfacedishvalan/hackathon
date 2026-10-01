@@ -17,11 +17,21 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import numpy as np
 
 _MARKET_DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "market_data.json"
+
+# Trailing-window lengths (calendar days) accepted by get_correlation_matrix's `horizon` arg.
+HORIZON_DAYS: Dict[str, Optional[int]] = {
+    "3m": 90,
+    "6m": 182,
+    "1y": 365,
+    "3y": 365 * 3,
+    "5y": 365 * 5,
+    "all": None,
+}
 
 
 def load_market_data_raw() -> Dict[str, Any]:
@@ -104,30 +114,55 @@ def _write_atomic(data: Dict[str, Any]) -> None:
     os.replace(tmp_path, _MARKET_DATA_PATH)
 
 
-def get_correlation_matrix(frequency: int = 252) -> Dict[str, Any]:
+def refresh_market_caps() -> Dict[str, Any]:
+    """
+    Stub for refreshing market caps from a live source (e.g. a market data API)
+    and persisting them to market_data.json. Not implemented yet — currently a
+    no-op that returns the assumptions unchanged.
+    """
+    return get_assumptions()
+
+
+def get_correlation_matrix(frequency: int = 252, horizon: str = "all") -> Dict[str, Any]:
     """
     Compute the annualized asset correlation matrix and per-asset annualized
-    volatility from real price history.
+    volatility from real price history, restricted to a trailing window.
 
     Note: the correlation matrix itself is mathematically invariant to
     ``frequency`` (it cancels out of the covariance-to-correlation
     normalisation) — only ``annualized_volatility`` changes with it.
+    ``horizon`` *does* change the correlation matrix, since it changes which
+    return observations are included in the sample.
 
     Args:
         frequency: Periods per year used to annualize (252 daily, 52 weekly, 12 monthly).
+        horizon: Trailing window key — one of ``HORIZON_DAYS`` ("3m", "6m",
+            "1y", "3y", "5y", "all").
 
     Returns:
-        ``{"assets": [...], "frequency": int, "correlation": [[...]], "annualized_volatility": {asset: float}}``
+        ``{"assets": [...], "frequency": int, "horizon": str, "correlation": [[...]], "annualized_volatility": {asset: float}}``
     """
     if frequency <= 0:
         raise ValueError("frequency must be positive")
+    if horizon not in HORIZON_DAYS:
+        raise ValueError(f"horizon must be one of {sorted(HORIZON_DAYS)}, got '{horizon}'")
 
     # Imported lazily: load_data.py imports this module, so a top-level
     # import here would create a circular import.
+    import pandas as pd
     from app.services.price_data.load_data import load_market_data
     from app.services.bl_engine.bl_standalone import sample_cov
 
     price_df, *_ = load_market_data()
+
+    days = HORIZON_DAYS[horizon]
+    if days is not None:
+        cutoff = price_df.index.max() - pd.Timedelta(days=days)
+        price_df = price_df[price_df.index >= cutoff]
+
+    if len(price_df.pct_change().dropna()) < 2:
+        raise ValueError(f"Not enough price history for horizon '{horizon}' to compute covariance")
+
     cov = sample_cov(price_df, frequency)
     assets = cov.columns.tolist()
     std = np.sqrt(np.diag(cov.values))
@@ -137,6 +172,7 @@ def get_correlation_matrix(frequency: int = 252) -> Dict[str, Any]:
     return {
         "assets": assets,
         "frequency": frequency,
+        "horizon": horizon,
         "correlation": corr.tolist(),
         "annualized_volatility": dict(zip(assets, std.tolist())),
     }

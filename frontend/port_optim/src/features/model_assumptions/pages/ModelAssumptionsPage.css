@@ -24,3 +24,25 @@
   color: #6366f1;
   font-style: italic;
 }
+
+.refresh-caps-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: #cbd5e1;
+  background: #1e2530;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.refresh-caps-btn:hover:not(:disabled) {
+  background: #2d3540;
+  border-color: #475569;
+}
+
+.refresh-caps-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

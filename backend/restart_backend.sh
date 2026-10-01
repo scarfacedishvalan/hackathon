@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restarts the FastAPI backend in the background and tails its log.
+# Pulls latest code, rebuilds the frontend, and restarts the FastAPI backend — run after every push.
 #
 # Usage (from the backend/ directory):
 #   ./restart_backend.sh
@@ -10,6 +10,8 @@
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+FRONTEND_DIR="$REPO_ROOT/frontend/port_optim"
 cd "$SCRIPT_DIR"
 
 VENV_PYTHON="${VENV_PYTHON:-$HOME/work/.venv/bin/python}"
@@ -24,6 +26,9 @@ if [[ ! -x "$VENV_PYTHON" ]]; then
   exit 1
 fi
 
+echo "Pulling latest code..."
+( cd "$REPO_ROOT" && git stash && git pull )
+
 echo "Stopping any existing backend process..."
 if [[ -f "$PID_FILE" ]]; then
   kill "$(cat "$PID_FILE")" 2>/dev/null
@@ -37,5 +42,9 @@ disown
 echo $! > "$PID_FILE"
 
 echo "Backend started, pid=$(cat "$PID_FILE"). Log: $LOG_FILE"
+
+echo "Building frontend ($FRONTEND_DIR)..."
+( cd "$FRONTEND_DIR" && npm run build )
+
 echo "Tailing log (Ctrl+C stops tailing only, backend keeps running)..."
 tail -f "$LOG_FILE"
