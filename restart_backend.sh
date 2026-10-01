@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pulls latest code, rebuilds the frontend, and restarts the FastAPI backend — run after every push.
 #
-# Usage (from the backend/ directory):
+# Usage (from the repo root):
 #   ./restart_backend.sh
 #
 # Ctrl+C only stops the log tail — the server keeps running detached.
@@ -9,14 +9,14 @@
 
 set -u
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$REPO_ROOT/backend"
 FRONTEND_DIR="$REPO_ROOT/frontend/port_optim"
-cd "$SCRIPT_DIR"
+cd "$BACKEND_DIR"
 
 VENV_PYTHON="${VENV_PYTHON:-$HOME/work/.venv/bin/python}"
-LOG_FILE="$SCRIPT_DIR/backend.log"
-PID_FILE="$SCRIPT_DIR/backend.pid"
+LOG_FILE="$BACKEND_DIR/backend.log"
+PID_FILE="$BACKEND_DIR/backend.pid"
 HOST="0.0.0.0"
 PORT="8000"
 
