@@ -39,19 +39,19 @@
   ],
   "factor_exposures": {
     "_note": "Order matches factor_names: [Growth, Financial, Defensive, Market, Rates]. ETF exposures estimated from return characteristics; refine via factor regression.",
-    "AAPL":  [1.2, 0.0, 0.1, 1.1, 0.0],
-    "AMZN":  [1.4, 0.0, 0.1, 1.3, 0.1],
-    "BAC":   [0.1, 1.3, 0.2, 0.8, 0.2],
-    "BND":   [0.0, 0.0, 0.2, 0.1, 1.5],
-    "GLD":   [0.0, 0.0, 0.6, 0.0, 0.3],
-    "GOOGL": [1.3, 0.0, 0.1, 1.2, 0.1],
-    "JNJ":   [0.2, 0.0, 1.4, 0.6, 0.3],
-    "JPM":   [0.2, 1.5, 0.2, 0.9, 0.2],
-    "MSFT":  [1.1, 0.0, 0.2, 1.0, 0.0],
-    "PG":    [0.2, 0.0, 1.3, 0.6, 0.3],
-    "TSLA":  [1.6, 0.0, 0.0, 1.5, 0.4],
-    "VNQ":   [0.1, 0.2, 0.4, 0.7, 0.8],
-    "WMT":   [0.3, 0.1, 1.1, 0.7, 0.2]
+    "AAPL":  [1.2, 0.0, 0.1, 1.1, -0.2],
+    "AMZN":  [1.4, 0.0, 0.1, 1.3, -0.3],
+    "BAC":   [0.1, 1.3, 0.2, 0.8, 0.3],
+    "BND":   [0.0, 0.0, 0.2, 0.1, -1.5],
+    "GLD":   [0.0, 0.0, 0.6, 0.0, -0.3],
+    "GOOGL": [1.3, 0.0, 0.1, 1.2, -0.2],
+    "JNJ":   [0.2, 0.0, 1.4, 0.6, -0.2],
+    "JPM":   [0.2, 1.5, 0.2, 0.9, 0.3],
+    "MSFT":  [1.1, 0.0, 0.2, 1.0, -0.2],
+    "PG":    [0.2, 0.0, 1.3, 0.6, -0.2],
+    "TSLA":  [1.6, 0.0, 0.0, 1.5, -0.5],
+    "VNQ":   [0.1, 0.2, 0.4, 0.7, -0.8],
+    "WMT":   [0.3, 0.1, 1.1, 0.7, -0.1]
   },
   "sector_map": {
     "AAPL":  "Technology",
@@ -95,7 +95,7 @@
       "Financial": "Financial sector exposure (high exposure: BAC, JPM)",
       "Defensive": "Defensive/consumer staples and inflation hedges (high exposure: JNJ, PG, WMT, GLD)",
       "Market": "Overall market beta",
-      "Rates": "Interest rate sensitivity (high exposure: BAC, JPM, TSLA, BND, VNQ)"
+      "Rates": "Interest rate sensitivity, signed: positive = benefits from rising rates (BAC, JPM via net interest margin), negative = hurt by rising rates (BND, VNQ via duration risk; TSLA, GLD, growth tech via valuation/opportunity cost)"
     },
     "market_caps_unit": "billions USD",
     "etf_market_caps_note": "BND, GLD, VNQ market caps are approximate NAV proxies, not true market caps"
