@@ -36,5 +36,8 @@ chatgpt_prompts/
 data/*.db
 data/*.db-journal
 
+# Personal ad-hoc API testing scratch notebook
+test_api_call.ipynb
+.ipynb_checkpoints/
 
 agent_audits/*
