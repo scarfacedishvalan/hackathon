@@ -4,6 +4,10 @@ venv/
 ENV/
 env/
 
+# workspace files
+.vscode/
+*-workspace
+
 # Python cache
 __pycache__/
 *.py[cod]
