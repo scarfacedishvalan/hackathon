@@ -124,6 +124,13 @@ Centralized LLM integration with cost tracking.
 
 ## Setup
 
+Run the commands below from the `backend` directory with Python installed.
+`requirements.txt` lists unversioned top-level packages for the API, portfolio
+analysis, backtesting, charts, LLM integration, and news extraction. Pip installs
+their transitive dependencies automatically; Python and its standard-library
+modules (including SQLite) are not pip dependencies. Unpinned versions simplify
+setup but do not guarantee compatibility or reproducible installations.
+
 1. Create a virtual environment:
 ```bash
 python -m venv venv
@@ -140,7 +147,7 @@ source venv/bin/activate
 
 3. Install dependencies:
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## Running the Server
