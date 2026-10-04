@@ -57,7 +57,7 @@ def _apply_model_defaults(recipe: dict) -> dict:
     defaults = _load_metadata().get("model_defaults", {})
     recipe = json.loads(json.dumps(recipe))  # deep copy
     params = recipe.setdefault("model_parameters", {})
-    for key in ("tau", "risk_aversion", "risk_free_rate"):
+    for key in ("tau", "risk_aversion", "risk_free_rate", "covariance_lookback_years"):
         if key not in params and key in defaults:
             params[key] = defaults[key]
     return recipe
@@ -334,11 +334,18 @@ def _compute_chart_data(
     params = recipe["model_parameters"]
     risk_aversion: float = params["risk_aversion"]
     risk_free_rate: float = params["risk_free_rate"]
+    covariance_lookback_years = params.get("covariance_lookback_years")
 
     # Filter market_caps to universe assets only — the full market_context may
     # contain more assets than the current universe, and market_implied_prior_returns
     # requires market_caps and cov_matrix to have matching asset counts.
     universe_market_caps = {a: market_caps[a] for a in universe if a in market_caps}
+
+    # Match the same trailing estimation window used by run_bl_recipe, so the
+    # displayed stats are consistent with the actual optimization inputs.
+    if covariance_lookback_years:
+        cutoff = price_subset.index.max() - pd.Timedelta(days=365 * covariance_lookback_years)
+        price_subset = price_subset[price_subset.index >= cutoff]
 
     # Re-compute covariance + equilibrium returns (cheap — needed for Σ)
     cov_matrix = sample_cov(price_subset)

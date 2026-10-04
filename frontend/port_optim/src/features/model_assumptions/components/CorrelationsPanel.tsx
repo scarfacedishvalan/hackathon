@@ -9,6 +9,15 @@ const FREQUENCY_OPTIONS = [
   { value: 12, label: 'Monthly (12)' },
 ];
 
+const HORIZON_OPTIONS = [
+  { value: '3m', label: '3 Months' },
+  { value: '6m', label: '6 Months' },
+  { value: '1y', label: '1 Year' },
+  { value: '3y', label: '3 Years' },
+  { value: '5y', label: '5 Years' },
+  { value: 'all', label: 'All' },
+];
+
 // Diverging red (-1) -> white (0) -> green (+1) scale; fixed hue, lightness carries magnitude.
 function colorForCorrelation(value: number): string {
   const v = Math.max(-1, Math.min(1, value));
@@ -19,6 +28,7 @@ function colorForCorrelation(value: number): string {
 
 export const CorrelationsPanel: React.FC = () => {
   const [frequency, setFrequency] = useState(252);
+  const [horizon, setHorizon] = useState('all');
   const [data, setData] = useState<CorrelationMatrix | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,19 +36,31 @@ export const CorrelationsPanel: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     modelAssumptionsService
-      .getCorrelations(frequency)
+      .getCorrelations(frequency, horizon)
       .then((result) => {
         setData(result);
         setError(null);
       })
       .catch((err) => setError(err instanceof Error ? err.message : String(err)))
       .finally(() => setLoading(false));
-  }, [frequency]);
+  }, [frequency, horizon]);
 
   return (
     <div className="correlations-panel">
       <div className="correlations-header">
         <span className="correlations-title">Asset Correlations</span>
+        <label className="frequency-select-label">
+          Horizon:
+          <select
+            className="frequency-select"
+            value={horizon}
+            onChange={(e) => setHorizon(e.target.value)}
+          >
+            {HORIZON_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </label>
         <label className="frequency-select-label">
           Annualization frequency:
           <select
@@ -53,9 +75,9 @@ export const CorrelationsPanel: React.FC = () => {
         </label>
       </div>
       <p className="correlations-note">
-        Correlation values are unaffected by the annualization frequency (it cancels out
-        mathematically) — the frequency selector instead controls the annualized volatility
-        figures below.
+        Horizon selects the trailing price-history window used to compute both the correlation
+        matrix and the volatility figures below. Annualization frequency only rescales the
+        volatility figures — correlation is unaffected by it (cancels out mathematically).
       </p>
 
       {loading && <div className="correlations-loading">Loading price data…</div>}

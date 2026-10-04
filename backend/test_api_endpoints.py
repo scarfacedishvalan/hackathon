@@ -57,9 +57,24 @@ def _check_views_current(get_json: Callable[[str], Any]) -> None:
         _assert(isinstance(data[key], list), f"'{key}' should be a list: {_pretty(data)}")
 
 
-def _check_model_parameters(get_json: Callable[[str], Any]) -> None:
+def _check_model_parameters(
+    get_json: Callable[[str], Any],
+    put_json: Callable[[str, dict[str, Any]], Any],
+) -> None:
     data = get_json("/views/model_parameters")
     _assert(isinstance(data, dict), f"GET /views/model_parameters should return JSON object, got: {type(data)}")
+    for key in ("tau", "risk_aversion", "risk_free_rate", "covariance_lookback_years"):
+        _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
+
+    original_lookback = data["covariance_lookback_years"]
+    try:
+        updated = put_json("/views/model_parameters", {"covariance_lookback_years": original_lookback + 1})
+        _assert(
+            updated["covariance_lookback_years"] == original_lookback + 1,
+            f"PUT did not persist updated covariance_lookback_years: {_pretty(updated)}",
+        )
+    finally:
+        put_json("/views/model_parameters", {"covariance_lookback_years": original_lookback})
 
 
 def _check_constraints(get_json: Callable[[str], Any]) -> None:
@@ -121,12 +136,58 @@ def _check_market_data_correlations(get_json: Callable[[str], Any]) -> None:
     _assert(len(data["correlation"]) == n, f"correlation matrix row count mismatch: {_pretty(data)}")
 
 
+_ALL_HORIZONS = ["3m", "6m", "1y", "3y", "5y", "all"]
+
+
+def _check_market_data_correlations_horizons(get_json: Callable[[str], Any]) -> None:
+    """GET /market-data/correlations for every supported horizon — requires real price history (SQLite)."""
+    for horizon in _ALL_HORIZONS:
+        data = get_json(f"/market-data/correlations?frequency=252&horizon={horizon}")
+        _assert(
+            isinstance(data, dict),
+            f"GET /market-data/correlations?horizon={horizon} should return JSON object, got: {type(data)}",
+        )
+        for key in ("assets", "frequency", "horizon", "correlation", "annualized_volatility"):
+            _assert(key in data, f"Missing key '{key}' for horizon={horizon}: {_pretty(data)}")
+        _assert(data["horizon"] == horizon, f"horizon echoed back incorrectly: {_pretty(data)}")
+
+        n = len(data["assets"])
+        _assert(n > 0, f"No assets returned for horizon={horizon}")
+        _assert(len(data["correlation"]) == n, f"correlation row count mismatch for horizon={horizon}: {_pretty(data)}")
+        for i, row in enumerate(data["correlation"]):
+            _assert(len(row) == n, f"correlation row {i} length mismatch for horizon={horizon}: {_pretty(data)}")
+            _assert(abs(row[i] - 1.0) < 1e-6, f"diagonal should be ~1.0 for horizon={horizon}, got {row[i]}")
+            for v in row:
+                _assert(-1.0001 <= v <= 1.0001, f"correlation value out of [-1,1] range for horizon={horizon}: {v}")
+        _assert(
+            set(data["annualized_volatility"].keys()) == set(data["assets"]),
+            f"annualized_volatility keys don't match assets for horizon={horizon}: {_pretty(data)}",
+        )
+
+
+def _check_market_data_refresh_caps(
+    get_json: Callable[[str], Any],
+    post_json: Callable[[str, dict[str, Any]], Any],
+) -> None:
+    """POST /market-data/refresh-caps — stub, must be a no-op (caps unchanged)."""
+    before = get_json("/market-data/assumptions")
+    data = post_json("/market-data/refresh-caps", {})
+    _assert(isinstance(data, dict), f"POST /market-data/refresh-caps should return JSON object, got: {type(data)}")
+    for key in ("all_assets", "factor_names", "market_caps", "factor_exposures"):
+        _assert(key in data, f"Missing key '{key}' in response: {_pretty(data)}")
+    _assert(
+        data["market_caps"] == before["market_caps"],
+        f"refresh-caps stub should not change market_caps: {_pretty(data)}",
+    )
+
+
 def _run_all_checks(
     get_json: Callable[[str], Any],
+    post_json: Callable[[str, dict[str, Any]], Any],
     put_json: Callable[[str, dict[str, Any]], Any],
 ) -> None:
     _check_views_current(get_json)
-    _check_model_parameters(get_json)
+    _check_model_parameters(get_json, put_json)
     _check_constraints(get_json)
     _check_universe(get_json)
     _check_portfolios(get_json)
@@ -134,6 +195,8 @@ def _run_all_checks(
     _check_admin_console(get_json)
     _check_market_data_assumptions(get_json, put_json)
     _check_market_data_correlations(get_json)
+    _check_market_data_correlations_horizons(get_json)
+    _check_market_data_refresh_caps(get_json, post_json)
 
 
 # ---------------------------------------------------------------------------
@@ -218,7 +281,7 @@ def _run_inprocess(with_llm: bool) -> int:
         resp = client.delete(path)
         _assert(resp.status_code in (200, 204), f"DELETE {path} -> {resp.status_code}: {resp.text}")
 
-    _run_all_checks(get_json, put_json)
+    _run_all_checks(get_json, post_json, put_json)
     if with_llm:
         _run_llm_checks(get_json, post_json, delete_call)
 
@@ -248,7 +311,7 @@ def _run_live(base_url: str, with_llm: bool) -> int:
         resp = requests.delete(base_url + path, timeout=60)
         _assert(resp.status_code in (200, 204), f"DELETE {path} -> {resp.status_code}: {resp.text}")
 
-    _run_all_checks(get_json, put_json)
+    _run_all_checks(get_json, post_json, put_json)
     if with_llm:
         _run_llm_checks(get_json, post_json, delete_call)
 

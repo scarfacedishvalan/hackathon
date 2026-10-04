@@ -13,6 +13,7 @@ export interface MarketAssumptionsUpdate {
 export interface CorrelationMatrix {
   assets: string[];
   frequency: number;
+  horizon: string;
   correlation: number[][];
   annualized_volatility: Record<string, number>;
 }

@@ -7,6 +7,7 @@ interface ModelParams {
   tau: number;
   risk_aversion: number;
   risk_free_rate: number;
+  covariance_lookback_years: number;
 }
 
 interface Constraints {
@@ -14,7 +15,12 @@ interface Constraints {
   weight_bounds: [number, number];
 }
 
-const PARAM_DEFAULTS: ModelParams = { tau: 0.05, risk_aversion: 3.0, risk_free_rate: 0.02 };
+const PARAM_DEFAULTS: ModelParams = {
+  tau: 0.05,
+  risk_aversion: 3.0,
+  risk_free_rate: 0.02,
+  covariance_lookback_years: 5,
+};
 const CONSTRAINT_DEFAULTS: Constraints = { long_only: true, weight_bounds: [0.0, 1.0] };
 const DEBOUNCE_MS = 500;
 
@@ -138,6 +144,20 @@ export const ModelControls: React.FC = () => {
               className="slider"
             />
             <div className="slider-labels"><span>0%</span><span>10%</span></div>
+          </div>
+
+          {/* Covariance Lookback */}
+          <div className="control-group">
+            <label className="control-label">
+              Covariance Lookback: <strong>{params.covariance_lookback_years.toFixed(1)}y</strong>
+            </label>
+            <input
+              type="range" min="1" max="10" step="0.5"
+              value={params.covariance_lookback_years}
+              onChange={(e) => updateParam('covariance_lookback_years', e.target.value)}
+              className="slider"
+            />
+            <div className="slider-labels"><span>1y — recent regime</span><span>10y — long history</span></div>
           </div>
 
           {/* Divider */}

@@ -315,37 +315,44 @@ def update_universe(assets: List[str]) -> List[str]:
 
 def get_model_parameters() -> Dict[str, float]:
     """
-    Return the ``model_parameters`` block from ``current.json``.
-
-    Falls back to ``market_data.json`` model_defaults when ``current.json``
-    is absent or has no ``model_parameters`` key.
+    Return the ``model_parameters`` block from ``current.json``, merged over
+    ``market_data.json`` model_defaults for any key the recipe doesn't
+    override (so older ``current.json`` files missing newer keys like
+    ``covariance_lookback_years`` still get a sane value instead of nothing).
     """
-    try:
-        recipe = load_recipe("current")
-        params = recipe.get("model_parameters")
-        if params:
-            return {k: float(v) for k, v in params.items()}
-    except FileNotFoundError:
-        pass
-    # Fall back to market_data.json model_defaults
+    allowed = ("tau", "risk_aversion", "risk_free_rate", "covariance_lookback_years")
+
     try:
         md = load_market_data_raw()
-        defaults = md.get("model_defaults", {})
-        return {k: float(v) for k, v in defaults.items() if k in ("tau", "risk_aversion", "risk_free_rate")}
+        result = {k: float(v) for k, v in md.get("model_defaults", {}).items() if k in allowed}
     except (FileNotFoundError, json.JSONDecodeError):
-        return {"tau": 0.05, "risk_aversion": 1.0, "risk_free_rate": 0.02}
+        result = {}
+    result.setdefault("tau", 0.05)
+    result.setdefault("risk_aversion", 1.0)
+    result.setdefault("risk_free_rate", 0.02)
+    result.setdefault("covariance_lookback_years", 5)
+
+    try:
+        recipe = load_recipe("current")
+        params = recipe.get("model_parameters") or {}
+        result.update({k: float(v) for k, v in params.items() if k in allowed})
+    except FileNotFoundError:
+        pass
+
+    return result
 
 
 def update_model_parameters(params: Dict[str, float]) -> None:
     """
     Merge *params* into the ``model_parameters`` block of ``current.json``
-    and persist.  Only ``tau``, ``risk_aversion``, and ``risk_free_rate``
-    are accepted; unknown keys are silently ignored.
+    and persist.  Only ``tau``, ``risk_aversion``, ``risk_free_rate``, and
+    ``covariance_lookback_years`` are accepted; unknown keys are silently
+    ignored.
 
     Creates ``current.json`` with bare model_parameters if it does not
     exist yet.
     """
-    allowed = {"tau", "risk_aversion", "risk_free_rate"}
+    allowed = {"tau", "risk_aversion", "risk_free_rate", "covariance_lookback_years"}
     safe_params = {k: float(v) for k, v in params.items() if k in allowed}
     try:
         recipe = load_recipe("current")

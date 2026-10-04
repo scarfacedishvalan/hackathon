@@ -8,7 +8,7 @@ import { CorrelationsPanel } from '../components/CorrelationsPanel';
 import './ModelAssumptionsPage.css';
 
 export const ModelAssumptionsPage: React.FC = () => {
-  const { data, loading, error, saving, updateFactorExposure } = useModelAssumptions();
+  const { data, loading, error, saving, refreshing, updateFactorExposure, refreshMarketCaps } = useModelAssumptions();
 
   if (loading) return <div className="model-assumptions-page">Loading…</div>;
   if (error && !data) return <div className="model-assumptions-page model-assumptions-error">Failed to load: {error}</div>;
@@ -27,7 +27,19 @@ export const ModelAssumptionsPage: React.FC = () => {
         <FactorExposuresGrid data={data} onChange={updateFactorExposure} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Market Caps">
+      <CollapsibleSection
+        title="Market Caps"
+        headerExtra={
+          <button
+            type="button"
+            className="refresh-caps-btn"
+            onClick={(e) => { e.stopPropagation(); refreshMarketCaps(); }}
+            disabled={refreshing}
+          >
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </button>
+        }
+      >
         <MarketCapsTable data={data} />
       </CollapsibleSection>
 

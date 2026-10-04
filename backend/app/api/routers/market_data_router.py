@@ -33,14 +33,23 @@ async def update_assumptions(body: dict):
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@router.post("/refresh-caps")
+async def refresh_caps():
+    """
+    Stub endpoint for refreshing market caps from a live data source.
+    Not implemented yet — currently a no-op that returns the assumptions unchanged.
+    """
+    return market_data_orchestrator.refresh_market_caps()
+
+
 @router.get("/correlations")
-async def get_correlations(frequency: int = 252):
+async def get_correlations(frequency: int = 252, horizon: str = "all"):
     """
     Return the annualized asset correlation matrix and per-asset annualized
-    volatility, computed from real price history. Read-only — not yet
-    linked to any persisted assumptions.
+    volatility, computed from real price history restricted to the trailing
+    `horizon` window. Read-only — not yet linked to any persisted assumptions.
     """
     try:
-        return market_data_orchestrator.get_correlation_matrix(frequency)
+        return market_data_orchestrator.get_correlation_matrix(frequency, horizon)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))

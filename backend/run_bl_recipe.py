@@ -105,16 +105,26 @@ def run_bl_recipe(
     tau = params['tau']
     risk_aversion = params['risk_aversion']
     risk_free_rate = params['risk_free_rate']
-    
+    covariance_lookback_years = params.get('covariance_lookback_years')
+
     print(f"\n📦 Universe: {len(universe)} assets - {', '.join(universe)}")
-    print(f"⚙️  Parameters: tau={tau}, risk_aversion={risk_aversion}, rf={risk_free_rate}")
-    
+    print(
+        f"⚙️  Parameters: tau={tau}, risk_aversion={risk_aversion}, rf={risk_free_rate}, "
+        f"cov_lookback_years={covariance_lookback_years}"
+    )
+
+    # Restrict the covariance/prior-return estimation window to the trailing
+    # N years, if configured — otherwise use all available history.
+    if covariance_lookback_years:
+        cutoff = price_df.index.max() - pd.Timedelta(days=365 * covariance_lookback_years)
+        price_df = price_df[price_df.index >= cutoff]
+
     # Compute covariance and prior returns
     if covariance_estimator is None:
         covariance_estimator = sample_cov
     if return_estimator is None:
         return_estimator = market_implied_prior_returns
-    
+
     cov_matrix = covariance_estimator(price_df)
     pi = return_estimator(filtered_market_caps, cov_matrix, risk_aversion)
     Sigma = cov_matrix.values

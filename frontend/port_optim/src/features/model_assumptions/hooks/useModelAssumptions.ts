@@ -9,6 +9,7 @@ export function useModelAssumptions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Accumulates edits between debounce fires so only the changed keys are sent.
   const pending = useRef<MarketAssumptionsUpdate>({});
@@ -63,5 +64,18 @@ export function useModelAssumptions() {
     [scheduleSave],
   );
 
-  return { data, loading, error, saving, updateMarketCap, updateFactorExposure };
+  const refreshMarketCaps = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const updated = await modelAssumptionsService.refreshMarketCaps();
+      setData(updated);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  return { data, loading, error, saving, refreshing, updateMarketCap, updateFactorExposure, refreshMarketCaps };
 }
