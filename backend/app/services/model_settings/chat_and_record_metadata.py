@@ -27,6 +27,26 @@ PRICING = {
 }
 # Nested dictionary: service -> operation -> parameters
 CHAT_AND_RECORD_METADATA = {
+    "research_agent": {
+        "critic": {
+            "service": "research_agent",
+            "operation": "critic",
+            "model": "gpt-4.1-mini",
+            "temperature": 0,
+        },
+        "revise_views": {
+            "service": "research_agent",
+            "operation": "revise_views",
+            "model": "gpt-4.1-mini",
+            "temperature": 0,
+        },
+        "analyze_evidence": {
+            "service": "research_agent",
+            "operation": "analyze_evidence",
+            "model": "gpt-4.1-mini",
+            "temperature": 0,
+        }
+    },
     "black_litterman_parser": {
         "parse_views": {
             "service": "black_litterman_parser",

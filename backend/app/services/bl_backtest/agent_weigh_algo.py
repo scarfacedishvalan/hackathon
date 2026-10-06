@@ -12,6 +12,8 @@ that reads ``target.temp["selected"]`` and ``target.universe``, and sets
 
 from __future__ import annotations
 
+import math
+from numbers import Real
 from typing import Callable, Optional
 
 import pandas as pd
@@ -19,7 +21,7 @@ from bt.core import Algo
 
 from app.services.bl_backtest.mock_agent import mock_generate_agent_weights
 
-WeightFn = Callable[[pd.DataFrame, list, str], dict]
+WeightFn = Callable[[pd.DataFrame, list[str], str, pd.Timestamp], dict[str, float]]
 
 
 class AgenticViewWeighTarget(Algo):
@@ -29,7 +31,7 @@ class AgenticViewWeighTarget(Algo):
     Args:
         hypothesis: Natural-language research hypothesis passed verbatim to
             the agent on every call (see agent_plan.md section 6).
-        weight_fn: ``(price_window, universe, hypothesis) -> {ticker: weight}``.
+        weight_fn: ``(price_window, universe, hypothesis, as_of) -> {ticker: weight}``.
             Defaults to the mock agent. Swap this for the real pipeline
             (EPS features -> LangChain view agent -> run_black_litterman)
             without changing this class or the Strategy wiring.
@@ -65,12 +67,28 @@ class AgenticViewWeighTarget(Algo):
         # the point-in-time boundary -- the agent never sees future prices.
         t0 = target.now
         price_window = target.universe.loc[t0 - self.lookback : t0, selected]
+        # bt prepends one all-NaN initialization row, not a market observation.
+        if (
+            not price_window.empty
+            and price_window.index[0] == target.universe.index[0]
+            and price_window.iloc[0].isna().all()
+        ):
+            price_window = price_window.iloc[1:]
 
-        weights = self.weight_fn(price_window, selected, self.hypothesis)
+        weights = self.weight_fn(price_window, selected, self.hypothesis, pd.Timestamp(t0))
+        if set(weights) != set(selected):
+            raise ValueError("weight_fn must return exactly the selected assets")
+        if any(
+            isinstance(value, bool) or not isinstance(value, Real)
+            or not math.isfinite(value) or value < 0
+            for value in weights.values()
+        ):
+            raise ValueError("weight_fn must return finite, nonnegative numeric weights")
 
         total = sum(weights.values())
-        if total > 0:
-            weights = {ticker: w / total for ticker, w in weights.items()}
+        if not math.isfinite(total) or total <= 0:
+            raise ValueError("weight_fn must return a finite, strictly positive total weight")
+        weights = {ticker: w / total for ticker, w in weights.items()}
 
         target.temp["weights"] = weights
         return True

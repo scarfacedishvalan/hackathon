@@ -150,6 +150,116 @@ source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
+## Hypothesis-driven research example
+
+For the feedback-loop version, open
+[research_feedback_walkthrough.ipynb](app/services/bl_backtest/research_feedback_walkthrough.ipynb),
+an unexecuted copy of the single-date walkthrough. It uses the same research
+implementation and unchanged BL node, prints the expanded conditional graph,
+and displays original proposals, per-cycle criticism/revisions, validated final
+views, and prior-versus-BL allocations.
+
+The shared research graph now defaults to:
+
+```text
+prepare_research_context -> analyze_available_evidence -> generate_investment_views
+    -> critic_agent -> revision_agent -> validate_structured_views
+           ^                |
+           +----------------+  needs_review and cycle count below limit
+```
+
+The analyst may return zero or more supported views; it need not cover every
+security. The existing `AssetView` fields and deterministic citation/score
+validation are preserved. Final views must be unique per asset and within the
+requested universe. The critic independently evaluates every proposal's
+evidence quality, contradictions, materiality, redundancy, and confidence.
+Revision receives the original/current proposals, same evidence, and critique.
+It can abstain or merge same-asset theses without inventing evidence.
+
+`max_revision_cycles` accepts 1 or 2 (default 2). One cycle costs three LLM
+calls (analyst, critic, revision); a second costs two more. The revision's
+`needs_review` flag requests another cycle. At the hard limit, remaining
+concerns are explicitly reported through `revision_limit_reached` and warnings;
+deterministic validation still runs before any portfolio node. Empty final
+views are valid and use the existing BL engine's equilibrium allocation.
+For the earlier one-call behavior, use
+`build_research_graph(feedback_enabled=False)` in the same implementation.
+Existing notebooks use the updated default when rerun; their previously saved
+outputs are not fresh feedback-loop results.
+
+For a minimal single-date example without a backtest, open
+[research_walkthrough.ipynb](app/services/bl_backtest/research_walkthrough.ipynb).
+It shows explicit LangGraph state/node/edge construction, prints the expanded
+compiled graph, and ends with validated views and Black-Litterman optimized
+weights using the application's existing recipe runner. The
+`research_views -> generate_weights_bl -> END` path uses an explicit
+`MAX_ANNUAL_ALPHA = 0.05` illustrative annual prior-relative return calibration,
+omits neutral/zero-confidence views, and shows the same `priorWeight`/`blWeight`
+comparison as the application's allocation chart. Model defaults and long-only
+constraints are reused; this is not an empirically calibrated forecasting model.
+Graph invocation uses the shared bounded feedback loop, then deterministic BL optimization.
+It reuses the same setup and credentials described below. The monthly backtest
+notebook below still uses research-strength tilts, not BL.
+
+Open [the research notebook](app/services/bl_backtest/run_example.ipynb) using
+the repository Python environment. Install this backend's requirements and
+set `OPENAI_API_KEY` in your environment or a local `.env`; do not put keys
+in notebook cells. The notebook loads `.env` from the backend/repository root.
+
+Edit `RESEARCH_HYPOTHESIS`, `START_DATE`, and `END_DATE` in the setup cell,
+then run all cells. The default short range (2021-03-19 through 2021-09-30)
+limits live calls. There is one bounded research/critic/revision sequence per monthly rebalance once
+the required 64 observations exist. Before that, explicitly recorded warm-up
+rebalances use equal weights and make no LLM call.
+
+The [LangGraph workflow](app/services/bl_backtest/research_graph.py)
+receives selected evidence, returns strict views, and checks citations in
+Python. EPS/rate signals come from the existing synthetic CSVs; prices/returns
+are existing historical exports. The agent receives no raw DataFrame or
+database access.
+
+The callback produces **research-strength tilts, not Black-Litterman weights**:
+
+```text
+score_i = 1 + 0.5 * sign(direction_i) * magnitude_i * confidence_i
+weight_i = score_i / sum(scores)
+```
+
+Scores range from 0.5 to 1.5 before normalization. Neutral views retain a
+baseline score of 1; omitted securities also retain that baseline score
+without creating fabricated research views. Negative views reduce allocation without shorting.
+Magnitude is not an expected return. There is no new backtest engine,
+BL execution, or return calibration in this example.
+
+Inspect `rebalance_records` and the notebook's audit tables for hypotheses,
+cutoffs, validated views, evidence references, warnings, and weights.
+Provider/refusal/parsing/validation failures stop execution; they do not
+silently fall back to the mock. Token usage uses the existing LLM usage recorder.
+Do not treat results as publication-time-safe research or demonstrated
+investment performance: EPS/rates are synthetic, metadata is static, and an
+LLM may already know later events.
+
+Commands from the backend directory:
+
+```powershell
+# Existing mock example (no live research calls)
+python -m app.services.bl_backtest.run_example
+
+# One-shot research with no backtest
+python -m app.services.bl_backtest.run_example --research-only --as-of 2021-09-30 --universe AAPL MSFT JPM --hypothesis "Use EPS revisions as the primary signal."
+
+# Explicit live hypothesis-driven rebalances, using the existing bt engine
+python -m app.services.bl_backtest.run_example --research-backtest --start-date 2021-03-19 --end-date 2021-09-30 --universe AAPL MSFT JPM
+
+# Offline tests: fake LLM, real graph/bt execution, temporary usage database
+python -m unittest test_research_graph -v
+```
+
+`AgenticViewWeighTarget.weight_fn` now receives
+`(price_window, universe, hypothesis, as_of)`. Update any custom callbacks
+to accept the fourth positional rebalance timestamp. The default mock
+still supports its old three-argument direct invocation.
+
 ## Running the Server
 
 Development mode with auto-reload:

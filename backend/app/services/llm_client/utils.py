@@ -28,13 +28,17 @@ class OpenAIClientWrapper:
     Used when no client is provided to chat_and_record().
     """
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o-mini"):
+    def __init__(
+        self, api_key: Optional[str] = None, model: str = "gpt-4o-mini",
+        *, structured_output: bool = False,
+    ):
         """
         Initialize the OpenAI client.
         
         Args:
             api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
             model: Model to use (default: gpt-4o-mini)
+            structured_output: Opt in to provider JSON-schema enforcement.
         """
         if api_key is None:
             api_key = os.getenv("OPENAI_API_KEY")
@@ -46,6 +50,7 @@ class OpenAIClientWrapper:
         
         self.client = OpenAI(api_key=api_key)
         self.model = model
+        self.structured_output = structured_output
         self.last_prompt_tokens = 0
         self.last_completion_tokens = 0
     
@@ -63,7 +68,7 @@ class OpenAIClientWrapper:
         Args:
             system_prompt: System message
             user_prompt: User message
-            schema: Optional JSON schema (not directly used by OpenAI)
+            schema: JSON schema, enforced when structured_output is enabled
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
             
@@ -75,18 +80,33 @@ class OpenAIClientWrapper:
             {"role": "user", "content": user_prompt}
         ]
         
+        options = {}
+        if self.structured_output:
+            if schema is None:
+                raise ValueError("Structured output requires a JSON schema")
+            options["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "research_views", "strict": True, "schema": schema},
+            }
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             temperature=temperature,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            **options,
         )
         
         # Store token counts for tracking
         self.last_prompt_tokens = response.usage.prompt_tokens
         self.last_completion_tokens = response.usage.completion_tokens
         
-        return response.choices[0].message.content
+        choice = response.choices[0]
+        if self.structured_output:
+            if choice.message.refusal:
+                raise ValueError(f"LLM refused research request: {choice.message.refusal}")
+            if choice.finish_reason != "stop" or not choice.message.content:
+                raise ValueError(f"Incomplete research response: {choice.finish_reason}")
+        return choice.message.content
 
 
 def chat_and_record(
@@ -100,6 +120,7 @@ def chat_and_record(
     max_tokens: int = 4000,
     model: Optional[str] = None,
     db_path: Optional[Union[str, Path]] = None,
+    forward_parameters: bool = False,
 ) -> str:
     """
     Make an LLM chat call and automatically record usage to SQLite.
@@ -119,6 +140,8 @@ def chat_and_record(
         max_tokens: Maximum response tokens
         model: Model name (if None, tries to get from llm_client.model)
         db_path: Path to SQLite database. If None, uses backend/data/llm_usage.db
+        forward_parameters: Opt in to forwarding temperature/max_tokens.
+            Defaults to False to preserve existing three-argument clients.
         
     Returns:
         Raw LLM response text (usually JSON string)
@@ -169,10 +192,12 @@ def chat_and_record(
     
     try:
         # Make the actual LLM call
+        options = {"temperature": temperature, "max_tokens": max_tokens} if forward_parameters else {}
         response = llm_client.chat(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            schema=schema
+            schema=schema,
+            **options,
         )
         
         # Calculate metrics

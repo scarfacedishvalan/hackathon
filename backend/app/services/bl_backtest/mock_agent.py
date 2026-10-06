@@ -24,6 +24,7 @@ def mock_generate_agent_weights(
     price_window: pd.DataFrame,
     universe: list[str],
     hypothesis: str,
+    as_of: pd.Timestamp | None = None,
 ) -> dict[str, float]:
     """
     Mock agent: returns an equal-weight baseline tilted by a small random
@@ -38,6 +39,7 @@ def mock_generate_agent_weights(
         universe: Tickers selected for this rebalance.
         hypothesis: Natural-language research hypothesis (unused by the mock,
             but the real agent will consume it exactly as received here).
+        as_of: Explicit rebalance timestamp. Optional for legacy direct calls.
 
     Returns:
         dict mapping ticker -> raw (not necessarily normalised) weight.
@@ -48,7 +50,7 @@ def mock_generate_agent_weights(
         return {asset: 1.0 / len(universe) for asset in universe}
 
     # Deterministic per-date seed so re-running the backtest is reproducible.
-    as_of = price_window.index[-1]
+    as_of = price_window.index[-1] if as_of is None else as_of
     seed = int(pd.Timestamp(as_of).strftime("%Y%m%d"))
     rng = np.random.default_rng(seed)
 
