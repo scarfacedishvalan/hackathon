@@ -152,6 +152,64 @@ python -m pip install -r requirements.txt
 
 ## Hypothesis-driven research example
 
+Research-role code is grouped under
+[agent_utils/research](app/services/bl_backtest/agent_utils/research/):
+
+```text
+agent_utils/
+|-- prompts.py          # Critic/revision prompts; compatible research re-exports
+`-- research/
+    |-- __init__.py
+    |-- prompts.py      # Research instructions and context formatting
+    `-- tools.py        # Plain Python functions, NOT bound to an LLM
+```
+
+`make_research_tools(context)` creates scope-restricted callables over a private
+copy of the already selected evidence:
+
+- `query_evidence(asset, metrics=None, include_macro=True)` selects asset/shared
+  evidence with original references and coverage information.
+- `summarize_signal(asset, signal, lookback=63)` retrieves existing EPS, return,
+  or shared-rate summaries; lookbacks are restricted to 21 or 63 observations.
+- `compare_signals(assets, signal, lookback=63)` compares EPS/return values using
+  deterministic mean, minimum, maximum, and population standard deviation.
+  Missing/non-applicable entries are explicitly reported and excluded, not
+  treated as zeros.
+
+```python
+from app.services.bl_backtest.agent_utils.research import make_research_tools
+
+tools = make_research_tools(context)
+comparison = tools["compare_signals"](["AAPL", "MSFT"], "eps", 63)
+```
+
+Tools accept no dataset path, SQL, code, or cutoff override. Unknown assets,
+metrics, and unsupported windows raise explicit errors. Calculations remain in
+the data interface. Returned entries preserve the existing evidence IDs,
+units, source dates, synthetic-data labels, and warnings; comparison statistics
+are descriptive summaries, not newly citable evidence or forecasts.
+The production graph has no tool binding or dispatcher. For a standalone
+LangChain demonstration, open
+[tool_agent_walkthrough.ipynb](app/services/bl_backtest/agent_utils/research/tool_agent_walkthrough.ipynb).
+It uses `ChatOpenAI.bind_tools`, prints model-selected tool calls and results,
+limits retrieval to four rounds, and validates structured views against retrieved
+evidence. Final synthesis receives a fresh message containing only
+retrieved evidence and an explicit citation allowlist, not the initial catalog
+or intermediate model assessments. Deterministic validation still rejects
+unretrieved or invented citations. Retrieving a non-applicable coverage entry
+is required before citing it as a reason for abstention.
+Tool argument errors are printed and sent back for correction within the same
+round budget; no successful retrieval means synthesis stops explicitly.
+Responses requesting more than eight calls are rejected as a whole, with an
+error response for every call ID so the model can retry a smaller batch.
+The execution limits are not silently increased or bypassed.
+For macro-only evidence, `query_evidence` still requires a selected ticker
+(not `None`), `include_macro=True`, and macro metric names.
+Install the backend dependencies and set `OPENAI_API_KEY` in the kernel
+environment before manually running its live cell (OpenAI requests incur charges
+and bypass application cost tracking). The notebook is saved unexecuted.
+Production research/critic/revision behavior and portfolio construction are unchanged.
+
 For the feedback-loop version, open
 [research_feedback_walkthrough.ipynb](app/services/bl_backtest/research_feedback_walkthrough.ipynb),
 an unexecuted copy of the single-date walkthrough. It uses the same research

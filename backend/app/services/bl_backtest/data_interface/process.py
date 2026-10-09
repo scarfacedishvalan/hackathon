@@ -1,5 +1,7 @@
 """Calculate bounded evidence summaries; the LLM performs no arithmetic."""
 
+from statistics import fmean, pstdev
+
 import pandas as pd
 
 from app.services.bl_backtest.data_interface.load import ResearchData, check_close
@@ -12,6 +14,35 @@ LIMITATIONS = [
     "Observation-date filtering is not publication-time certification. Static metadata is not point-in-time.",
     "Research magnitude is dimensionless strength, not an expected return or a BL input.",
 ]
+
+
+def summarize_evidence_values(entries: dict[str, Evidence]) -> dict[str, object]:
+    """Describe comparable selected features, not a new predictive signal."""
+    if not entries:
+        raise ValueError("statistical comparison requires at least one evidence entry")
+    if len({(entry.metric, entry.unit) for entry in entries.values()}) != 1:
+        raise ValueError("statistical comparison requires matching metrics and units")
+    if len({(entry.start, entry.end, entry.observations) for entry in entries.values()}) != 1:
+        raise ValueError("statistical comparison requires matching observation windows")
+    values = [
+        entry.value for entry in entries.values()
+        if entry.status == "available" and entry.value is not None
+    ]
+    excluded = {
+        reference: entry.status for reference, entry in entries.items()
+        if entry.status != "available"
+    }
+    return {
+        "available_count": len(values),
+        "excluded": excluded,
+        "mean": fmean(values) if values else None,
+        "minimum": min(values) if values else None,
+        "maximum": max(values) if values else None,
+        "population_stddev": pstdev(values) if values else None,
+        "note": "Descriptive cross-sectional statistics of available selected values. "
+                "Unavailable values are excluded explicitly, never replaced by zero. "
+                "Not a significance test or return forecast.",
+    }
 
 
 def prepare_context(

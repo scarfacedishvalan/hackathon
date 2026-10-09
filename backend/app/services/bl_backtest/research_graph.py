@@ -8,8 +8,11 @@ from pydantic import BaseModel
 from langgraph.graph import END, START, StateGraph
 
 from app.services.bl_backtest.agent_utils.prompts import (
-    CRITIC_AGENT, CRITIC_OUTPUT_RULES, RESEARCH_AGENT, REVISION_OUTPUT_RULES,
-    SYNTHESIS_AGENT, SYSTEM_PROMPT, build_critic_prompt, build_revision_prompt, build_user_prompt,
+    CRITIC_AGENT, CRITIC_OUTPUT_RULES, REVISION_OUTPUT_RULES,
+    SYNTHESIS_AGENT, build_critic_prompt, build_revision_prompt,
+)
+from app.services.bl_backtest.agent_utils.research.prompts import (
+    RESEARCH_AGENT, SYSTEM_PROMPT, build_user_prompt,
 )
 from app.services.bl_backtest.schema import (
     CriticBatch, FeedbackCycle, ResearchContext, ResearchResult, RevisionOutput,
